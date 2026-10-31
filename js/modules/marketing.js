@@ -49,7 +49,7 @@
 
   function perf(el, ds, m) {
     if (!ds || !m.spend) { el.innerHTML = ds ? App.ui.empty('Map at least Campaign and Spend.') : ''; return; }
-    const tgt = App.settings.get('mk.targets', { roas: 3, cpa: 50 });
+    const tgt = App.bsettings.get('mk.targets', { roas: 3, cpa: 50 });
     const [tot] = agg(ds.rows, m, () => 'Total');
     const camps = agg(ds.rows, m, r => String(r[m.camp] || '(none)'));
     const chans = m.chan ? agg(ds.rows, m, r => String(r[m.chan] || '(none)')) : [];
@@ -88,7 +88,7 @@
       ${chans.length ? `<div class="card"><div class="card-head"><h2>Channel efficiency</h2></div><div id="mkChanT"></div></div>` : ''}
       <div class="card"><div class="card-head"><h2>Campaigns</h2><button class="btn small" id="mkCsv">Export CSV</button></div><div id="mkCampT"></div></div>`;
 
-    const tr = s => s.oninput = () => { App.settings.set('mk.targets', { roas: +el.querySelector('#tRoas').value, cpa: +el.querySelector('#tCpa').value }); };
+    const tr = s => s.oninput = () => { App.bsettings.set('mk.targets', { roas: +el.querySelector('#tRoas').value, cpa: +el.querySelector('#tCpa').value }); };
     tr(el.querySelector('#tRoas')); tr(el.querySelector('#tCpa'));
     el.querySelectorAll('#tRoas,#tCpa').forEach(i => i.onchange = () => perf(el, ds, m));
 
@@ -114,8 +114,8 @@
   }
 
   async function strategy(body) {
-    const swot = App.settings.get('mk.swot', { s: '', w: '', o: '', t: '' });
-    const inits = App.settings.get('mk.initiatives', []);
+    const swot = App.bsettings.get('mk.swot', { s: '', w: '', o: '', t: '' });
+    const inits = App.bsettings.get('mk.initiatives', []);
     body.innerHTML = `
       <div class="card"><div class="card-head"><h2>SWOT</h2><span class="muted small">Autosaves</span></div>
         <div class="swot">
@@ -131,21 +131,21 @@
           <button class="btn primary" id="iAdd">Add</button>
         </div>
         <div class="grid c3" id="iBoard"></div></div>`;
-    body.querySelectorAll('[data-sw]').forEach(t => t.oninput = () => { swot[t.dataset.sw] = t.value; App.settings.set('mk.swot', swot); });
+    body.querySelectorAll('[data-sw]').forEach(t => t.oninput = () => { swot[t.dataset.sw] = t.value; App.bsettings.set('mk.swot', swot); });
     const board = () => {
       const groups = ['Idea', 'Planned', 'Active', 'Done'];
       body.querySelector('#iBoard').innerHTML = groups.map(g => `<div class="card" style="background:var(--panel-2)"><div class="card-head"><h3>${g}</h3><span class="badge">${inits.filter(i => i.status === g).length}</span></div>
         <div class="stack">${inits.filter(i => i.status === g).map(i => `<div class="note-item" style="background:var(--panel)"><b>${esc(i.name)}</b>
           <div class="muted small">${esc(i.owner || '—')}${i.due ? ' · due ' + esc(i.due) : ''}${i.budget ? ' · ' + fmt.money(+i.budget) : ''}</div>
           <div class="row" style="margin-top:6px"><select data-mv="${i.id}" class="small">${App.ui.options(groups, g)}</select><button class="btn small danger" data-rm="${i.id}">Remove</button></div></div>`).join('') || '<div class="muted small">—</div>'}</div></div>`).join('');
-      body.querySelectorAll('[data-mv]').forEach(s => s.onchange = () => { inits.find(i => i.id === s.dataset.mv).status = s.value; App.settings.set('mk.initiatives', inits); board(); });
-      body.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { inits.splice(inits.findIndex(i => i.id === b.dataset.rm), 1); App.settings.set('mk.initiatives', inits); board(); });
+      body.querySelectorAll('[data-mv]').forEach(s => s.onchange = () => { inits.find(i => i.id === s.dataset.mv).status = s.value; App.bsettings.set('mk.initiatives', inits); board(); });
+      body.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { inits.splice(inits.findIndex(i => i.id === b.dataset.rm), 1); App.bsettings.set('mk.initiatives', inits); board(); });
     };
     body.querySelector('#iAdd').onclick = () => {
       const name = body.querySelector('#iName').value.trim();
       if (!name) return;
       inits.push({ id: App.uid(), name, owner: body.querySelector('#iOwner').value, due: body.querySelector('#iDue').value, budget: body.querySelector('#iBudget').value, status: body.querySelector('#iStatus').value });
-      App.settings.set('mk.initiatives', inits);
+      App.bsettings.set('mk.initiatives', inits);
       body.querySelector('#iName').value = '';
       board();
     };

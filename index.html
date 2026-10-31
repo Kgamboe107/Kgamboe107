@@ -10,14 +10,18 @@
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <div class="brand-mark">OC</div>
+        <div class="brand-mark" id="brandMark">OC</div>
         <div>
           <div class="brand-name">Ops Command Desk</div>
-          <div class="brand-sub">Operations Manager</div>
+          <div class="brand-sub" id="brandSub">Operations Manager</div>
         </div>
       </div>
+      <div class="biz-switch">
+        <label class="tiny" for="bizSelect">Viewing</label>
+        <select id="bizSelect"></select>
+      </div>
       <nav id="nav">
-        <a data-route="dashboard" class="active"><span class="ico">◧</span>Dashboard</a>
+        <a data-route="dashboard" class="active"><span class="ico">◧</span><span id="dashLabel">Dashboard</span></a>
         <a data-route="library"><span class="ico">⇪</span>Data Library</a>
         <div class="nav-label">Analysis</div>
         <a data-route="finance"><span class="ico">$</span>Financials</a>
@@ -27,6 +31,7 @@
         <a data-route="research"><span class="ico">✎</span>Research</a>
         <a data-route="personnel"><span class="ico">☺</span>Personnel</a>
         <div class="nav-label">Tools</div>
+        <a data-route="businesses"><span class="ico">▦</span>Businesses</a>
         <a data-route="explorer"><span class="ico">⊞</span>Data Explorer</a>
         <a data-route="integrations"><span class="ico">⇄</span>Integrations</a>
         <a data-route="settings"><span class="ico">⚑</span>Settings</a>
@@ -61,6 +66,7 @@
   <script src="vendor/chart.umd.min.js"></script>
   <script src="vendor/msal-browser.min.js"></script>
   <script src="js/core.js"></script>
+  <script src="js/biz.js"></script>
   <script src="js/store.js"></script>
   <script src="js/ingest.js"></script>
   <script src="js/ui.js"></script>
@@ -76,6 +82,8 @@
   <script src="js/modules/explorer.js"></script>
   <script src="js/modules/integrations.js"></script>
   <script src="js/modules/settings.js"></script>
+  <script src="js/modules/businesses.js"></script>
+  <script src="js/modules/master.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

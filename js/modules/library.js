@@ -11,6 +11,7 @@
         <div class="card">
           <div class="card-head"><h2>Upload</h2><span class="muted small">Spreadsheets (CSV, XLSX, XLS, ODS), reports (PDF, DOCX, PPTX), notes (MD, TXT), images, personnel files</span></div>
           <div class="row" style="margin-bottom:12px">
+            <label class="field">Business<select id="upBiz">${App.ui.options(App.biz.active().map(b => ({ value: b.id, label: b.name })), App.biz.target())}</select></label>
             <label class="field">Category<select id="upCat">${App.ui.options(catOpts, '')}</select></label>
             <label class="field">Source system<select id="upSrc">${App.ui.options(srcOpts, '')}</select></label>
             <label class="field" style="flex:1">Tags (comma separated)<input id="upTags" placeholder="e.g. Q3, Store 12, board deck"></label>
@@ -35,6 +36,7 @@
 
       const dz = view.querySelector('#dz'), inp = view.querySelector('#dzInput');
       const opts = () => ({
+        businessId: view.querySelector('#upBiz').value,
         category: view.querySelector('#upCat').value || undefined,
         source: view.querySelector('#upSrc').value || undefined,
         tags: view.querySelector('#upTags').value.split(',').map(s => s.trim()).filter(Boolean)
@@ -58,9 +60,10 @@
         if (filter.q) { const q = filter.q.toLowerCase(); files = files.filter(f => (f.name + ' ' + (f.tags || []).join(' ')).toLowerCase().includes(q)); }
         const el = view.querySelector('#fileList');
         if (!files.length) { el.innerHTML = '<div class="empty">No files yet.</div>'; return; }
-        el.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Category</th><th>Source</th><th>Tags</th><th class="num">Size</th><th>Uploaded</th><th></th></tr></thead><tbody>
+        el.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Business</th><th>Category</th><th>Source</th><th>Tags</th><th class="num">Size</th><th>Uploaded</th><th></th></tr></thead><tbody>
           ${files.map(f => `<tr>
             <td><a data-open="${f.id}">${esc(f.name)}</a>${f.datasetIds?.length ? ` <span class="badge accent">${f.datasetIds.length} table${f.datasetIds.length > 1 ? 's' : ''}</span>` : ''}</td>
+            <td><select data-biz="${f.id}">${App.ui.options(App.biz.list().map(b => ({ value: b.id, label: b.name })), App.biz.idOf(f))}</select></td>
             <td><select data-cat="${f.id}">${App.ui.options(Object.entries(App.categories).map(([k, v]) => ({ value: k, label: v.label })), f.category)}</select></td>
             <td><span class="badge" style="border-color:${App.sources[f.source]?.color}">${esc(App.sources[f.source]?.label || f.source)}</span></td>
             <td class="small">${(f.tags || []).map(t => `<span class="badge">${esc(t)}</span>`).join(' ')}</td>
@@ -74,6 +77,14 @@
           await App.store.put('files', f);
           for (const id of f.datasetIds || []) { const d = await App.store.get('datasets', id); if (d) { d.category = s.value; await App.store.put('datasets', d); } }
           App.ui.toast('Category updated');
+        });
+        el.querySelectorAll('[data-biz]').forEach(s => s.onchange = async () => {
+          const f = await App.store.get('files', s.dataset.biz);
+          f.businessId = s.value;
+          await App.store.put('files', f);
+          for (const id of f.datasetIds || []) { const d = await App.store.get('datasets', id); if (d) { d.businessId = s.value; await App.store.put('datasets', d); } }
+          for (const n of await App.store.all('notes', { raw: true })) if (n.fileId === f.id) { n.businessId = s.value; await App.store.put('notes', n); }
+          App.ui.toast(`Moved to ${App.biz.get(s.value).name}`); renderList();
         });
         el.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
           if (!confirm('Delete this file and its data tables?')) return;
@@ -112,7 +123,7 @@
       const v = card.querySelector('#pvView');
       if (v) v.onclick = () => window.open(URL.createObjectURL(f.blob), '_blank');
       const ex = card.querySelector('#pvExplore');
-      if (ex) ex.onclick = () => { App.settings.set('explorer.ds', datasets[0].id); close(); App.go('explorer'); };
+      if (ex) ex.onclick = () => { App.bsettings.set('explorer.ds', datasets[0].id); close(); App.go('explorer'); };
       const t = card.querySelector('#pvTables');
       datasets.forEach(d => {
         const box = document.createElement('div');

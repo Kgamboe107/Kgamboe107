@@ -4,24 +4,28 @@
 
   /* Re-run each analysis off-screen so the dashboard always reflects current data */
   async function refreshKpis() {
-    App.settings.set('kpis', {});
+    App.bsettings.set('kpis', {});
     const runs = [['finance'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
     for (const [mod, params] of runs) {
+      if (!App.biz.enabled(mod)) continue;
       try { await App.modules[mod].render(document.createElement('div'), params || {}); } catch (e) { console.warn('KPI refresh', mod, e); }
     }
-    return App.settings.get('kpis', {});
+    return App.bsettings.get('kpis', {});
   }
 
   App.modules.dashboard = {
+    refreshKpis,
     async render(view) {
+      if (App.biz.isMaster()) return App.modules.master.render(view);
+      const biz = App.biz.get(App.biz.current());
       const files = await App.store.files();
       const datasets = await App.store.datasets();
       const notes = await App.store.all('notes');
       if (!files.length) {
         view.innerHTML = `
-          <div class="card"><h2>Welcome to your operations desk</h2>
+          <div class="card biz-card" style="--bc:${biz.color}"><h2>${esc(biz.name)} — let's get started</h2>
             <p class="muted">Upload spreadsheets, reports, and personnel files — or connect Google Drive and Outlook — and every module (financials, operations, trading risk, marketing, research, personnel) will analyze them automatically.</p>
-            <div class="row"><a class="btn primary" data-go="library">Upload files</a><a class="btn" data-go="integrations">Connect apps</a><button class="btn" id="dSample">Load sample data</button></div>
+            <div class="row"><a class="btn primary" data-go="library">Upload files</a><a class="btn" data-go="integrations">Connect apps</a><button class="btn" id="dSample">Load sample data</button><button class="btn ghost" data-go="businesses">Manage businesses</button></div>
           </div>
           <div class="grid c3">${Object.entries(App.sources).filter(([k]) => k !== 'manual').map(([, s]) => `<div class="card row"><span class="badge" style="background:${s.color};color:#fff;border:none">${esc(s.label)}</span><span class="muted small">ready</span></div>`).join('')}</div>`;
         view.querySelector('#dSample').onclick = async () => { await App.samples.load(); App.go('dashboard'); };
@@ -40,7 +44,7 @@
         tp.total !== undefined && ['Realized P&L', fmt.money(tp.total), `win rate ${fmt.pct(tp.winRate)} · VaR ${fmt.money(tp.hVaR)}`, tp.total >= 0 ? 'good' : 'bad', 'trading'],
         mk.spend !== undefined && ['Marketing spend', fmt.compact(mk.spend), mk.roas ? `ROAS ${(+mk.roas).toFixed(2)}×` : '', '', 'marketing'],
         p.headcount !== undefined && ['Active headcount', fmt.num(p.headcount), `turnover ${fmt.pct(p.turnover)}`, '', 'personnel'],
-        ['Open research', fmt.num(openResearch), `${notes.length} notes`, '', 'research']
+        App.biz.enabled('research') && ['Open research', fmt.num(openResearch), `${notes.length} notes`, '', 'research']
       ].filter(Boolean);
       const alertMods = [['finance', 'Financials', f], ['operations', 'Operations', o], ['trading', 'Positions', t], ['trading', 'Trade performance', tp], ['marketing', 'Marketing', mk], ['personnel', 'Personnel', p]].filter(([, , d]) => d.alerts);
       const byCat = {};
@@ -49,6 +53,10 @@
       files.forEach(x => bySrc[x.source] = (bySrc[x.source] || 0) + 1);
 
       view.innerHTML = `
+        <div class="card biz-card row spread" style="--bc:${biz.color};flex-direction:row">
+          <div><h2>${esc(biz.name)}</h2><div class="muted small">${esc(App.biz.TEMPLATES[biz.type]?.label || 'Custom')}${biz.description ? ' · ' + esc(biz.description) : ''}</div></div>
+          <div class="row no-print"><button class="btn small" id="dEdit">Edit business</button><button class="btn small" id="dMaster">Master dashboard</button></div>
+        </div>
         <div class="grid k4">${tiles.map(([l, v, s, tone, go]) => `<a data-go="${go}" style="text-decoration:none;color:inherit">${App.ui.kpi(l, v, s, tone)}</a>`).join('')}</div>
         <div class="grid c2">
           <div class="card"><div class="card-head"><h2>Needs attention</h2><span class="badge ${alertMods.length ? 'warn' : 'good'}">${App.sum(alertMods.map(a => a[2].alerts))} flags</span></div>
@@ -63,6 +71,8 @@
             <div class="stack">${Object.entries(bySrc).sort((a, b) => b[1] - a[1]).map(([s, n]) => `<div class="row spread"><span class="row"><span style="width:10px;height:10px;border-radius:3px;background:${App.sources[s]?.color}"></span>${esc(App.sources[s]?.label || s)}</span><b>${n}</b></div>`).join('')}</div></div>
         </div>
         <div class="row no-print"><button class="btn" onclick="window.print()">Print / save as PDF</button><span class="muted small">Updated ${new Date().toLocaleTimeString()}</span></div>`;
+      view.querySelector('#dEdit').onclick = () => App.businessForm(biz, () => App.go('dashboard'));
+      view.querySelector('#dMaster').onclick = () => { App.biz.setCurrent('all'); App.go('dashboard'); };
       const cats = Object.keys(byCat);
       App.ui.chart('dCov', 'doughnut', { labels: cats.map(c => App.categories[c]?.label || c), datasets: [{ data: cats.map(c => byCat[c]), backgroundColor: cats.map(c => App.categories[c]?.color || '#64748b') }] }, { plugins: { legend: { position: 'right', labels: { color: App.ui.cssVar('--muted') } } } });
     }

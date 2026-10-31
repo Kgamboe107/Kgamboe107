@@ -4,15 +4,18 @@
   const TITLES = {
     dashboard: 'Dashboard', library: 'Data Library', finance: 'Financial Analysis', operations: 'Business Operations',
     trading: 'Trading Risk Management', marketing: 'Marketing Strategy', research: 'Research Management',
-    personnel: 'Personnel', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
+    personnel: 'Personnel', businesses: 'Businesses', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';
 
   async function go(route, params = {}) {
-    if (!App.modules[route]) route = 'dashboard';
+    if (!App.modules[route] || route === 'master' || !App.biz.enabled(route)) route = 'dashboard';
     current = route;
+    syncBiz();
     $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
-    $('#pageTitle').textContent = TITLES[route] || route;
+    const master = App.biz.isMaster();
+    const bizName = master ? 'All businesses' : App.biz.get(App.biz.current()).name;
+    $('#pageTitle').textContent = route === 'dashboard' ? (master ? 'Master Dashboard' : bizName) : `${TITLES[route] || route} · ${bizName}`;
     $('#sidebar').classList.remove('open');
     if (location.hash.slice(1) !== route) history.replaceState(null, '', '#' + route);
     const view = $('#view');
@@ -22,6 +25,24 @@
     view.scrollTop = 0;
   }
   App.go = go;
+
+  /* Sidebar business switcher + per-business nav */
+  function syncBiz() {
+    const cur = App.biz.current();
+    const sel = $('#bizSelect');
+    const live = App.biz.active();
+    const archived = App.biz.list().filter(b => b.archived);
+    sel.innerHTML = `<option value="all" ${cur === 'all' ? 'selected' : ''}>★ All businesses (Master)</option>`
+      + live.map(b => `<option value="${b.id}" ${b.id === cur ? 'selected' : ''}>${App.esc(b.name)}</option>`).join('')
+      + (archived.length ? `<optgroup label="Archived">${archived.map(b => `<option value="${b.id}" ${b.id === cur ? 'selected' : ''}>${App.esc(b.name)}</option>`).join('')}</optgroup>` : '')
+      + `<option value="__new">+ New business…</option>`;
+    const biz = cur === 'all' ? null : App.biz.get(cur);
+    $('#dashLabel').textContent = biz ? 'Dashboard' : 'Master Dashboard';
+    $('#brandSub').textContent = biz ? biz.name : 'All businesses';
+    $('#brandMark').style.background = biz ? biz.color : '';
+    $('#brandMark').textContent = biz ? biz.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'OC';
+    $$('#nav a[data-route]').forEach(a => a.classList.toggle('hidden', !App.biz.enabled(a.dataset.route)));
+  }
 
   function init() {
     const theme = App.settings.get('theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -35,6 +56,12 @@
 
     $('#nav').addEventListener('click', e => { const a = e.target.closest('a[data-route]'); if (a) go(a.dataset.route); });
     document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); go(a.dataset.go); } });
+    $('#bizSelect').onchange = e => {
+      const v = e.target.value;
+      if (v === '__new') { syncBiz(); App.businessForm(null, id => { App.biz.setCurrent(id); go('dashboard'); }); return; }
+      App.biz.setCurrent(v);
+      go(current === 'search' || current === 'businesses' ? 'dashboard' : current);
+    };
     $('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
 
     $('#quickUpload').onchange = async e => {

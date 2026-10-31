@@ -33,7 +33,7 @@
 
   App.modules.operations = {
     async render(view) {
-      const t = App.settings.get('ops.targets', { labor: 0.28, food: 0.30, prime: 0.60, splh: 55, ot: 0.05 });
+      const t = App.bsettings.get('ops.targets', { labor: 0.28, food: 0.30, prime: 0.60, splh: 55, ot: 0.05 });
       view.innerHTML = `
         <div class="card no-print"><div class="card-head"><h2>Targets</h2><span class="muted small">Used for flags and KPI colors</span></div>
           <div class="row">
@@ -47,7 +47,7 @@
         <div id="opsOut" class="stack" style="gap:16px"></div>
         <div id="iMap"></div><div id="iOut"></div>`;
       view.querySelectorAll('.row input').forEach(i => i.onchange = () => {
-        App.settings.set('ops.targets', {
+        App.bsettings.set('ops.targets', {
           labor: +view.querySelector('#tLabor').value / 100, food: +view.querySelector('#tFood').value / 100,
           prime: +view.querySelector('#tPrime').value / 100, splh: +view.querySelector('#tSplh').value, ot: +view.querySelector('#tOt').value / 100
         });
@@ -65,7 +65,7 @@
   function analyze(view) {
     const el = view.querySelector('#opsOut');
     if (!el) return;
-    const t = App.settings.get('ops.targets', { labor: 0.28, food: 0.30, prime: 0.60, splh: 55, ot: 0.05 });
+    const t = App.bsettings.get('ops.targets', { labor: 0.28, food: 0.30, prime: 0.60, splh: 55, ot: 0.05 });
     const lm = L.m, sm = S.m;
     const hasL = L.ds && lm.hours, hasS = S.ds && sm.sales;
     if (!hasL && !hasS) { el.innerHTML = ''; return; }

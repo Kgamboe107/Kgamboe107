@@ -3,6 +3,7 @@
   const DB_NAME = 'ops-command-desk';
   const DB_VER = 1;
   let dbp = null;
+  const SCOPED = ['files', 'datasets', 'notes'];
 
   function open() {
     if (dbp) return dbp;
@@ -39,7 +40,12 @@
   const store = {
     async put(name, obj) { await tx(name, 'readwrite', s => s.put(obj)); App.bus.emit('data-changed', name); return obj; },
     async get(name, id) { const db = await open(); return reqP(db.transaction(name).objectStore(name).get(id)); },
-    async all(name) { const db = await open(); return reqP(db.transaction(name).objectStore(name).getAll()); },
+    /* files/datasets/notes are scoped to the active business unless { raw: true } */
+    async all(name, opts = {}) {
+      const db = await open();
+      const rows = await reqP(db.transaction(name).objectStore(name).getAll());
+      return opts.raw || !SCOPED.includes(name) || !App.biz ? rows : rows.filter(App.biz.inScope);
+    },
     async del(name, id) { await tx(name, 'readwrite', s => s.delete(id)); App.bus.emit('data-changed', name); },
     async clear(name) { await tx(name, 'readwrite', s => s.clear()); App.bus.emit('data-changed', name); },
 
@@ -54,13 +60,13 @@
       return all.sort((a, b) => b.createdAt - a.createdAt);
     },
     async deleteFile(id) {
-      const ds = (await this.all('datasets')).filter(d => d.fileId === id);
+      const ds = (await this.all('datasets', { raw: true })).filter(d => d.fileId === id);
       for (const d of ds) await tx('datasets', 'readwrite', s => s.delete(d.id));
       await this.del('files', id);
     },
     async exportAll() {
-      const files = await this.all('files');
-      const out = { version: 1, exportedAt: new Date().toISOString(), files: [], datasets: await this.all('datasets'), notes: await this.all('notes') };
+      const files = await this.all('files', { raw: true });
+      const out = { version: 2, exportedAt: new Date().toISOString(), files: [], datasets: await this.all('datasets', { raw: true }), notes: await this.all('notes', { raw: true }) };
       for (const f of files) {
         const { blob, ...meta } = f;
         meta.dataUrl = blob ? await blobToDataUrl(blob) : null;

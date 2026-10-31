@@ -19,7 +19,7 @@
         </div>
         <div class="card"><div class="card-head"><h2>Reports & research files</h2><a data-go="library" class="small">Manage in Data Library →</a></div><div id="rFiles"></div></div>`;
       view.querySelector('#rNew').onclick = async () => {
-        const n = { id: App.uid(), module: 'research', title: 'Untitled research', body: '', tags: [], status: 'Open question', link: '', updated: Date.now() };
+        const n = { id: App.uid(), businessId: App.biz.target(), module: 'research', title: 'Untitled research', body: '', tags: [], status: 'Open question', link: '', updated: Date.now() };
         await App.store.put('notes', n); activeId = n.id; list(view); edit(view);
       };
       view.querySelector('#rImp').onchange = async e => {

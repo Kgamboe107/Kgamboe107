@@ -123,7 +123,8 @@
     const name = file.name || opts.name || 'untitled';
     const rec = {
       id: App.uid(), name, size: file.size, mime: file.type || '', uploadedAt: Date.now(),
-      origin: opts.origin || 'upload', tags: opts.tags || [], notes: '', datasetIds: []
+      origin: opts.origin || 'upload', tags: opts.tags || [], notes: '', datasetIds: [],
+      businessId: opts.businessId || App.biz.target()
     };
     let tables = [];
     if (SHEET_EXT.test(name) || /spreadsheet|csv|excel/.test(file.type)) {
@@ -138,7 +139,7 @@
       const ds = {
         id: App.uid(), fileId: rec.id, name: tables.length > 1 ? `${name} › ${t.sheet}` : name,
         sheet: t.sheet, headers: t.headers, rows: t.rows.slice(0, 250000),
-        category: rec.category, source: rec.source, createdAt: Date.now()
+        category: rec.category, source: rec.source, businessId: rec.businessId, createdAt: Date.now()
       };
       await App.store.put('datasets', ds);
       rec.datasetIds.push(ds.id);
@@ -149,7 +150,7 @@
       const body = await file.text();
       await App.store.put('notes', {
         id: App.uid(), module: rec.category === 'marketing' ? 'marketing' : 'research', title: name.replace(/\.[^.]+$/, ''),
-        body, tags: [App.sources[rec.source]?.label || rec.source], fileId: rec.id, updated: Date.now()
+        body, tags: [App.sources[rec.source]?.label || rec.source], fileId: rec.id, businessId: rec.businessId, updated: Date.now()
       });
     }
 

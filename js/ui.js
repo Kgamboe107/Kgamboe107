@@ -126,7 +126,7 @@
       onChange(null, {});
       return;
     }
-    const saved = App.settings.get('map.' + key, {});
+    const saved = App.bsettings.get('map.' + key, {});
     /* Pick the table whose columns best fit this analysis (required fields weigh most) */
     const fit = d => fields.reduce((s, f) => s + (App.findCol(d.headers, f.syn) ? (f.optional ? 1 : 4) : 0), 0)
       + (categories && categories.includes(d.category) ? 2 : 0);
@@ -149,7 +149,7 @@
           <span class="badge">${ds.rows.length.toLocaleString()} rows · ${esc(App.sources[ds.source]?.label || ds.source)}</span></div>
         <div class="stack">
           <label class="field">Table
-            <select data-ds>${datasets.map(d => `<option value="${d.id}" ${d.id === ds.id ? 'selected' : ''}>${esc(d.name)} — ${esc(cat(d.category))}</option>`).join('')}</select>
+            <select data-ds>${datasets.map(d => `<option value="${d.id}" ${d.id === ds.id ? 'selected' : ''}>${App.biz.isMaster() ? esc(App.biz.get(App.biz.idOf(d))?.name || '') + ' · ' : ''}${esc(d.name)} — ${esc(cat(d.category))}</option>`).join('')}</select>
           </label>
           <details ${fields.some(f => !f.optional && !map[f.key]) ? 'open' : ''}>
             <summary class="small muted" style="cursor:pointer">Column mapping (auto-detected — adjust if needed)</summary>
@@ -166,16 +166,16 @@
         map[s.dataset.f] = s.value; persist(); onChange(ds, map);
       });
     }
-    function persist() { App.settings.set('map.' + key, { ds: ds.id, map }); }
+    function persist() { App.bsettings.set('map.' + key, { ds: ds.id, map }); }
     render();
     onChange(ds, map);
   }
 
   /* Save module KPIs so the dashboard can show a cross-module summary */
   function publish(module, data) {
-    const all = App.settings.get('kpis', {});
+    const all = App.bsettings.get('kpis', {});
     all[module] = { ...data, at: Date.now() };
-    App.settings.set('kpis', all);
+    App.bsettings.set('kpis', all);
   }
 
   App.ui = { toast, modal, kpi, empty, table, chart, options, mapper, publish, PALETTE, cssVar };

@@ -6,8 +6,8 @@
     async render(view) {
       const datasets = await App.store.datasets();
       if (!datasets.length) { view.innerHTML = App.ui.empty('No data tables yet.', '<a class="btn primary" data-go="library">Upload data</a>'); return; }
-      let ds = datasets.find(d => d.id === App.settings.get('explorer.ds')) || datasets[0];
-      const st = App.settings.get('explorer.state', {});
+      let ds = datasets.find(d => d.id === App.bsettings.get('explorer.ds')) || datasets[0];
+      const st = App.bsettings.get('explorer.state', {});
 
       function render() {
         const numCols = ds.headers.filter(h => App.isNumericCol(ds.rows, h));
@@ -71,8 +71,8 @@
         App.ui.table(view.querySelector('#xProf'), [{ key: 'col', label: 'Column' }, { key: 'type', label: 'Type' }, { key: 'filled', label: 'Filled', num: true }, { key: 'info', label: 'Stats' }], prof);
         App.ui.table(view.querySelector('#xRaw'), ds.headers.map(h => ({ key: h, label: h, num: numCols.includes(h) })), rows, { limit: 300 });
 
-        const upd = (k, v) => { st[k] = v; App.settings.set('explorer.state', st); render(); };
-        view.querySelector('#xDs').onchange = e => { ds = datasets.find(d => d.id === e.target.value); App.settings.set('explorer.ds', ds.id); st.by = st.val = undefined; render(); };
+        const upd = (k, v) => { st[k] = v; App.bsettings.set('explorer.state', st); render(); };
+        view.querySelector('#xDs').onchange = e => { ds = datasets.find(d => d.id === e.target.value); App.bsettings.set('explorer.ds', ds.id); st.by = st.val = undefined; render(); };
         view.querySelector('#xBy').onchange = e => upd('by', e.target.value);
         view.querySelector('#xBucket').onchange = e => upd('bucket', e.target.value);
         view.querySelector('#xVal').onchange = e => upd('val', e.target.value);

@@ -24,7 +24,7 @@
   ];
 
   const defaults = { account: 25000, riskPct: 1, maxPos: 20, maxSector: 40, dailyLoss: 2, maxDD: 10 };
-  const limits = () => ({ ...defaults, ...App.settings.get('trade.limits', {}) });
+  const limits = () => ({ ...defaults, ...App.bsettings.get('trade.limits', {}) });
   let tab = 'positions';
 
   App.modules.trading = {
@@ -240,7 +240,7 @@
 
   function tools(body) {
     const lim = limits();
-    const calc = App.settings.get('trade.calc', { entry: 50, stop: 47.5, target: 57.5 });
+    const calc = App.bsettings.get('trade.calc', { entry: 50, stop: 47.5, target: 57.5 });
     body.innerHTML = `
       <div class="grid c2">
         <div class="card"><div class="card-head"><h2>Risk limits</h2><span class="muted small">Drive all flags on this page</span></div>
@@ -269,13 +269,13 @@
             .map((s, i) => `<label class="row"><input type="checkbox" data-ck="${i}"> ${esc(s)}</label>`).join('')}
         </div></div>`;
     const save = () => {
-      App.settings.set('trade.limits', { account: +body.querySelector('#lAcct').value, riskPct: +body.querySelector('#lRisk').value, maxPos: +body.querySelector('#lPos').value,
+      App.bsettings.set('trade.limits', { account: +body.querySelector('#lAcct').value, riskPct: +body.querySelector('#lRisk').value, maxPos: +body.querySelector('#lPos').value,
         maxSector: +body.querySelector('#lSec').value, dailyLoss: +body.querySelector('#lDay').value, maxDD: +body.querySelector('#lDD').value });
-      App.settings.set('trade.calc', { entry: +body.querySelector('#cEntry').value, stop: +body.querySelector('#cStop').value, target: +body.querySelector('#cTarget').value });
+      App.bsettings.set('trade.calc', { entry: +body.querySelector('#cEntry').value, stop: +body.querySelector('#cStop').value, target: +body.querySelector('#cTarget').value });
       size();
     };
     function size() {
-      const L = limits(), c = App.settings.get('trade.calc', calc);
+      const L = limits(), c = App.bsettings.get('trade.calc', calc);
       const riskPer = Math.abs(c.entry - c.stop);
       const riskBudget = L.account * L.riskPct / 100;
       let shares = riskPer ? Math.floor(riskBudget / riskPer) : 0;
