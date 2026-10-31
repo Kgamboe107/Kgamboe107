@@ -1,0 +1,10 @@
+Symbol,Name,Quantity,Avg Cost,Last Price,Mkt Value,Unrealized P&L,Sector
+NVDA,NVIDIA,120,98.4,141.2,16944,5136,Technology
+AAPL,Apple,80,182.1,228.5,18280,3712,Technology
+MSFT,Microsoft,40,395,431.8,17272,1472,Technology
+JPM,JPMorgan,50,205,238.9,11945,1695,Financials
+XOM,Exxon Mobil,70,118.4,109.2,7644,-644,Energy
+COST,Costco,12,820,915.4,10984.8,1144.8,Consumer Staples
+TSLA,Tesla,35,262,219.7,7689.5,-1480.5,Consumer Discretionary
+SPY,SPDR S&P 500,25,540,582.3,14557.5,1057.5,ETF
+PLTR,Palantir,300,28.5,61.2,18360,9810,Technology

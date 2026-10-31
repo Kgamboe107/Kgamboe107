@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ops Command Desk</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">OC</div>
+        <div>
+          <div class="brand-name">Ops Command Desk</div>
+          <div class="brand-sub">Operations Manager</div>
+        </div>
+      </div>
+      <nav id="nav">
+        <a data-route="dashboard" class="active"><span class="ico">◧</span>Dashboard</a>
+        <a data-route="library"><span class="ico">⇪</span>Data Library</a>
+        <div class="nav-label">Analysis</div>
+        <a data-route="finance"><span class="ico">$</span>Financials</a>
+        <a data-route="operations"><span class="ico">⚙</span>Operations</a>
+        <a data-route="trading"><span class="ico">↗</span>Trading Risk</a>
+        <a data-route="marketing"><span class="ico">✦</span>Marketing</a>
+        <a data-route="research"><span class="ico">✎</span>Research</a>
+        <a data-route="personnel"><span class="ico">☺</span>Personnel</a>
+        <div class="nav-label">Tools</div>
+        <a data-route="explorer"><span class="ico">⊞</span>Data Explorer</a>
+        <a data-route="integrations"><span class="ico">⇄</span>Integrations</a>
+        <a data-route="settings"><span class="ico">⚑</span>Settings</a>
+      </nav>
+      <div class="sidebar-foot">
+        <button class="btn ghost small" id="themeToggle">Toggle theme</button>
+        <div class="muted tiny">Data is stored locally on this computer.</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="topbar-actions">
+          <input type="search" id="globalSearch" placeholder="Search files, notes, people…">
+          <label class="btn primary">
+            Upload
+            <input type="file" id="quickUpload" multiple hidden>
+          </label>
+        </div>
+      </header>
+      <section id="view" class="view"></section>
+    </main>
+  </div>
+
+  <div id="dropOverlay" class="drop-overlay"><div>Drop files to upload</div></div>
+  <div id="toast" class="toast"></div>
+  <div id="modal" class="modal" hidden><div class="modal-card" id="modalCard"></div></div>
+
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="vendor/msal-browser.min.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ingest.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/samples.js"></script>
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/library.js"></script>
+  <script src="js/modules/finance.js"></script>
+  <script src="js/modules/operations.js"></script>
+  <script src="js/modules/trading.js"></script>
+  <script src="js/modules/marketing.js"></script>
+  <script src="js/modules/research.js"></script>
+  <script src="js/modules/personnel.js"></script>
+  <script src="js/modules/explorer.js"></script>
+  <script src="js/modules/integrations.js"></script>
+  <script src="js/modules/settings.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

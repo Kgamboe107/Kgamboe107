@@ -1,0 +1,25 @@
+{
+  "name": "ops-command-desk",
+  "version": "1.0.0",
+  "description": "Desktop command center for an operations manager: financials, operations, trading risk, marketing, research, and personnel — with Harri, CrunchTime, Webull, Dub, Anara, Outlook, and Google Drive support.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "web": "node server.js",
+    "samples": "node scripts/write-samples.js",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.gamboeconsulting.opsdesk",
+    "productName": "Ops Command Desk",
+    "files": ["main.js", "server.js", "index.html", "css/**", "js/**", "vendor/**", "samples/**"],
+    "mac": { "target": "dmg", "category": "public.app-category.business" },
+    "win": { "target": "nsis" },
+    "linux": { "target": "AppImage" }
+  }
+}
