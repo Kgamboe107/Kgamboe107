@@ -14,6 +14,16 @@ A desktop command center for an operations manager. Upload spreadsheets, reports
 | **Personnel** | Headcount, tenure, turnover, early attrition, pay range, and a searchable directory. Each employee's record can hold their personnel files (reviews, I-9s, certifications). |
 | **Data Explorer** | Pivot any table: group by any column, sum/avg/min/max/count, bucket by day or month, chart it, and export it. |
 
+## Multiple businesses & the Master dashboard
+
+Use the **Viewing** switcher at the top of the sidebar to move between businesses, or pick **+ New business…** to add one. You can also manage them on the **Businesses** page.
+
+- **Each business is its own workspace.** It has its own files, notes, column mappings, targets (labor %, ROAS, risk limits…), strategy board, and dashboard.
+- **Templates** (Restaurant, Trading, E-commerce, Services, Real estate, Startup, Custom) choose which modules a business uses. Pages you don't need are hidden, and you can change the selection at any time.
+- **★ All businesses** opens the **Master dashboard**. It shows consolidated totals (revenue, net income, sales, marketing spend, headcount, trading exposure), compares revenue and net income by business, gives each venture a card with its key numbers, and lists every flag across all of them. Click any card or flag to jump straight into that business. Module pages in this view analyze data from all businesses together.
+- **Uploads go to the business you're viewing.** The Data Library has a Business picker for uploads and a Business column for moving files later.
+- **Archive** a venture to hide it from the Master totals, or **delete** it and either move its data to another business or remove it permanently.
+
 Column names are matched automatically. If an export uses different names, open **Column mapping** on any page and pick the right column. The app remembers your choice.
 
 ## Integrations
@@ -60,6 +70,7 @@ All files and data stay on your computer, in the app's local database (IndexedDB
 index.html            app shell
 css/app.css           styles (light + dark)
 js/core.js            helpers: number parsing, formatting, column matching, stats
+js/biz.js             businesses: workspaces, scoping, per-business settings
 js/store.js           IndexedDB storage
 js/ingest.js          file parsing, source + category detection
 js/ui.js              tables, charts, KPI cards, column mapper

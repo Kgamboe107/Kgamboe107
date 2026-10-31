@@ -32,7 +32,7 @@
     const sel = $('#bizSelect');
     const live = App.biz.active();
     const archived = App.biz.list().filter(b => b.archived);
-    sel.innerHTML = `<option value="all" ${cur === 'all' ? 'selected' : ''}>★ All businesses (Master)</option>`
+    sel.innerHTML = `<option value="all" ${cur === 'all' ? 'selected' : ''}>★ All businesses</option>`
       + live.map(b => `<option value="${b.id}" ${b.id === cur ? 'selected' : ''}>${App.esc(b.name)}</option>`).join('')
       + (archived.length ? `<optgroup label="Archived">${archived.map(b => `<option value="${b.id}" ${b.id === cur ? 'selected' : ''}>${App.esc(b.name)}</option>`).join('')}</optgroup>` : '')
       + `<option value="__new">+ New business…</option>`;
