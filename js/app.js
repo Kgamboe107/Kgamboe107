@@ -89,7 +89,9 @@
       if (files.length) { await App.ingest.ingestMany(files); go(current); }
     });
 
-    go(location.hash.slice(1) || 'dashboard').then(() => { App.fx.hideSplash(); App.fx.maybeOnboard(); });
+    go(location.hash.slice(1) || 'dashboard')
+      .catch(e => console.error('Initial render failed', e))
+      .finally(() => { App.fx.hideSplash(); window.desktop?.ready?.(); App.fx.maybeOnboard(); });
   }
 
   /* Global search across files, notes, and personnel rows */
@@ -114,5 +116,16 @@
     }
   };
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  /* Never fail silently: surface startup errors on screen and in the desktop log */
+  function showFatal(msg) {
+    window.desktop?.reportError?.(msg);
+    document.getElementById('splash')?.remove();
+    const v = document.getElementById('view');
+    if (v && !v.children.length) v.innerHTML = `<div class="card"><h2>Something went wrong while starting</h2><p class="muted">${App.esc(msg)}</p>
+      <div class="row"><button class="btn primary" onclick="location.reload()">Reload</button>${window.desktop ? '<button class="btn" onclick="window.desktop.openLogs()">Open logs</button>' : ''}</div></div>`;
+  }
+  window.addEventListener('error', e => window.desktop?.reportError?.(`${e.message} @ ${e.filename}:${e.lineno}`));
+  window.addEventListener('unhandledrejection', e => window.desktop?.reportError?.('Unhandled: ' + (e.reason?.stack || e.reason)));
+  const safeInit = () => { try { init(); } catch (e) { console.error(e); showFatal(e.message); } };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', safeInit); else safeInit();
 })(window.App);

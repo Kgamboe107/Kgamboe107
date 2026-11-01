@@ -55,6 +55,8 @@ The app isn't code-signed yet, so the first launch shows a warning:
 - **Windows:** "Windows protected your PC" → **More info → Run anyway**.
 - **Mac:** drag the app to Applications, then **right-click → Open → Open**. If macOS says it "is damaged", run `xattr -cr "/Applications/Ops Command Desk.app"` in Terminal and open it again.
 
+**Troubleshooting:** if the window ever opens blank, close it and open it again. The app detects this and restarts in safe graphics mode. A diagnostic log is saved at `%APPDATA%\Ops Command Desk\logs\main.log` on Windows (`~/Library/Application Support/Ops Command Desk/logs` on Mac), or open it from **Settings → Open diagnostic logs**. You can also start in safe mode manually with the `--safe-mode` flag.
+
 On first launch, a short setup wizard names your first business and offers to load sample data.
 
 ### Building a new installer

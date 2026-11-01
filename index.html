@@ -10,6 +10,7 @@
   <script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("ocd.theme"))||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
+  <script>setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.add("done");setTimeout(function(){s.remove()},500)}},6000)</script>
   <div id="splash" class="splash"><div class="splash-inner"><div class="splash-mark">OC</div><div>Ops Command Desk</div><div class="splash-bar"></div></div></div>
   <div class="app">
     <aside class="sidebar" id="sidebar">

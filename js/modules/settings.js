@@ -19,6 +19,10 @@
           <div class="card stack"><h2>Appearance</h2>
             <div class="row"><button class="btn" id="sTheme">Toggle light / dark</button></div>
           </div>
+          ${window.desktop ? `<div class="card stack"><h2>Troubleshooting</h2>
+            <p class="muted small">If the window ever opens blank, the app switches itself to safe graphics mode on the next launch. Developer tools: <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>I</kbd>. Reload: <kbd>F5</kbd>.</p>
+            <div class="row"><button class="btn" onclick="window.desktop.openLogs()">Open diagnostic logs</button></div>
+          </div>` : ''}
           <div class="card stack"><h2>Reset</h2>
             <p class="muted small">Permanently deletes all files, data tables, notes, and settings on this computer.</p>
             <div class="row"><button class="btn danger" id="sClear">Delete all data</button></div>
