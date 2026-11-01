@@ -23,15 +23,22 @@
       const notes = await App.store.all('notes');
       if (!files.length) {
         view.innerHTML = `
-          <div class="card biz-card" style="--bc:${biz.color}"><h2>${esc(biz.name)} — let's get started</h2>
+          <div class="card hero"><div class="hero-grid"></div><div class="badge" style="background:rgba(255,255,255,.14);color:#fff;margin-bottom:12px">${esc(App.biz.TEMPLATES[biz.type]?.label || 'Custom')}</div><h2>${esc(biz.name)}: let's get started</h2>
             <p class="muted">Upload spreadsheets, reports, and personnel files — or connect Google Drive and Outlook — and every module (financials, operations, trading risk, marketing, research, personnel) will analyze them automatically.</p>
             <div class="row"><a class="btn primary" data-go="library">Upload files</a><a class="btn" data-go="integrations">Connect apps</a><button class="btn" id="dSample">Load sample data</button><button class="btn ghost" data-go="businesses">Manage businesses</button></div>
           </div>
-          <div class="grid c3">${Object.entries(App.sources).filter(([k]) => k !== 'manual').map(([, s]) => `<div class="card row"><span class="badge" style="background:${s.color};color:#fff;border:none">${esc(s.label)}</span><span class="muted small">ready</span></div>`).join('')}</div>`;
+          <div class="grid c3">${[
+            ['upload', 'Drop in your exports', 'CSV/Excel from Harri, CrunchTime, Webull, Dub, P&Ls, campaign reports. Columns are matched automatically.', 'library'],
+            ['integrations', 'Connect Drive & Outlook', 'Pull spreadsheets from Google Drive or attachments straight from your inbox.', 'integrations'],
+            ['businesses', 'Add more ventures', 'Each business gets its own workspace. The Master dashboard rolls them up.', 'businesses']
+          ].map(([ic, t, d, go], i) => `<a class="card note-item" data-go="${go}" style="text-decoration:none;color:inherit;padding:18px">
+              <div class="row" style="gap:12px"><span class="oc-i" style="width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)">${App.fx.icon(ic)}</span>
+              <span class="badge">Step ${i + 1}</span></div><h3 style="margin-top:12px">${t}</h3><div class="muted small" style="margin-top:4px">${d}</div></a>`).join('')}</div>
+          <div class="row muted small"><kbd>${/Mac/.test(navigator.platform) ? '⌘' : 'Ctrl'}</kbd><kbd>K</kbd> opens the command palette from anywhere</div>`;
         view.querySelector('#dSample').onclick = async () => { await App.samples.load(); App.go('dashboard'); };
         return;
       }
-      view.innerHTML = `<div class="muted small">Refreshing analyses…</div>`;
+      view.innerHTML = App.ui.skeleton();
       const k = await refreshKpis();
       const f = k.finance || {}, o = k.operations || {}, t = k.trading || {}, tp = k['trading-perf'] || {}, mk = k.marketing || {}, p = k.personnel || {};
       const openResearch = notes.filter(n => n.module === 'research' && (n.status || 'Open question') !== 'Archived' && n.status !== 'Findings ready').length;

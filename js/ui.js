@@ -65,7 +65,7 @@
   }
 
   function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-  const PALETTE = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#475569', '#ea580c'];
+  const PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#ef4444', '#84cc16', '#64748b', '#f97316'];
 
   /**
    * chart(canvasId, config) — destroys any prior chart on that canvas
@@ -84,18 +84,21 @@
         d.borderColor = d.borderColor || c;
         d.backgroundColor = d.backgroundColor || (type === 'line' ? c + '22' : c);
       }
-      if (type === 'line') { d.tension = d.tension ?? 0.25; d.pointRadius = d.pointRadius ?? 2; d.borderWidth = 2; }
+      if (type === 'line') { d.tension = d.tension ?? 0.35; d.pointRadius = d.pointRadius ?? 0; d.pointHoverRadius = 5; d.borderWidth = 2.25; }
+      if (type === 'bar') { d.borderRadius = d.borderRadius ?? 6; d.borderSkipped = false; d.maxBarThickness = 42; }
     });
     const isRadial = type === 'doughnut' || type === 'pie';
     charts[el.id] = new Chart(el, {
       type, data,
       options: Object.assign({
-        responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
-        plugins: { legend: { display: isRadial || data.datasets.length > 1, labels: { color: text, boxWidth: 12 } },
-          tooltip: { mode: isRadial ? 'nearest' : 'index', intersect: isRadial } },
+        responsive: true, maintainAspectRatio: false, animation: { duration: 800, easing: 'easeOutQuart' },
+        interaction: { mode: 'index', intersect: false },
+        cutout: isRadial ? '68%' : undefined,
+        plugins: { legend: { display: isRadial || data.datasets.length > 1, labels: { color: text, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'rectRounded', padding: 14 } },
+          tooltip: { mode: isRadial ? 'nearest' : 'index', intersect: isRadial, backgroundColor: 'rgba(15,19,29,.92)', padding: 10, cornerRadius: 8, titleFont: { weight: '600' }, boxPadding: 4 } },
         scales: isRadial ? {} : {
           x: { ticks: { color: text, maxRotation: 0, autoSkip: true }, grid: { color: grid, display: false } },
-          y: { ticks: { color: text }, grid: { color: grid } }
+          y: { ticks: { color: text }, grid: { color: grid }, border: { display: false } }
         }
       }, options)
     });

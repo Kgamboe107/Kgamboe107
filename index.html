@@ -4,9 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ops Command Desk</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="preload" href="vendor/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
+  <script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("ocd.theme"))||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
 </head>
 <body>
+  <div id="splash" class="splash"><div class="splash-inner"><div class="splash-mark">OC</div><div>Ops Command Desk</div><div class="splash-bar"></div></div></div>
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
@@ -21,35 +25,35 @@
         <select id="bizSelect"></select>
       </div>
       <nav id="nav">
-        <a data-route="dashboard" class="active"><span class="ico">◧</span><span id="dashLabel">Dashboard</span></a>
-        <a data-route="library"><span class="ico">⇪</span>Data Library</a>
+        <a data-route="dashboard" class="active"><span class="ico" data-icon="dashboard"></span><span id="dashLabel">Dashboard</span></a>
+        <a data-route="library"><span class="ico" data-icon="library"></span>Data Library</a>
         <div class="nav-label">Analysis</div>
-        <a data-route="finance"><span class="ico">$</span>Financials</a>
-        <a data-route="operations"><span class="ico">⚙</span>Operations</a>
-        <a data-route="trading"><span class="ico">↗</span>Trading Risk</a>
-        <a data-route="marketing"><span class="ico">✦</span>Marketing</a>
-        <a data-route="research"><span class="ico">✎</span>Research</a>
-        <a data-route="personnel"><span class="ico">☺</span>Personnel</a>
+        <a data-route="finance"><span class="ico" data-icon="finance"></span>Financials</a>
+        <a data-route="operations"><span class="ico" data-icon="operations"></span>Operations</a>
+        <a data-route="trading"><span class="ico" data-icon="trading"></span>Trading Risk</a>
+        <a data-route="marketing"><span class="ico" data-icon="marketing"></span>Marketing</a>
+        <a data-route="research"><span class="ico" data-icon="research"></span>Research</a>
+        <a data-route="personnel"><span class="ico" data-icon="personnel"></span>Personnel</a>
         <div class="nav-label">Tools</div>
-        <a data-route="businesses"><span class="ico">▦</span>Businesses</a>
-        <a data-route="explorer"><span class="ico">⊞</span>Data Explorer</a>
-        <a data-route="integrations"><span class="ico">⇄</span>Integrations</a>
-        <a data-route="settings"><span class="ico">⚑</span>Settings</a>
+        <a data-route="businesses"><span class="ico" data-icon="businesses"></span>Businesses</a>
+        <a data-route="explorer"><span class="ico" data-icon="explorer"></span>Data Explorer</a>
+        <a data-route="integrations"><span class="ico" data-icon="integrations"></span>Integrations</a>
+        <a data-route="settings"><span class="ico" data-icon="settings"></span>Settings</a>
       </nav>
       <div class="sidebar-foot">
         <button class="btn ghost small" id="themeToggle">Toggle theme</button>
-        <div class="muted tiny">Data is stored locally on this computer.</div>
+        <div class="muted tiny lock"><span data-icon="lock"></span>Data stays on this computer</div>
       </div>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+        <button class="btn ghost small menu-btn icon-btn" id="menuBtn" aria-label="Menu"><span data-icon="menu"></span></button>
         <h1 id="pageTitle">Dashboard</h1>
         <div class="topbar-actions">
-          <input type="search" id="globalSearch" placeholder="Search files, notes, people…">
-          <label class="btn primary">
-            Upload
+          <button class="cmdk-trigger" id="cmdkBtn" aria-label="Search and commands"><span data-icon="search"></span><span>Search or jump to…</span><kbd id="cmdkKey">Ctrl K</kbd></button>
+          <label class="btn primary" title="Upload files (Ctrl+U)">
+            <span data-icon="upload"></span><span class="upload-label">Upload</span>
             <input type="file" id="quickUpload" multiple hidden>
           </label>
         </div>
@@ -58,8 +62,7 @@
     </main>
   </div>
 
-  <div id="dropOverlay" class="drop-overlay"><div>Drop files to upload</div></div>
-  <div id="toast" class="toast"></div>
+  <div id="dropOverlay" class="drop-overlay"><div>Drop files to upload<div class="small" id="dropTarget" style="font-weight:500;opacity:.8;margin-top:6px"></div></div></div>
   <div id="modal" class="modal" hidden><div class="modal-card" id="modalCard"></div></div>
 
   <script src="vendor/xlsx.full.min.js"></script>
@@ -70,6 +73,7 @@
   <script src="js/store.js"></script>
   <script src="js/ingest.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/fx.js"></script>
   <script src="js/samples.js"></script>
   <script src="js/modules/dashboard.js"></script>
   <script src="js/modules/library.js"></script>

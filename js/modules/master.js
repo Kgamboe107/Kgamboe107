@@ -6,7 +6,7 @@
   App.modules.master = {
     async render(view) {
       const bizs = App.biz.active();
-      view.innerHTML = `<div class="muted small">Refreshing ${bizs.length} business${bizs.length > 1 ? 'es' : ''}…</div>`;
+      view.innerHTML = App.ui.skeleton(8);
       const allFiles = await App.store.all('files', { raw: true });
 
       /* Compute each business's KPIs in its own scope */

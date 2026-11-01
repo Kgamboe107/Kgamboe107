@@ -17,7 +17,7 @@
             <label class="field" style="flex:1">Tags (comma separated)<input id="upTags" placeholder="e.g. Q3, Store 12, board deck"></label>
           </div>
           <label class="dropzone" id="dz">
-            <div style="font-size:28px">⇪</div>
+            <div class="dz-icon">${App.fx.icon('upload')}</div>
             <div><b>Drop files here</b> or click to browse</div>
             <div class="muted small">Exports from Harri, CrunchTime, Webull, Dub, Outlook attachments, Anara notes, and Google Drive are recognized automatically</div>
             <input type="file" id="dzInput" multiple hidden>

@@ -15,16 +15,19 @@
     $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
     const master = App.biz.isMaster();
     const bizName = master ? 'All businesses' : App.biz.get(App.biz.current()).name;
-    $('#pageTitle').textContent = route === 'dashboard' ? (master ? 'Master Dashboard' : bizName) : `${TITLES[route] || route} · ${bizName}`;
+    $('#pageTitle').innerHTML = route === 'dashboard' ? App.esc(master ? 'Master Dashboard' : bizName)
+      : `${App.esc(TITLES[route] || route)} <span class="crumb">· ${App.esc(bizName)}</span>`;
     $('#sidebar').classList.remove('open');
     if (location.hash.slice(1) !== route) history.replaceState(null, '', '#' + route);
     const view = $('#view');
+    view.classList.remove('page-enter'); void view.offsetWidth; view.classList.add('page-enter');
     view.innerHTML = '';
     try { await App.modules[route].render(view, params); }
     catch (e) { console.error(e); view.innerHTML = App.ui.empty('Something went wrong rendering this page: ' + App.esc(e.message)); }
-    view.scrollTop = 0;
+    window.scrollTo({ top: 0 });
   }
   App.go = go;
+  App.currentRoute = () => current;
 
   /* Sidebar business switcher + per-business nav */
   function syncBiz() {
@@ -47,12 +50,13 @@
   function init() {
     const theme = App.settings.get('theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.dataset.theme = theme;
-    $('#themeToggle').onclick = () => {
-      const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = t;
-      App.settings.set('theme', t);
-      go(current);
-    };
+    if (window.desktop) { document.documentElement.classList.add('desktop', window.desktop.platform); window.desktop.setTheme?.(theme); }
+    App.fx.hydrateIcons();
+    App.fx.updateThemeButton();
+    App.fx.watch($('#view'));
+    $('#themeToggle').onclick = e => App.fx.setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', { x: e.clientX, y: e.clientY });
+    $('#cmdkKey').textContent = /Mac/.test(navigator.platform) ? '⌘ K' : 'Ctrl K';
+    $('#cmdkBtn').onclick = () => App.fx.openPalette();
 
     $('#nav').addEventListener('click', e => { const a = e.target.closest('a[data-route]'); if (a) go(a.dataset.route); });
     document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); go(a.dataset.go); } });
@@ -72,7 +76,11 @@
 
     let dragDepth = 0;
     const overlay = $('#dropOverlay');
-    window.addEventListener('dragenter', e => { if (e.dataTransfer?.types?.includes('Files')) { dragDepth++; overlay.classList.add('show'); } });
+    window.addEventListener('dragenter', e => {
+      if (!e.dataTransfer?.types?.includes('Files')) return;
+      dragDepth++; overlay.classList.add('show');
+      $('#dropTarget').textContent = 'into ' + App.biz.get(App.biz.target()).name;
+    });
     window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) overlay.classList.remove('show'); });
     window.addEventListener('dragover', e => e.preventDefault());
     window.addEventListener('drop', async e => {
@@ -81,14 +89,7 @@
       if (files.length) { await App.ingest.ingestMany(files); go(current); }
     });
 
-    let st;
-    $('#globalSearch').addEventListener('input', e => {
-      clearTimeout(st);
-      const q = e.target.value.trim();
-      st = setTimeout(() => { if (q.length >= 2) go('search', { q }); else if (current === 'search') go('dashboard'); }, 250);
-    });
-
-    go(location.hash.slice(1) || 'dashboard');
+    go(location.hash.slice(1) || 'dashboard').then(() => { App.fx.hideSplash(); App.fx.maybeOnboard(); });
   }
 
   /* Global search across files, notes, and personnel rows */
@@ -106,6 +107,7 @@
         if (rowHits.length > 50) break;
       }
       view.innerHTML = `
+        <div class="card row spread"><h2>Results for “${App.esc(q)}”</h2><button class="btn small" onclick="App.fx.openPalette()">New search</button></div>
         <div class="card"><h2>Files (${files.length})</h2><div class="stack" style="margin-top:10px">${files.map(f => `<div class="row spread"><span>${App.esc(f.name)}</span><span class="badge">${App.esc(App.categories[f.category]?.label)}</span></div>`).join('') || '<span class="muted">No matches</span>'}</div></div>
         <div class="card"><h2>Notes (${notes.length})</h2><div class="stack" style="margin-top:10px">${notes.map(n => `<div><b>${App.esc(n.title)}</b> <span class="muted small">${App.esc(n.body.slice(0, 120))}</span></div>`).join('') || '<span class="muted">No matches</span>'}</div></div>
         <div class="card"><h2>Rows in data tables (${rowHits.length}${rowHits.length > 50 ? '+' : ''})</h2><div class="stack small" style="margin-top:10px">${rowHits.slice(0, 50).map(h => `<div><span class="badge">${App.esc(h.d.name)}</span> ${App.esc(Object.values(h.r).slice(0, 6).join(' · '))}</div>`).join('') || '<span class="muted">No matches</span>'}</div></div>`;

@@ -40,25 +40,45 @@ Column names are matched automatically. If an export uses different names, open 
 
 Harri, CrunchTime, Webull, and Dub don't offer an open API that an individual can sign in to from a desktop app. Harri's and CrunchTime's APIs are partner/enterprise-only. Webull's OpenAPI requires signing requests on a server with an app secret. So these connect through their exports, which the app recognizes automatically by file name and column headers.
 
-## Run it
+## Install
 
-You need [Node.js](https://nodejs.org) 18 or newer.
+**Download the installer** from the [Releases page](https://github.com/Kgamboe107/Kgamboe107/releases/latest):
+
+| Your computer | Download |
+|---|---|
+| Windows 10/11 | `Ops-Command-Desk-Setup-x.y.z.exe` |
+| Mac with Apple Silicon (M1–M4) | `…-mac-arm64.dmg` |
+| Mac with Intel | `…-mac-x64.dmg` |
+| Linux | `.AppImage` (any distro) or `.deb` (Ubuntu/Debian) |
+
+The app isn't code-signed yet, so the first launch shows a warning:
+- **Windows:** "Windows protected your PC" → **More info → Run anyway**.
+- **Mac:** drag the app to Applications, then **right-click → Open → Open**. If macOS says it "is damaged", run `xattr -cr "/Applications/Ops Command Desk.app"` in Terminal and open it again.
+
+On first launch, a short setup wizard names your first business and offers to load sample data.
+
+### Building a new installer
+
+Installers are built by GitHub Actions (`.github/workflows/release.yml`):
+- **Manually:** GitHub → **Actions → Build installers → Run workflow**.
+- **On release:** bump `version` in `package.json`, commit, and push a matching tag (`git tag v1.2.0 && git push --tags`).
+
+Either way, a Release appears with Windows, Mac, and Linux installers attached.
+
+### Run from source
 
 ```bash
-npm install        # one time
-npm start          # opens the desktop app
+npm install
+npm start          # desktop app
+npm run web        # browser at http://localhost:5178
+npm run dist       # build an installer for this computer into dist/
 ```
 
-Other options:
+## Using it
 
-```bash
-npm run web        # run in your browser at http://localhost:5178 (no install needed)
-npm run dist       # build an installer (.dmg / .exe / AppImage) into dist/
-```
-
-You can also just double-click `index.html`. Everything works that way except Google Drive and Outlook sign-in, which need `npm start` or `npm run web`.
-
-**First time:** go to **Settings → Load sample data** to see every module filled in. The same sample files are also in `samples/` if you want to try uploading them by hand.
+- **⌘K / Ctrl+K:** the command palette. Jump to any page, switch businesses, upload, create a business, toggle the theme, or search everything.
+- **⌘U / Ctrl+U** upload · **⌘B / Ctrl+B** new business · **⌘J / Ctrl+J** light/dark · **G D** dashboard · **G M** master dashboard · **?** all shortcuts.
+- Drag files anywhere onto the window to upload them into the business you're viewing.
 
 ## Privacy
 
@@ -76,6 +96,10 @@ js/ingest.js          file parsing, source + category detection
 js/ui.js              tables, charts, KPI cards, column mapper
 js/samples.js         sample data generator
 js/modules/*.js       one file per page
-main.js / server.js   Electron desktop shell + local server
+js/fx.js              icons, animations, toasts, command palette, onboarding
+main.js / preload.js  Electron desktop shell
+server.js             local server (needed for Google/Microsoft sign-in)
+build/icon.png        app icon
+.github/workflows/    installer builds
 vendor/               SheetJS, Chart.js, MSAL (bundled for offline use)
 ```
