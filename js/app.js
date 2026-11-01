@@ -4,7 +4,7 @@
   const TITLES = {
     dashboard: 'Dashboard', library: 'Data Library', finance: 'Financial Analysis', operations: 'Business Operations',
     trading: 'Trading Risk Management', marketing: 'Marketing Strategy', research: 'Research Management',
-    personnel: 'Personnel', businesses: 'Businesses', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
+    personnel: 'Personnel', businesses: 'Businesses', ai: 'AI Assistant', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';
 

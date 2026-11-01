@@ -37,7 +37,7 @@
       };
       view.querySelector('#sExport').onclick = async () => {
         const data = await App.store.exportAll();
-        data.settings = Object.fromEntries(Object.keys(localStorage).filter(k => k.startsWith('ocd.')).map(k => [k, localStorage.getItem(k)]));
+        data.settings = Object.fromEntries(Object.keys(localStorage).filter(k => k.startsWith('ocd.') && !k.startsWith('ocd.secret.')).map(k => [k, localStorage.getItem(k)]));
         App.download(`ops-desk-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data), 'application/json');
       };
       view.querySelector('#sImport').onchange = async e => {

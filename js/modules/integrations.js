@@ -138,6 +138,7 @@
   App.modules.integrations = {
     async render(view) {
       const g = App.settings.get('int.google', {}), o = App.settings.get('int.outlook', {});
+      const aiConn = await App.ai.connected();
       const files = await App.store.files();
       const count = s => files.filter(f => f.source === s).length;
       const logo = s => `<div class="logo" style="background:${App.sources[s].color}">${esc(App.sources[s].label.slice(0, 2))}</div>`;
@@ -169,6 +170,16 @@
               <li>API permissions → Microsoft Graph → delegated <b>Mail.Read</b>, <b>User.Read</b>. Paste the client ID above.</li></ol></details>
           </div>
         </div>
+        <h2 style="margin-top:8px">AI providers</h2>
+        <div class="grid c2">${Object.entries(App.ai.PROVIDERS).map(([k, p]) => `
+          <div class="card int-card stack">
+            <div class="row spread"><div class="row"><div class="logo" style="background:${p.color}">${p.mono}</div><div><h2>${esc(p.label)}</h2><div class="muted small">${esc(p.short)} · <span data-aistat="${k}">${aiConn[k] ? '<span class="badge good">connected</span>' : '<span class="badge">not connected</span>'}</span></div></div></div>
+              <a class="btn small" href="${p.keyUrl}" target="_blank" rel="noopener">Get an API key</a></div>
+            <div class="row"><input type="password" data-aikey="${k}" placeholder="${aiConn[k] ? '•••••••• saved. Paste to replace' : p.keyHint}" style="flex:1">
+              <button class="btn primary small" data-aisave="${k}">Save</button><button class="btn small" data-aitest="${k}" ${aiConn[k] ? '' : 'disabled'}>Test</button>
+              ${aiConn[k] ? `<button class="btn small danger" data-airm="${k}">Remove</button>` : ''}</div>
+            <div class="muted tiny">${k === 'perplexity' ? 'Uses the Perplexity Agent API (web search with citations). Billed per request by Perplexity.' : 'Uses the xAI API. Models are loaded from your account. Billed per token by xAI.'} ${window.desktop ? 'Keys are encrypted by your operating system.' : 'Keys stay in this browser and are never included in backups.'}</div>
+          </div>`).join('')}</div>
         <h2 style="margin-top:8px">Export-based connectors</h2>
         <div class="grid c2">${Object.entries(GUIDES).map(([s, gd]) => `
           <div class="card int-card stack">
@@ -181,6 +192,21 @@
             </div>
           </div>`).join('')}</div>`;
 
+      view.querySelectorAll('[data-aisave]').forEach(b => b.onclick = async () => {
+        const k = b.dataset.aisave, v = view.querySelector(`[data-aikey="${k}"]`).value.trim();
+        if (!v) return App.ui.toast('Paste a key first');
+        await App.ai.setKey(k, v); App.ui.toast(`${App.ai.PROVIDERS[k].label} key saved`); App.go('integrations');
+      });
+      view.querySelectorAll('[data-airm]').forEach(b => b.onclick = async () => { await App.ai.setKey(b.dataset.airm, ''); App.ui.toast('Key removed'); App.go('integrations'); });
+      view.querySelectorAll('[data-aitest]').forEach(b => b.onclick = async () => {
+        const k = b.dataset.aitest, st = view.querySelector(`[data-aistat="${k}"]`);
+        b.disabled = true; st.innerHTML = '<span class="badge">testing…</span>';
+        try {
+          if (k === 'xai') { const m = await App.ai.grokModels(); st.innerHTML = `<span class="badge good">works · ${m.length} models</span>`; }
+          else { await App.ai.ask({ provider: 'perplexity', messages: [{ role: 'user', content: 'Reply with the single word OK.' }], depth: 'low' }); st.innerHTML = '<span class="badge good">works</span>'; }
+        } catch (e) { st.innerHTML = '<span class="badge bad">failed</span>'; App.ui.toast(e.message, 7000); }
+        b.disabled = false;
+      });
       view.querySelector('#gSave').onclick = () => { App.settings.set('int.google', { clientId: view.querySelector('#gId').value.trim(), apiKey: view.querySelector('#gKey').value.trim() }); App.ui.toast('Google settings saved'); };
       view.querySelector('#oSave').onclick = () => { App.settings.set('int.outlook', { clientId: view.querySelector('#oId').value.trim(), tenant: view.querySelector('#oTen').value.trim() || 'common' }); msal = null; App.ui.toast('Outlook settings saved'); };
       view.querySelector('#gPick').onclick = async () => {

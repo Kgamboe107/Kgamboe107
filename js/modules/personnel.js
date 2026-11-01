@@ -64,7 +64,7 @@
     if (turnover > 0.75) alerts.push(['warn', `Annualized turnover ≈ ${fmt.pct(turnover)}`]);
     if (early) alerts.push(['warn', `${early} employee${early > 1 ? 's' : ''} left within 90 days of hire — review onboarding`]);
     if (m.email) { const missing = active.filter(p => !p.email).length; if (missing) alerts.push(['warn', `${missing} active employee records missing email`]); }
-    App.ui.publish('personnel', { headcount: active.length, turnover, avgTenure: App.mean(tenures), alerts: alerts.length });
+    App.ui.publish('personnel', { headcount: active.length, turnover, avgTenure: App.mean(tenures), alerts: alerts.length, flags: alerts.slice(0, 12).map(a => a[1]) });
 
     el.innerHTML = `
       <div class="grid k4">

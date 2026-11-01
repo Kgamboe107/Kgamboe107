@@ -87,7 +87,7 @@
     if (lim.account && gross > lim.account * 1.0) alerts.push(['warn', `Gross exposure ${fmt.money(gross)} exceeds account equity ${fmt.money(lim.account)} — leverage ${(gross / lim.account).toFixed(2)}x`]);
 
     const shocks = [-0.05, -0.10, -0.20, -0.30];
-    App.ui.publish('trading', { gross, net, upl, positions: rows.length, topWeight: sorted[0]?.w, alerts: alerts.length });
+    App.ui.publish('trading', { gross, net, upl, positions: rows.length, topWeight: sorted[0]?.w, alerts: alerts.length, flags: alerts.slice(0, 12).map(a => a[1]) });
 
     el.innerHTML = `
       <div class="grid k4">
@@ -208,7 +208,7 @@
     if (pf < 1) alerts.push(['warn', `Profit factor ${pf.toFixed(2)} — losing more on losers than gaining on winners`]);
     if (avgL > avgW * 1.5 && winRate < 0.6) alerts.push(['warn', `Average loss (${fmt.money(avgL)}) is ${(avgL / avgW).toFixed(1)}× average win — check stop discipline`]);
 
-    App.ui.publish('trading-perf', { total, winRate, pf, maxDD, hVaR, alerts: alerts.length });
+    App.ui.publish('trading-perf', { total, winRate, pf, maxDD, hVaR, alerts: alerts.length, flags: alerts.slice(0, 12).map(a => a[1]) });
 
     el.innerHTML = `
       <div class="grid k4">

@@ -63,7 +63,7 @@
       if (m.conv && c.spend > 0 && c.conv === 0) alerts.push(['bad', `${c.key}: ${fmt.money(c.spend)} spent with zero conversions`]);
     });
     const best = m.rev ? [...camps].filter(c => c.spend > 0).sort((a, b) => b.roas - a.roas)[0] : null;
-    App.ui.publish('marketing', { spend: tot.spend, rev: tot.rev, roas: tot.roas, cpa: tot.cpa, alerts: alerts.length });
+    App.ui.publish('marketing', { spend: tot.spend, rev: tot.rev, roas: tot.roas, cpa: tot.cpa, alerts: alerts.length, flags: alerts.slice(0, 12).map(a => a[1]) });
 
     el.innerHTML = `
       <div class="card no-print"><div class="row">

@@ -1,6 +1,7 @@
 /* Minimal static file server (no dependencies). Used by the desktop app and `npm run web`.
    Serving over http://localhost is required for Google Drive and Outlook sign-in. */
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,7 +14,48 @@ const TYPES = {
 const ALLOWED = ['index.html', 'css', 'js', 'vendor', 'samples', 'assets', 'build'];
 const MARKER = 'X-Ops-Command-Desk';
 
+/* ---------- AI relay ----------
+   Perplexity and xAI don't allow direct browser calls (CORS), so the app sends requests here and
+   this relays them. Only these exact endpoints are reachable, only from this machine, and only
+   from the app's own pages (custom header + loopback Host/Origin checks block other websites). */
+const AI_ROUTES = {
+  perplexity: { host: 'api.perplexity.ai', paths: { 'POST /v1/agent': true } },
+  xai: { host: 'api.x.ai', paths: { 'POST /v1/chat/completions': true, 'GET /v1/models': true } }
+};
+const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
+
+function aiRelay(req, res) {
+  const deny = (code, msg) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: { message: msg } })); };
+  if (req.method !== 'POST') return deny(405, 'Method not allowed');
+  if (req.headers['x-ocd-client'] !== '1' || !LOOPBACK.test(req.headers.host || '')) return deny(403, 'Forbidden');
+  const origin = req.headers.origin;
+  if (origin && !LOOPBACK.test(origin.replace(/^https?:\/\//, ''))) return deny(403, 'Forbidden origin');
+  let raw = '';
+  req.on('data', c => { raw += c; if (raw.length > 4e6) { deny(413, 'Request too large'); req.destroy(); } });
+  req.on('end', () => {
+    let msg;
+    try { msg = JSON.parse(raw); } catch { return deny(400, 'Bad JSON'); }
+    const route = AI_ROUTES[msg.provider];
+    const method = msg.method === 'GET' ? 'GET' : 'POST';
+    if (!route || !route.paths[`${method} ${msg.path}`]) return deny(400, 'Endpoint not allowed');
+    if (!msg.key || typeof msg.key !== 'string') return deny(401, 'Missing API key');
+    const body = method === 'POST' ? JSON.stringify(msg.body || {}) : null;
+    const up = https.request({
+      host: route.host, path: msg.path, method, timeout: 180000,
+      headers: { Authorization: 'Bearer ' + msg.key.trim(), Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } : {}) }
+    }, upRes => {
+      res.writeHead(upRes.statusCode || 502, { 'Content-Type': upRes.headers['content-type'] || 'application/json', 'Cache-Control': 'no-store' });
+      upRes.pipe(res);
+    });
+    up.on('timeout', () => up.destroy(new Error('The AI provider took too long to respond')));
+    up.on('error', e => { if (!res.headersSent) deny(502, e.message); else res.end(); });
+    if (body) up.write(body);
+    up.end();
+  });
+}
+
 function handler(req, res) {
+  if (req.url.split('?')[0] === '/api/ai') return aiRelay(req, res);
   let rel;
   try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '') || 'index.html'; }
   catch { res.writeHead(400); return res.end('Bad request'); }

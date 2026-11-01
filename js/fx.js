@@ -139,6 +139,16 @@
     b.innerHTML = `${icon(dark ? 'sun' : 'moon')}<span>${dark ? 'Light mode' : 'Dark mode'}</span>`;
   }
 
+  /* ---------- AI shortcuts ---------- */
+  async function aiBriefing() {
+    const c = await App.ai.connected();
+    const provider = c.xai ? 'xai' : 'perplexity';
+    App.go('ai', { newThread: true, send: c.xai || c.perplexity, provider,
+      prompt: App.biz.isMaster()
+        ? 'Give me an executive briefing across all my businesses: the top 5 things that need my attention, ranked by impact, with the numbers behind each and the next step.'
+        : 'Give me a briefing on this business: the top 5 things that need my attention, ranked by impact, with the numbers behind each and the next step.' });
+  }
+
   /* ---------- Command palette ---------- */
   const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
     ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['businesses', 'Businesses'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
@@ -148,6 +158,7 @@
     items.push({ g: 'Businesses', icon: 'star', label: 'Master dashboard — all businesses', run: () => { App.biz.setCurrent('all'); App.go('dashboard'); } });
     App.biz.active().forEach(b => items.push({ g: 'Businesses', icon: 'businesses', label: `Switch to ${b.name}`, color: b.color, run: () => { App.biz.setCurrent(b.id); App.go('dashboard'); } }));
     items.push(
+      { g: 'Actions', icon: 'sparkles', label: 'AI briefing: what needs my attention?', run: () => aiBriefing() },
       { g: 'Actions', icon: 'upload', label: 'Upload files', hint: '', run: () => $('#quickUpload').click() },
       { g: 'Actions', icon: 'plus', label: 'New business or venture', run: () => App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }) },
       { g: 'Actions', icon: 'sparkles', label: 'Load sample data', run: async () => { await App.samples.load(); App.go('dashboard'); } },
@@ -160,6 +171,8 @@
     const ql = q.toLowerCase();
     const score = s => { s = s.toLowerCase(); if (s.startsWith(ql)) return 3; if (s.split(/\s+/).some(w => w.startsWith(ql))) return 2; return s.includes(ql) ? 1 : 0; };
     const out = items.map(it => ({ it, s: score(it.label) })).filter(x => x.s > 0).sort((a, b) => b.s - a.s).map(x => x.it);
+    out.unshift({ g: 'Ask AI', icon: 'sparkles', label: `Ask Grok: “${q}”`, run: () => App.go('ai', { prompt: q, send: true, provider: 'xai', newThread: true }) },
+      { g: 'Ask AI', icon: 'sparkles', label: `Research with Perplexity: “${q}”`, run: () => App.go('ai', { prompt: q, send: true, provider: 'perplexity', newThread: true }) });
     out.push({ g: 'Search', icon: 'search', label: `Search everything for “${q}”`, run: () => App.go('search', { q }) });
     return out;
   }
@@ -209,7 +222,7 @@
   function shortcuts() {
     const mod = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl';
     App.ui.modal(`<div class="card-head"><h2>Keyboard shortcuts</h2><button class="btn small" data-close>Close</button></div>
-      <div class="stack">${[[`${mod} K`, 'Command palette'], [`${mod} U`, 'Upload files'], [`${mod} B`, 'New business'], [`${mod} J`, 'Toggle light / dark'],
+      <div class="stack">${[[`${mod} K`, 'Command palette'], [`${mod} U`, 'Upload files'], [`${mod} B`, 'New business'], [`${mod} J`, 'Toggle light / dark'], [`${mod} /`, 'AI Assistant'],
         ['G then D', 'Go to dashboard'], ['G then L', 'Go to Data Library'], ['G then M', 'Master dashboard'], ['?', 'Show this list']]
         .map(([k, l]) => `<div class="row spread"><span>${l}</span><span class="row" style="gap:4px">${k.split(' ').map(x => x === 'then' ? '<span class="muted small">then</span>' : `<kbd>${x}</kbd>`).join('')}</span></div>`).join('')}</div>`);
   }
@@ -219,6 +232,7 @@
     const mod = e.metaKey || e.ctrlKey;
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#cmdk') && !$('#cmdk').hidden ? closePalette() : openPalette(); return; }
+    if (mod && e.key === '/') { e.preventDefault(); App.go('ai'); return; }
     if (mod && e.key.toLowerCase() === 'u') { e.preventDefault(); $('#quickUpload').click(); return; }
     if (mod && e.key.toLowerCase() === 'b') { e.preventDefault(); App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }); return; }
     if (mod && e.key.toLowerCase() === 'j') { e.preventDefault(); setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); return; }
@@ -305,7 +319,7 @@
       <div class="grid c2"><div class="skel" style="height:300px"></div><div class="skel" style="height:300px"></div></div>`;
   }
 
-  App.fx = { icon, hydrateIcons, toast, countUp, watch, setTheme, updateThemeButton, openPalette, closePalette, shortcuts, onboarding, maybeOnboard, hideSplash, skeleton };
+  App.fx = { aiBriefing, icon, hydrateIcons, toast, countUp, watch, setTheme, updateThemeButton, openPalette, closePalette, shortcuts, onboarding, maybeOnboard, hideSplash, skeleton };
   App.ui.toast = toast;
   App.ui.skeleton = skeleton;
 })(window.App);

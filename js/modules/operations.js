@@ -119,7 +119,7 @@
     if (theo && cogs > theo * 1.02) alerts.push(['warn', `Actual vs theoretical food cost gap: ${fmt.money(cogs - theo)} (${fmt.pct(cogs / theo - 1)})`]);
     rows.filter(r => r.sales && r.laborPct > t.labor * 1.15).slice(0, 6).forEach(r => alerts.push(['warn', `${r.key}: labor ${fmt.pct(r.laborPct)}`]));
 
-    App.ui.publish('operations', { sales, laborPct, foodPct, primePct, splh, alerts: alerts.length });
+    App.ui.publish('operations', { sales, laborPct, foodPct, primePct, splh, alerts: alerts.length, flags: alerts.slice(0, 12).map(a => a[1]) });
     const tone = (v, tgt, lowerBetter = true) => isNaN(v) ? '' : ((lowerBetter ? v <= tgt : v >= tgt) ? 'good' : 'bad');
 
     el.innerHTML = `

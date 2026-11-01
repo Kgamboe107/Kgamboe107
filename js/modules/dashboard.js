@@ -62,7 +62,7 @@
       view.innerHTML = `
         <div class="card biz-card row spread" style="--bc:${biz.color};flex-direction:row">
           <div><h2>${esc(biz.name)}</h2><div class="muted small">${esc(App.biz.TEMPLATES[biz.type]?.label || 'Custom')}${biz.description ? ' · ' + esc(biz.description) : ''}</div></div>
-          <div class="row no-print"><button class="btn small" id="dEdit">Edit business</button><button class="btn small" id="dMaster">Master dashboard</button></div>
+          <div class="row no-print"><button class="btn small primary" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn small" id="dEdit">Edit business</button><button class="btn small" id="dMaster">Master dashboard</button></div>
         </div>
         <div class="grid k4">${tiles.map(([l, v, s, tone, go]) => `<a data-go="${go}" style="text-decoration:none;color:inherit">${App.ui.kpi(l, v, s, tone)}</a>`).join('')}</div>
         <div class="grid c2">

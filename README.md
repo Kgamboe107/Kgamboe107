@@ -26,6 +26,25 @@ Use the **Viewing** switcher at the top of the sidebar to move between businesse
 
 Column names are matched automatically. If an export uses different names, open **Column mapping** on any page and pick the right column. The app remembers your choice.
 
+## AI Assistant (Perplexity + Grok)
+
+Open **AI Assistant** in the sidebar (or press **Ctrl/⌘ + /**).
+
+| | Use it for | Get a key |
+|---|---|---|
+| **Perplexity** | Live web research with clickable sources: competitors, pricing, benchmarks, news on your positions. Choose **Quick** or **Thorough** depth. | [perplexity.ai → API keys](https://www.perplexity.ai/account/api/keys) |
+| **Grok (xAI)** | Reasoning over your own numbers: briefings, "why is labor high at Airport?", what to cut or scale. Models load from your account. | [console.x.ai](https://console.x.ai) |
+
+- **Connecting:** paste a key on the AI page or under **Integrations → AI providers**, then click **Test**. In the desktop app, keys are encrypted by Windows/macOS. In a browser they stay in that browser. Keys are never included in backups.
+- **What the AI sees:** you choose on the right side of the AI page: your KPIs and flagged issues (one business, or all of them in Master view), optionally one data table, and optionally your research notes. Nothing else is sent. Personnel tables show a warning before they're shared.
+- **Shortcuts:**
+  - **AI briefing** buttons on every dashboard.
+  - Type anything in **Ctrl/⌘ K** to get *Ask Grok* or *Research with Perplexity*.
+  - **Ask Grok too / Ask Perplexity too** gets a second opinion on any answer.
+  - **Save to Research** files an answer with its sources as a research note.
+- Usage is billed by each provider to your own account. Perplexity answers show their cost.
+- Perplexity is accessed via its **Agent API** (`/v1/agent`). The older Sonar Chat Completions API was retired on Sep 27, 2026.
+
 ## Integrations
 
 | App | How it connects |
@@ -99,8 +118,9 @@ js/ui.js              tables, charts, KPI cards, column mapper
 js/samples.js         sample data generator
 js/modules/*.js       one file per page
 js/fx.js              icons, animations, toasts, command palette, onboarding
+js/ai.js              Perplexity + Grok clients, business context, answer formatting
 main.js / preload.js  Electron desktop shell
-server.js             local server (needed for Google/Microsoft sign-in)
+server.js             local server (Google/Microsoft sign-in + allowlisted AI relay)
 build/icon.png        app icon
 .github/workflows/    installer builds
 vendor/               SheetJS, Chart.js, MSAL (bundled for offline use)

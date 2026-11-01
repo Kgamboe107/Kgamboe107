@@ -76,7 +76,7 @@
       if (r.prime > 0.65 && (m.cogs && m.labor)) alerts.push(['warn', `${r.period}: prime cost ${fmt.pct(r.prime)} of revenue (target < 65%)`]);
     });
 
-    App.ui.publish('finance', { revenue: rev, net, margin: rev ? net / rev : NaN, periods: rows.length, alerts: alerts.length });
+    App.ui.publish('finance', { revenue: rev, net, margin: rev ? net / rev : NaN, periods: rows.length, alerts: alerts.length, flags: alerts.slice(0, 12).map(a => a[1]) });
 
     el.innerHTML = `
       <div class="grid k4">

@@ -1,5 +1,5 @@
 /* Electron desktop shell — with startup diagnostics and self-healing for blank windows */
-const { app, BrowserWindow, shell, ipcMain, nativeTheme } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, nativeTheme, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { start } = require('./server');
@@ -110,6 +110,24 @@ async function createWindow() {
   }
   win.loadURL(appUrl);
 }
+
+/* ---------- Encrypted secrets (API keys) via OS keychain / DPAPI ---------- */
+const secretsFile = path.join(app.getPath('userData'), 'secrets.json');
+const readSecrets = () => { try { return JSON.parse(fs.readFileSync(secretsFile, 'utf8')); } catch { return {}; } };
+ipcMain.handle('secret-get', (_e, name) => {
+  const v = readSecrets()[name];
+  if (!v) return '';
+  try { return v.enc ? safeStorage.decryptString(Buffer.from(v.data, 'base64')) : v.data; } catch (e) { log('secret decrypt failed', e.message); return ''; }
+});
+ipcMain.handle('secret-set', (_e, name, value) => {
+  const all = readSecrets();
+  if (!value) delete all[name];
+  else if (safeStorage.isEncryptionAvailable()) all[name] = { enc: true, data: safeStorage.encryptString(String(value)).toString('base64') };
+  else all[name] = { enc: false, data: String(value) };
+  fs.mkdirSync(path.dirname(secretsFile), { recursive: true });
+  fs.writeFileSync(secretsFile, JSON.stringify(all), { mode: 0o600 });
+  return true;
+});
 
 ipcMain.on('renderer-ready', () => {
   writeState({ ...readState(), pending: false, lastOk: Date.now() });
