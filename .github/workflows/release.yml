@@ -15,21 +15,24 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            target: --win
+            cmd: npx electron-builder --win --publish never
+          # Mac: build each architecture separately; parallel DMG builds share a
+          # volume name and unmount each other mid-build.
           - os: macos-latest
-            target: --mac
+            cmd: npx electron-builder --mac --arm64 --publish never && npx electron-builder --mac --x64 --publish never
           - os: ubuntu-latest
-            target: --linux
+            cmd: npx electron-builder --linux --publish never
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - name: Build installer
-        run: npx electron-builder ${{ matrix.target }} --publish never
+        shell: bash
+        run: ${{ matrix.cmd }}
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
       - uses: actions/upload-artifact@v4
@@ -44,9 +47,11 @@ jobs:
 
   release:
     needs: build
+    # Publish whatever built, even if one platform failed
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
         with:
           path: out
