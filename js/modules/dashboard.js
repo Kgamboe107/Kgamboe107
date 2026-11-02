@@ -5,7 +5,7 @@
   /* Re-run each analysis off-screen so the dashboard always reflects current data */
   async function refreshKpis() {
     App.bsettings.set('kpis', {});
-    const runs = [['finance'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
+    const runs = [['finance'], ['purchases'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
     for (const [mod, params] of runs) {
       if (!App.biz.enabled(mod)) continue;
       try { await App.modules[mod].render(document.createElement('div'), params || {}); } catch (e) { console.warn('KPI refresh', mod, e); }
@@ -40,9 +40,11 @@
       }
       view.innerHTML = App.ui.skeleton();
       const k = await refreshKpis();
+      const pu = k.purchases || {};
       const f = k.finance || {}, o = k.operations || {}, t = k.trading || {}, tp = k['trading-perf'] || {}, mk = k.marketing || {}, p = k.personnel || {};
       const openResearch = notes.filter(n => n.module === 'research' && (n.status || 'Open question') !== 'Archived' && n.status !== 'Findings ready').length;
       const tiles = [
+        pu.receipts && ['Food cost %', fmt.pct(pu.foodPct), `${fmt.money(pu.food)} food · ${pu.receipts} receipts`, isNaN(pu.foodPct) ? '' : pu.foodPct <= (App.bsettings.get('ops.targets', {}).food || 0.3) ? 'good' : 'bad', 'purchases'],
         f.revenue !== undefined && ['Revenue', fmt.compact(f.revenue), `net margin ${fmt.pct(f.margin)}`, f.margin >= 0 ? 'good' : 'bad', 'finance'],
         o.laborPct !== undefined && !isNaN(o.laborPct) && ['Labor %', fmt.pct(o.laborPct), `prime cost ${fmt.pct(o.primePct)}`, '', 'operations'],
         o.splh !== undefined && !isNaN(o.splh) && ['Sales / labor hr', fmt.money(o.splh, 2), `sales ${fmt.compact(o.sales)}`, '', 'operations'],
@@ -53,7 +55,7 @@
         p.headcount !== undefined && ['Active headcount', fmt.num(p.headcount), `turnover ${fmt.pct(p.turnover)}`, '', 'personnel'],
         App.biz.enabled('research') && ['Open research', fmt.num(openResearch), `${notes.length} notes`, '', 'research']
       ].filter(Boolean);
-      const alertMods = [['finance', 'Financials', f], ['operations', 'Operations', o], ['trading', 'Positions', t], ['trading', 'Trade performance', tp], ['marketing', 'Marketing', mk], ['personnel', 'Personnel', p]].filter(([, , d]) => d.alerts);
+      const alertMods = [['purchases', 'Purchases', pu], ['finance', 'Financials', f], ['operations', 'Operations', o], ['trading', 'Positions', t], ['trading', 'Trade performance', tp], ['marketing', 'Marketing', mk], ['personnel', 'Personnel', p]].filter(([, , d]) => d.alerts);
       const byCat = {};
       files.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + 1);
       const bySrc = {};

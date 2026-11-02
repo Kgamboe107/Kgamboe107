@@ -13,6 +13,7 @@
 
   function modal(html, onMount) {
     const m = $('#modal'), c = $('#modalCard');
+    c.className = 'modal-card';
     c.innerHTML = html;
     m.hidden = false;
     const close = () => { m.hidden = true; c.innerHTML = ''; };

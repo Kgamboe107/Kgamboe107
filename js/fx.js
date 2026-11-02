@@ -33,7 +33,9 @@
     lock: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
     keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'
   };
   const icon = (name, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[name] || P.info}</svg>`;
 
@@ -150,7 +152,7 @@
   }
 
   /* ---------- Command palette ---------- */
-  const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
+  const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['purchases', 'Purchases'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
     ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['businesses', 'Businesses'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
   function commands(q) {
     const items = [];
@@ -159,6 +161,8 @@
     App.biz.active().forEach(b => items.push({ g: 'Businesses', icon: 'businesses', label: `Switch to ${b.name}`, color: b.color, run: () => { App.biz.setCurrent(b.id); App.go('dashboard'); } }));
     items.push(
       { g: 'Actions', icon: 'sparkles', label: 'AI briefing: what needs my attention?', run: () => aiBriefing() },
+      ...(App.biz.enabled('purchases') && !App.biz.isMaster() ? [{ g: 'Actions', icon: 'receipt', label: 'New receipt (purchase journal)', run: () => App.go('purchases').then(() => App.purchasesEditor()) }] : []),
+      { g: 'Actions', icon: 'explorer', label: 'New table (type data in by hand)', run: () => App.newTable() },
       { g: 'Actions', icon: 'upload', label: 'Upload files', hint: '', run: () => $('#quickUpload').click() },
       { g: 'Actions', icon: 'plus', label: 'New business or venture', run: () => App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }) },
       { g: 'Actions', icon: 'sparkles', label: 'Load sample data', run: async () => { await App.samples.load(); App.go('dashboard'); } },
@@ -222,7 +226,7 @@
   function shortcuts() {
     const mod = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl';
     App.ui.modal(`<div class="card-head"><h2>Keyboard shortcuts</h2><button class="btn small" data-close>Close</button></div>
-      <div class="stack">${[[`${mod} K`, 'Command palette'], [`${mod} U`, 'Upload files'], [`${mod} B`, 'New business'], [`${mod} J`, 'Toggle light / dark'], [`${mod} /`, 'AI Assistant'],
+      <div class="stack">${[[`${mod} K`, 'Command palette'], [`${mod} U`, 'Upload files'], [`${mod} B`, 'New business'], [`${mod} J`, 'Toggle light / dark'], [`${mod} /`, 'AI Assistant'], [`${mod} E`, 'New receipt'],
         ['G then D', 'Go to dashboard'], ['G then L', 'Go to Data Library'], ['G then M', 'Master dashboard'], ['?', 'Show this list']]
         .map(([k, l]) => `<div class="row spread"><span>${l}</span><span class="row" style="gap:4px">${k.split(' ').map(x => x === 'then' ? '<span class="muted small">then</span>' : `<kbd>${x}</kbd>`).join('')}</span></div>`).join('')}</div>`);
   }
@@ -232,6 +236,7 @@
     const mod = e.metaKey || e.ctrlKey;
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#cmdk') && !$('#cmdk').hidden ? closePalette() : openPalette(); return; }
+    if (mod && e.key.toLowerCase() === 'e' && !e.shiftKey && App.biz.enabled('purchases') && !App.biz.isMaster()) { e.preventDefault(); App.go('purchases').then(() => App.purchasesEditor()); return; }
     if (mod && e.key === '/') { e.preventDefault(); App.go('ai'); return; }
     if (mod && e.key.toLowerCase() === 'u') { e.preventDefault(); $('#quickUpload').click(); return; }
     if (mod && e.key.toLowerCase() === 'b') { e.preventDefault(); App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }); return; }

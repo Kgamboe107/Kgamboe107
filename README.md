@@ -26,6 +26,43 @@ Use the **Viewing** switcher at the top of the sidebar to move between businesse
 
 Column names are matched automatically. If an export uses different names, open **Column mapping** on any page and pick the right column. The app remembers your choice.
 
+## Entering data by hand
+
+### Purchases: receipts → purchase journal → food cost
+
+**Purchases** in the sidebar (or **Ctrl/⌘ + E** from anywhere) opens a new receipt. Three ways to fill it:
+
+| Way | Best for |
+|---|---|
+| **Type it** | Any receipt. Items you've bought before fill in their category and last price automatically. Enter adds the next line. |
+| **Paste receipt text** | Costco app → Account → Orders & Purchases → open a warehouse receipt → copy. Also works with emailed Sam's Club and Restaurant Depot receipts. Instant savings are applied to the right item, and "2 @ 13.99" sets the quantity. Works offline. |
+| **Scan photo with AI** | Snap the paper receipt. Grok reads the lines, totals and date (needs an xAI key). The photo stays attached to the receipt. |
+
+Built for how small businesses actually shop:
+- **Personal items on a business receipt** (the TV in the Costco cart) are recorded but kept out of business totals.
+- **Paid on your personal card?** The app tracks what the business owes you back.
+- **Total check:** enter the receipt total and it tells you if the lines + tax don't add up.
+- **Price watch** flags items that went up since your last purchase (e.g. avocados +14% at US Foods).
+- **Food cost %** = (beginning inventory + food purchases − ending inventory) ÷ food sales, for this week, last week, this month, last month, year to date, or a custom range. Sales fill in automatically from your sales table (uploaded or typed in), or you can type them. Inventory counts are optional.
+- Categories group into **Food**, **Beverage**, **Alcohol**, **Supplies** (paper, cleaning, smallwares), **Other** and **Personal**.
+- Export the journal or every line item as CSV for your bookkeeper. The live **Purchase journal** table also appears in Data Explorer, Financials' expense mix, and the AI Assistant's context.
+
+### Typed-in tables
+
+**Data Library → Type it in (new table)** (also in the Ctrl/⌘ K palette) gives a spreadsheet-style editor with templates:
+
+| Template | Columns | Feeds |
+|---|---|---|
+| Daily sales | Date, Location, Net Sales, Guest Count | Operations + food cost % |
+| Labor hours | Date, Employee, Position, Hours, Overtime, Pay Rate | Operations (labor %, SPLH) |
+| Inventory count | Item, Unit, On Hand, Unit Cost, Value (auto-calculated) | beginning/ending inventory |
+| Monthly P&L | Month, Revenue, COGS, Labor, Operating/Other Expenses | Financials |
+| Expenses | Date, Vendor, Category, Amount, Paid With | Financials expense mix |
+| Marketing spend | Date, Campaign, Channel, Spend, Clicks, Conversions, Revenue | Marketing |
+| Blank | rename columns to anything | Data Explorer |
+
+Typed tables autosave and work everywhere an uploaded spreadsheet does. Any imported table can be corrected too: open it in Data Library → **Edit data**.
+
 ## AI Assistant (Perplexity + Grok)
 
 Open **AI Assistant** in the sidebar (or press **Ctrl/⌘ + /**).
@@ -118,7 +155,8 @@ js/ui.js              tables, charts, KPI cards, column mapper
 js/samples.js         sample data generator
 js/modules/*.js       one file per page
 js/fx.js              icons, animations, toasts, command palette, onboarding
-js/ai.js              Perplexity + Grok clients, business context, answer formatting
+js/ai.js              Perplexity + Grok clients, business context, answer formatting, receipt photo reading
+js/purchasing.js      receipt parsing, auto-categories, item memory, price watch, food cost
 main.js / preload.js  Electron desktop shell
 server.js             local server (Google/Microsoft sign-in + allowlisted AI relay)
 build/icon.png        app icon

@@ -8,7 +8,7 @@
       view.innerHTML = `
         <div class="grid c2">
           <div class="card stack"><h2>Sample data</h2>
-            <p class="muted small">Loads realistic example exports — Harri timesheet & roster, CrunchTime sales & inventory variance, Webull positions & orders, a Dub portfolio, a P&L, an expense ledger, marketing campaigns, and an Anara research note — so you can explore every module.</p>
+            <p class="muted small">Loads realistic example exports and sample Costco, Restaurant Depot and Sysco receipts: Harri timesheet & roster, CrunchTime sales & inventory variance, Webull positions & orders, a Dub portfolio, a P&L, an expense ledger, marketing campaigns, and an Anara research note — so you can explore every module.</p>
             <div class="row"><button class="btn primary" id="sLoad">Load sample data</button><button class="btn" id="sRemove">Remove sample data</button></div>
           </div>
           <div class="card stack"><h2>Backup & restore</h2>
@@ -33,6 +33,8 @@
         const fs = (await App.store.files()).filter(f => (f.tags || []).includes('Sample'));
         for (const f of fs) await App.store.deleteFile(f.id);
         for (const n of await App.store.all('notes')) if (fs.some(f => f.id === n.fileId)) await App.store.del('notes', n.id);
+        for (const pr of await App.store.all('purchases')) if (pr.sample) await App.store.del('purchases', pr.id);
+        await App.purchasing.syncDataset();
         App.ui.toast(`Removed ${fs.length} sample files`); App.go('settings');
       };
       view.querySelector('#sExport').onclick = async () => {
@@ -52,7 +54,7 @@
       view.querySelector('#sTheme').onclick = () => document.getElementById('themeToggle').click();
       view.querySelector('#sClear').onclick = async () => {
         if (!confirm('Delete ALL data on this computer? This cannot be undone.')) return;
-        for (const s of ['files', 'datasets', 'notes']) await App.store.clear(s);
+        for (const s of ['files', 'datasets', 'notes', 'purchases']) await App.store.clear(s);
         Object.keys(localStorage).filter(k => k.startsWith('ocd.')).forEach(k => localStorage.removeItem(k));
         App.ui.toast('All data deleted'); App.go('dashboard');
       };

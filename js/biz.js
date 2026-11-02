@@ -1,15 +1,15 @@
 /* Businesses / ventures: each has its own data, settings, targets and dashboard.
    "all" is the Master view that consolidates every business. */
 (function (App) {
-  const ALL_MODULES = ['finance', 'operations', 'trading', 'marketing', 'research', 'personnel'];
-  const MODULE_LABELS = { finance: 'Financials', operations: 'Operations', trading: 'Trading Risk', marketing: 'Marketing', research: 'Research', personnel: 'Personnel' };
+  const ALL_MODULES = ['finance', 'purchases', 'operations', 'trading', 'marketing', 'research', 'personnel'];
+  const MODULE_LABELS = { finance: 'Financials', purchases: 'Purchases', operations: 'Operations', trading: 'Trading Risk', marketing: 'Marketing', research: 'Research', personnel: 'Personnel' };
   const TEMPLATES = {
-    restaurant: { label: 'Restaurant / hospitality', modules: ['finance', 'operations', 'marketing', 'research', 'personnel'] },
+    restaurant: { label: 'Restaurant / hospitality', modules: ['finance', 'purchases', 'operations', 'marketing', 'research', 'personnel'] },
     trading: { label: 'Trading / investing', modules: ['finance', 'trading', 'research'] },
-    ecommerce: { label: 'E-commerce / retail', modules: ['finance', 'operations', 'marketing', 'research', 'personnel'] },
-    services: { label: 'Services / consulting', modules: ['finance', 'marketing', 'research', 'personnel'] },
-    realestate: { label: 'Real estate', modules: ['finance', 'operations', 'research'] },
-    startup: { label: 'Startup / new venture', modules: ['finance', 'marketing', 'research'] },
+    ecommerce: { label: 'E-commerce / retail', modules: ['finance', 'purchases', 'operations', 'marketing', 'research', 'personnel'] },
+    services: { label: 'Services / consulting', modules: ['finance', 'purchases', 'marketing', 'research', 'personnel'] },
+    realestate: { label: 'Real estate', modules: ['finance', 'purchases', 'operations', 'research'] },
+    startup: { label: 'Startup / new venture', modules: ['finance', 'purchases', 'marketing', 'research'] },
     custom: { label: 'Custom', modules: ALL_MODULES.slice() }
   };
   const COLORS = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#ea580c', '#475569'];
@@ -18,6 +18,11 @@
     let l = App.settings.get('businesses', null);
     if (!Array.isArray(l) || !l.length) {
       l = [{ id: 'main', name: 'Main Business', type: 'custom', color: COLORS[0], modules: ALL_MODULES.slice(), description: '', createdAt: Date.now() }];
+      App.settings.set('businesses', l);
+    }
+    // v1.3: give existing businesses the Purchases module once (they can turn it off)
+    if (l.some(b => !b.mv3)) {
+      l.forEach(b => { if (!b.mv3) { b.mv3 = true; if (b.type !== 'trading' && !b.modules.includes('purchases')) b.modules.splice(1, 0, 'purchases'); } });
       App.settings.set('businesses', l);
     }
     return l;

@@ -141,6 +141,29 @@
   async function load() {
     const files = Object.entries(build()).map(([name, text]) => new File([text], name, { type: name.endsWith('.md') ? 'text/markdown' : 'text/csv' }));
     await App.ingest.ingestMany(files, { tags: ['Sample'] });
+    if (App.purchasing) await loadPurchases();
+  }
+
+  /* Sample receipts in the same weeks as the sample sales, so food cost % works out of the box */
+  async function loadPurchases() {
+    const biz = App.biz.target();
+    const L = (item, cat, qty, amount) => ({ item, cat, qty, amount });
+    const receipts = [
+      { date: '2026-10-02', vendor: 'Sysco', payment: 'Business checking', ref: 'INV-90117', tax: 0, lines: [L('Chicken Breast 40lb case', 'protein', 40, 3920), L('Ground Beef 80/20 10lb', 'protein', 60, 3120), L('Salmon Fillet 10lb', 'protein', 15, 1687.5), L('Romaine 24ct case', 'produce', 30, 1140), L('Roma Tomatoes 25lb', 'produce', 25, 800), L('Cheddar Shredded 5lb', 'dairy', 40, 840), L('Fries 6x5lb case', 'frozen', 30, 930), L('Dinner Napkins case', 'paper', 10, 450)] },
+      { date: '2026-10-06', vendor: 'US Foods', payment: 'Business checking', ref: 'USF-55210', tax: 0, lines: [L('Ribeye Choice 12lb', 'protein', 20, 2877.6), L('Shrimp 16/20 5lb', 'protein', 30, 1349.7), L('Chicken Thighs 40lb case', 'protein', 25, 2050), L('Avocados 48ct case', 'produce', 20, 1240), L('Brioche Buns 48ct', 'bakery', 80, 1199.2), L('Flour AP 50lb', 'dry', 12, 299.4), L('Heavy Cream Qt', 'dairy', 40, 199.6), L('To-Go Containers 150ct', 'paper', 15, 479.85)] },
+      { date: '2026-10-09', vendor: 'Sysco', payment: 'Business checking', ref: 'INV-90388', tax: 0, lines: [L('Chicken Breast 40lb case', 'protein', 40, 4160), L('Ground Beef 80/20 10lb', 'protein', 60, 3120), L('Salmon Fillet 10lb', 'protein', 15, 1770), L('Romaine 24ct case', 'produce', 30, 1230), L('Cheddar Shredded 5lb', 'dairy', 40, 840), L('Fries 6x5lb case', 'frozen', 30, 930), L('Eggs 15dz case', 'dairy', 20, 760)] },
+      { date: '2026-10-13', vendor: 'US Foods', payment: 'Business checking', ref: 'USF-55897', tax: 0, lines: [L('Ribeye Choice 12lb', 'protein', 20, 3024), L('Shrimp 16/20 5lb', 'protein', 30, 1349.7), L('Chicken Thighs 40lb case', 'protein', 25, 2050), L('Avocados 48ct case', 'produce', 20, 1420), L('Brioche Buns 48ct', 'bakery', 80, 1199.2), L('House Wine case', 'alcohol', 10, 718.8), L('Sanitizer Quat Gal', 'cleaning', 6, 95.94)] },
+      { date: '2026-10-02', vendor: 'Costco', payment: 'Business card', tax: 6.21, lines: [L('KS Chicken Breast', 'protein', 3, 71.97), L('Avocado Hass 6ct', 'produce', 4, 27.96), L('Romaine Hearts 6pk', 'produce', 3, 16.47), L('KS Large Eggs 60ct', 'dairy', 2, 31.98), L('KS Olive Oil 2L', 'dry', 1, 24.99), L('KS Paper Towels 12pk', 'paper', 1, 22.99), L('Nitrile Gloves L 200ct', 'paper', 2, 39.98), L('KS Water 40pk', 'bev', 2, 9.98)] },
+      { date: '2026-10-05', vendor: 'Restaurant Depot', payment: 'Business checking', ref: 'RD-44821', tax: 0, lines: [L('Ribeye Choice 12lb', 'protein', 2, 287.76), L('Shrimp 16/20 5lb', 'protein', 2, 89.98), L('Fries 6x5lb', 'frozen', 2, 61.98), L('Brioche Buns 48ct', 'bakery', 3, 44.97), L('Cheddar Sliced 5lb', 'dairy', 2, 41.98), L('Foam To-Go Containers 150', 'paper', 2, 63.98)] },
+      { date: '2026-10-09', vendor: 'Costco', payment: 'Personal card (owner paid)', reimburse: true, tax: 41.84, lines: [L('KS Chicken Breast', 'protein', 3, 77.97), L('Avocado Hass 6ct', 'produce', 4, 31.96), L('Tomatoes Roma 5lb', 'produce', 2, 13.98), L('Clorox Bleach 3pk', 'cleaning', 1, 12.99), L('Samsung 65" TV', 'personal', 1, 479.99), L('Instant savings', 'other', 1, -4.00)] },
+      { date: '2026-10-12', vendor: 'Sysco', payment: 'Business checking', ref: 'INV-90233', tax: 0, lines: [L('Salmon Fillet 10lb', 'protein', 1, 112.50), L('Mixed Greens 3lb', 'produce', 4, 47.80), L('Heavy Cream Qt', 'dairy', 6, 29.94), L('Flour AP 50lb', 'dry', 1, 24.95), L('House Wine Case', 'alcohol', 2, 143.76), L('Sanitizer Quat Gal', 'cleaning', 2, 31.98)] }
+    ];
+    for (const r of receipts) {
+      const sub = r.lines.reduce((a, l) => a + l.amount, 0);
+      await App.store.put('purchases', { id: App.uid(), businessId: biz, sample: true, ref: '', notes: '', attachment: null, ...r, total: +(sub + r.tax).toFixed(2), created: Date.now(), updated: Date.now() });
+      App.purchasing.remember(r.lines.filter(l => l.item !== 'Instant savings'), r.date);
+    }
+    await App.purchasing.syncDataset();
   }
 
   App.samples = { build, load };

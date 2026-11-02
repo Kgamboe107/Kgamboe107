@@ -1,9 +1,9 @@
 /* Local persistence in IndexedDB: files (with original blobs), datasets (parsed tables), notes */
 (function (App) {
   const DB_NAME = 'ops-command-desk';
-  const DB_VER = 1;
+  const DB_VER = 2;
   let dbp = null;
-  const SCOPED = ['files', 'datasets', 'notes'];
+  const SCOPED = ['files', 'datasets', 'notes', 'purchases'];
 
   function open() {
     if (dbp) return dbp;
@@ -17,6 +17,7 @@
           ds.createIndex('fileId', 'fileId');
         }
         if (!db.objectStoreNames.contains('notes')) db.createObjectStore('notes', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('purchases')) db.createObjectStore('purchases', { keyPath: 'id' }); // v2: purchase journal
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -72,6 +73,12 @@
         meta.dataUrl = blob ? await blobToDataUrl(blob) : null;
         out.files.push(meta);
       }
+      out.purchases = [];
+      for (const pr of await this.all('purchases', { raw: true })) {
+        const copy = { ...pr };
+        if (copy.attachment?.blob) copy.attachment = { ...copy.attachment, blob: undefined, dataUrl: await blobToDataUrl(copy.attachment.blob) };
+        out.purchases.push(copy);
+      }
       return out;
     },
     async importAll(data) {
@@ -82,6 +89,10 @@
       }
       for (const d of data.datasets || []) await tx('datasets', 'readwrite', s => s.put(d));
       for (const n of data.notes || []) await tx('notes', 'readwrite', s => s.put(n));
+      for (const pr of data.purchases || []) {
+        if (pr.attachment?.dataUrl) { const { dataUrl, ...a } = pr.attachment; pr.attachment = { ...a, blob: await (await fetch(dataUrl)).blob() }; }
+        await tx('purchases', 'readwrite', s => s.put(pr));
+      }
       App.bus.emit('data-changed', 'all');
     }
   };

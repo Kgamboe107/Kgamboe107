@@ -9,7 +9,11 @@
       const srcOpts = [{ value: '', label: 'Auto-detect' }, ...Object.entries(App.sources).map(([k, v]) => ({ value: k, label: v.label }))];
       view.innerHTML = `
         <div class="card">
-          <div class="card-head"><h2>Upload</h2><span class="muted small">Spreadsheets (CSV, XLSX, XLS, ODS), reports (PDF, DOCX, PPTX), notes (MD, TXT), images, personnel files</span></div>
+          <div class="card-head"><h2>Add data</h2><div class="row">
+            <button class="btn small" onclick="App.newTable()">${App.fx.icon('edit')} Type it in (new table)</button>
+            ${App.biz.enabled('purchases') && !App.biz.isMaster() ? `<button class="btn small" onclick="App.go('purchases').then(() => App.purchasesEditor())">${App.fx.icon('receipt')} Enter a receipt</button>` : ''}
+          </div></div>
+          <div class="muted small" style="margin:-6px 0 12px">Upload spreadsheets (CSV, XLSX, XLS, ODS), reports (PDF, DOCX, PPTX), notes (MD, TXT), images and personnel files, or type data in by hand.</div>
           <div class="row" style="margin-bottom:12px">
             <label class="field">Business<select id="upBiz">${App.ui.options(App.biz.active().map(b => ({ value: b.id, label: b.name })), App.biz.target())}</select></label>
             <label class="field">Category<select id="upCat">${App.ui.options(catOpts, '')}</select></label>
@@ -93,8 +97,12 @@
         el.querySelectorAll('[data-dl]').forEach(b => b.onclick = async () => {
           const f = await App.store.get('files', b.dataset.dl);
           if (f?.blob) App.download(f.name, f.blob);
+          else if (f?.datasetIds?.[0]) { const d = await App.store.get('datasets', f.datasetIds[0]); if (d) App.download(f.name + '.csv', App.toCSV(d.headers, d.rows)); }
         });
-        el.querySelectorAll('[data-open]').forEach(a => a.onclick = () => preview(a.dataset.open));
+        el.querySelectorAll('[data-open]').forEach(a => a.onclick = async () => {
+          const f = await App.store.get('files', a.dataset.open);
+          if (f?.origin === 'manual' && f.datasetIds?.[0]) App.go('sheet', { id: f.datasetIds[0] }); else preview(a.dataset.open);
+        });
       }
       renderList();
     }
@@ -111,7 +119,7 @@
         <label class="field">Notes<textarea id="pvNotes" rows="3">${esc(f.notes || '')}</textarea></label>
         <div class="row"><button class="btn primary small" id="pvSave">Save details</button>
           ${f.blob && /pdf|image|text|html/.test(f.blob.type || f.mime) ? '<button class="btn small" id="pvView">Open file</button>' : ''}
-          ${datasets.length ? '<button class="btn small" id="pvExplore">Open in Data Explorer</button>' : ''}</div>
+          ${datasets.length ? '<button class="btn small" id="pvExplore">Open in Data Explorer</button><button class="btn small" id="pvEdit">Edit data</button>' : ''}</div>
         <div id="pvTables"></div>
       </div>`, (card, close) => {
       card.querySelector('#pvSave').onclick = async () => {
@@ -123,6 +131,8 @@
       const v = card.querySelector('#pvView');
       if (v) v.onclick = () => window.open(URL.createObjectURL(f.blob), '_blank');
       const ex = card.querySelector('#pvExplore');
+      const ed = card.querySelector('#pvEdit');
+      if (ed) ed.onclick = () => { close(); App.go('sheet', { id: datasets[0].id }); };
       if (ex) ex.onclick = () => { App.bsettings.set('explorer.ds', datasets[0].id); close(); App.go('explorer'); };
       const t = card.querySelector('#pvTables');
       datasets.forEach(d => {

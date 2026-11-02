@@ -122,6 +122,8 @@ ${context ? '\n--- BUSINESS CONTEXT (from the user\'s own files) ---\n' + contex
     if (t) L.push(`Trading positions: gross exposure ${fmt.money(t.gross)}, net ${fmt.money(t.net)}, unrealized P&L ${fmt.money(t.upl)}, ${t.positions} positions, largest ${fmt.pct(t.topWeight)}`);
     if (tp) L.push(`Trading performance: realized P&L ${fmt.money(tp.total)}, win rate ${fmt.pct(tp.winRate)}, profit factor ${isFinite(tp.pf) ? (+tp.pf).toFixed(2) : 'n/a'}, max drawdown ${fmt.money(tp.maxDD)}, 1-day VaR95 ${fmt.money(tp.hVaR)}`);
     if (m) L.push(`Marketing: spend ${fmt.money(m.spend)}, revenue ${fmt.money(m.rev)}, ROAS ${m.roas ? (+m.roas).toFixed(2) + 'x' : 'n/a'}, CPA ${fmt.money(m.cpa, 2)}`);
+    const pu = k.purchases;
+    if (pu) L.push(`Purchases (${pu.period}): business purchases ${fmt.money(pu.total)}, food purchases ${fmt.money(pu.food)}, food cost ${fmt.pct(pu.foodPct)} on sales ${fmt.money(pu.sales)}, ${pu.receipts} receipts`);
     if (p) L.push(`Personnel: active headcount ${p.headcount}, turnover ${fmt.pct(p.turnover)}, avg tenure ${isNaN(p.avgTenure) ? 'n/a' : (+p.avgTenure).toFixed(1) + ' yrs'}`);
     const flags = Object.entries(k).flatMap(([mod, v]) => (v.flags || []).map(x => `[${mod}] ${x}`));
     if (flags.length) L.push('Flagged issues:\n' + flags.slice(0, 30).map(x => '- ' + x).join('\n'));
@@ -207,5 +209,45 @@ ${context ? '\n--- BUSINESS CONTEXT (from the user\'s own files) ---\n' + contex
     return out.join('');
   }
 
-  App.ai = { PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
+  /* ---------- Receipt photo → line items (Grok vision) ---------- */
+  function shrinkImage(blob, max = 1600) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(img.src);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => reject(new Error('Could not open that image.'));
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+  async function scanReceipt(blob) {
+    if (!(await getKey('xai'))) throw new Error('Reading receipt photos uses Grok. Add your xAI key in Integrations → AI providers (or paste the receipt text instead).');
+    const dataUrl = await shrinkImage(blob);
+    const models = await grokModels();
+    const model = models.find(m => /vision/i.test(m)) || App.settings.get('ai.grokModel', '') || models[0];
+    const prompt = `Read this purchase receipt. Return ONLY JSON, no prose:
+{"vendor": string, "date": "YYYY-MM-DD" or "", "items": [{"name": string, "qty": number, "amount": number}], "tax": number, "total": number}
+Rules: one entry per purchased line, with the name as printed. "amount" is the line's final price after any instant savings or coupon on that item (apply discount lines to the item above them). Use qty from "2 @ 4.99" style lines, otherwise 1. Exclude subtotal, tax, total, payment, change and membership lines from items. Numbers only, no currency symbols.`;
+    const d = await relay('xai', 'POST', '/v1/chat/completions', {
+      model, temperature: 0,
+      messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: dataUrl, detail: 'high' } }, { type: 'text', text: prompt }] }]
+    });
+    const text = d.choices?.[0]?.message?.content || '';
+    const json = (text.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, text])[1];
+    let r;
+    try { r = JSON.parse(json.slice(json.indexOf('{'), json.lastIndexOf('}') + 1)); }
+    catch { throw new Error('The AI could not read this receipt clearly. Try a sharper, flatter photo, or paste the text.'); }
+    return {
+      vendor: r.vendor || '', date: /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') ? r.date : '',
+      lines: (r.items || []).filter(i => i && i.name).map(i => ({ item: String(i.name).trim(), qty: +i.qty || 1, amount: +i.amount || 0 })),
+      tax: +r.tax || 0, total: +r.total || 0
+    };
+  }
+
+  App.ai = { scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
 })(window.App);
