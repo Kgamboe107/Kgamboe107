@@ -330,6 +330,7 @@
           attachment, created: existing?.created || Date.now(), updated: Date.now()
         };
         await App.store.put('purchases', rec);
+        App.compliance?.audit(isNew ? 'Receipt added' : 'Receipt edited', `${rec.vendor} ${rec.date} · ${fmt.money(App.purchasing.totals(rec).computed, 2)} · ${rec.lines.length} lines${rec.attachment ? ' · photo attached' : ''}`, rec.businessId);
         App.biz.withBiz(rec.businessId, () => App.purchasing.remember(lines.filter(l => l.item), rec.date));
         await App.purchasing.syncDataset();
         const t = App.purchasing.totals(rec);
@@ -343,6 +344,7 @@
       $('#rDel')?.addEventListener('click', async () => {
         if (!confirm('Delete this receipt?')) return;
         await App.store.del('purchases', existing.id); await App.purchasing.syncDataset();
+        App.compliance?.audit('Receipt deleted', `${existing.vendor} ${existing.date} · ${fmt.money(App.purchasing.totals(existing).computed, 2)}`, existing.businessId);
         close(); App.ui.toast('Receipt deleted'); App.go('purchases');
       });
       drawLines(); refresh();

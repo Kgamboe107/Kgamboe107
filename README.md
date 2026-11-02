@@ -63,6 +63,25 @@ Built for how small businesses actually shop:
 
 Typed tables autosave and work everywhere an uploaded spreadsheet does. Any imported table can be corrected too: open it in Data Library → **Edit data**.
 
+## Reports: Tax & Compliance
+
+**Tax & Compliance** (under *Reports* in the sidebar) keeps track of what has to be filed, paid, renewed and documented, per business. A red badge in the sidebar counts overdue filings.
+
+| Tab | What it does |
+|---|---|
+| **Overview** | Audit-readiness score, overdue / upcoming filings, a "fix to stay audit-ready" list, a year-end summary, and a one-click **accountant workbook** (Excel: summary, sales tax, payroll, 1099, purchases, receipts, filings, licenses, activity log). |
+| **Filing calendar** | Deadlines generated from your tax profile: sales tax returns, Form 941 (quarterly), 940, W-2/W-3, 1099-NEC/MISC, Form 8027 (tipped employees), estimated taxes, and your income tax return (Schedule C / 1065 / 1120-S / 1120). Also covers license renewals and custom state/local items. Weekend deadlines move to the next business day. **Mark filed** records the date, amount, confirmation # and who filed, with the return or payment receipt attached. |
+| **Sales tax** | Estimated tax per filing period from your sales data, your rate and taxable share; paid vs. estimated; sales tax you paid on purchases, with a resale-certificate hint when you paid tax on food for resale. |
+| **Payroll tax** | Employer Social Security (6.2% up to the $184,500 2026 wage base), Medicare 1.45%, FUTA and state unemployment by quarter, from your labor data. Employee withholding comes from your payroll provider. |
+| **1099 contractors** | Totals per vendor from Purchases plus contractor payments you record. Card/PayPal payments are excluded (the processor reports them on 1099-K). Flags who needs a 1099 at the 2026 **$2,000** threshold ($600 for 2025 and earlier), tracks W-9s and TIN last 4, suggests likely service providers, and exports CSV. |
+| **Licenses & permits** | Business license, health permit, seller's permit, liquor license, ServSafe/food handler certifications, fire inspection, insurance policies, lease, music licensing. Includes number, issuer, expiry, renewal cost and an attached copy, with expiring/expired warnings. |
+| **Records & audit log** | IRS record-retention guidance, receipts missing documentation, and an automatic activity log of receipt changes, deleted files, filings, license and 1099 decisions. |
+| **Setup** | Entity type, state, sales tax rate/frequency/due day, employees, FUTA/SUTA rates, Form 8027, estimated taxes. |
+
+Audit readiness also checks that active employees have an **I-9 and W-4** in their personnel file (attach them on the Personnel page).
+
+> These are estimates for tracking and preparation, not tax or legal advice. Confirm with your CPA, payroll provider and state/local agencies.
+
 ## AI Assistant (Perplexity + Grok)
 
 Open **AI Assistant** in the sidebar (or press **Ctrl/⌘ + /**).
@@ -157,6 +176,7 @@ js/modules/*.js       one file per page
 js/fx.js              icons, animations, toasts, command palette, onboarding
 js/ai.js              Perplexity + Grok clients, business context, answer formatting, receipt photo reading
 js/purchasing.js      receipt parsing, auto-categories, item memory, price watch, food cost
+js/compliance.js      deadlines, sales/payroll tax estimates, 1099 tally, licenses, audit log, readiness
 main.js / preload.js  Electron desktop shell
 server.js             local server (Google/Microsoft sign-in + allowlisted AI relay)
 build/icon.png        app icon

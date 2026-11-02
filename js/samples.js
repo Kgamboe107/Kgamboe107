@@ -142,6 +142,43 @@
     const files = Object.entries(build()).map(([name, text]) => new File([text], name, { type: name.endsWith('.md') ? 'text/markdown' : 'text/csv' }));
     await App.ingest.ingestMany(files, { tags: ['Sample'] });
     if (App.purchasing) await loadPurchases();
+    if (App.compliance) await loadCompliance();
+  }
+
+  /* Sample tax profile, permits, contractors and filing history, with a few realistic problems to fix */
+  async function loadCompliance() {
+    const biz = App.biz.target();
+    await App.biz.withBiz(biz, async () => {
+      if (!App.bsettings.get('cmp.setup', null)) App.bsettings.set('cmp.setup', { ...App.compliance.DEFAULT_SETUP, entity: 'llc-single', state: 'WA', salesTaxRate: 10.25, salesFreq: 'monthly', salesDueDay: 25, sutaRate: 1.2, sutaBase: 72800, tipped8027: true, sample: true });
+      const lic = App.bsettings.get('cmp.licenses', []);
+      [['Business license', 'BL-604-22871', 'City of Seattle', '2026-12-31', ''], ['Food service / health permit', 'PR0071234', 'King County Public Health', '2026-11-20', ''],
+       ['Liquor license', '421987', 'WA State Liquor & Cannabis Board', '2026-10-31', ''], ['Food manager certification (ServSafe)', 'SS-8834120', 'ServSafe / NRA', '2029-03-14', 'Jordan Reyes'],
+       ['General liability insurance', 'GL-2210-993', 'The Hartford', '2027-04-01', ''], ["Workers' comp insurance", 'WA L&I 600-112-33', 'WA Labor & Industries', '2027-01-01', ''],
+       ["Seller's permit (sales tax)", 'UBI 604 228 711', 'WA Dept. of Revenue', '', '']]
+        .forEach(([name, number, issuer, expires, holder]) => lic.push({ id: App.uid(), name, type: name, number, issuer, expires, holder, sample: true, fileId: null }));
+      App.bsettings.set('cmp.licenses', lic);
+      const cp = App.bsettings.get('cmp.cpay', []);
+      for (let m = 1; m <= 10; m++) cp.push({ id: App.uid(), vendor: 'Sparkle Cleaning Services', date: `2026-${String(m).padStart(2, '0')}-05`, amount: 650, method: 'Check', memo: 'Nightly kitchen cleaning', sample: true });
+      cp.push({ id: App.uid(), vendor: "Joe's Plumbing", date: '2026-03-18', amount: 1450, method: 'Check', memo: 'Grease trap repair', sample: true });
+      cp.push({ id: App.uid(), vendor: "Joe's Plumbing", date: '2026-08-02', amount: 820, method: 'ACH / bank transfer', memo: 'Water heater', sample: true });
+      cp.push({ id: App.uid(), vendor: "Joe's Plumbing", date: '2026-09-14', amount: 450, method: 'Credit card (excluded)', memo: 'Drain clearing', sample: true });
+      cp.push({ id: App.uid(), vendor: 'Hood Pros LLC', date: '2026-06-10', amount: 900, method: 'ACH / bank transfer', memo: 'Hood & duct cleaning', sample: true });
+      App.bsettings.set('cmp.cpay', cp);
+      const v = App.bsettings.get('cmp.vendors', {});
+      v[App.purchasing.norm('Sparkle Cleaning Services')] = { needs1099: true, w9: true, form: 'NEC', tin: '4821' };
+      v[App.purchasing.norm("Joe's Plumbing")] = { needs1099: true, w9: false, form: 'NEC' };
+      App.bsettings.set('cmp.vendors', v);
+      const custom = App.bsettings.get('cmp.custom', []);
+      custom.push({ id: App.uid(), title: 'County health inspection window opens', date: '2026-12-08', cat: 'State & local', yearly: false, sample: true });
+      custom.push({ id: App.uid(), title: 'WA annual reconciliation (if annual filer) / business license renewal', date: '2026-04-15', cat: 'State & local', yearly: true, sample: true });
+      App.bsettings.set('cmp.custom', custom);
+      // Filing history: everything already due is filed, except September sales tax (left overdue on purpose)
+      const done = App.bsettings.get('cmp.done', {});
+      const past = [...await App.compliance.deadlines(2025), ...await App.compliance.deadlines(2026)].filter(d => d.days < 0 && d.key !== 'sales:2026-09');
+      past.forEach((d, i) => { if (!done[d.key]) done[d.key] = { date: d.due, amount: d.cat === 'Sales tax' ? 10800 + (i % 5) * 340 : d.cat === 'Payroll' && /941/.test(d.title) ? 18400 + (i % 3) * 610 : null, confirmation: 'CONF-' + (100000 + i * 7919), by: d.cat === 'Payroll' ? 'Payroll provider' : 'Owner', sample: true }; });
+      App.bsettings.set('cmp.done', done);
+      App.compliance.audit('Sample data loaded', 'Tax profile, licenses, contractor payments and filing history');
+    });
   }
 
   /* Sample receipts in the same weeks as the sample sales, so food cost % works out of the box */

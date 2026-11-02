@@ -71,7 +71,7 @@
   };
 
   function label(mod) {
-    return { purchases: 'Purchases', finance: 'Financials', operations: 'Operations', trading: 'Positions', 'trading-perf': 'Trade performance', marketing: 'Marketing', personnel: 'Personnel' }[mod] || mod;
+    return { compliance: 'Tax & compliance', purchases: 'Purchases', finance: 'Financials', operations: 'Operations', trading: 'Positions', 'trading-perf': 'Trade performance', marketing: 'Marketing', personnel: 'Personnel' }[mod] || mod;
   }
 
   function card({ b, k, files, last, flags }) {
@@ -81,6 +81,7 @@
     if (k.operations && !k.finance) m.push(['Sales', fmt.compact(k.operations.sales)]);
     if (k.trading) m.push(['Exposure', fmt.compact(k.trading.gross)]);
     if (k['trading-perf']) m.push(['Realized P&L', fmt.money(k['trading-perf'].total)]);
+    if (k.compliance && !isNaN(k.compliance.score)) m.push(['Audit ready', Math.round(k.compliance.score * 100) + '%' + (k.compliance.overdue ? ` · ${k.compliance.overdue} overdue` : '')]);
     if (k.purchases?.receipts) m.push(['Food cost', fmt.pct(k.purchases.foodPct)]);
     if (k.marketing) m.push(['Mkt spend', fmt.compact(k.marketing.spend)]);
     if (k.personnel) m.push(['Headcount', fmt.num(k.personnel.headcount)]);

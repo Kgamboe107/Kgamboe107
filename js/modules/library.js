@@ -92,7 +92,9 @@
         });
         el.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
           if (!confirm('Delete this file and its data tables?')) return;
-          await App.store.deleteFile(b.dataset.del); renderList();
+          const gone = await App.store.get('files', b.dataset.del);
+          await App.store.deleteFile(b.dataset.del);
+          App.compliance?.audit('File deleted', gone?.name || '', gone?.businessId); renderList();
         });
         el.querySelectorAll('[data-dl]').forEach(b => b.onclick = async () => {
           const f = await App.store.get('files', b.dataset.dl);

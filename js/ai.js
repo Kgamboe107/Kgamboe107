@@ -122,6 +122,8 @@ ${context ? '\n--- BUSINESS CONTEXT (from the user\'s own files) ---\n' + contex
     if (t) L.push(`Trading positions: gross exposure ${fmt.money(t.gross)}, net ${fmt.money(t.net)}, unrealized P&L ${fmt.money(t.upl)}, ${t.positions} positions, largest ${fmt.pct(t.topWeight)}`);
     if (tp) L.push(`Trading performance: realized P&L ${fmt.money(tp.total)}, win rate ${fmt.pct(tp.winRate)}, profit factor ${isFinite(tp.pf) ? (+tp.pf).toFixed(2) : 'n/a'}, max drawdown ${fmt.money(tp.maxDD)}, 1-day VaR95 ${fmt.money(tp.hVaR)}`);
     if (m) L.push(`Marketing: spend ${fmt.money(m.spend)}, revenue ${fmt.money(m.rev)}, ROAS ${m.roas ? (+m.roas).toFixed(2) + 'x' : 'n/a'}, CPA ${fmt.money(m.cpa, 2)}`);
+    const cm = k.compliance;
+    if (cm) L.push(`Tax & compliance: audit readiness ${isNaN(cm.score) ? 'n/a' : Math.round(cm.score * 100) + '%'}, ${cm.overdue} overdue filings, ${cm.dueSoon} due within 30 days`);
     const pu = k.purchases;
     if (pu) L.push(`Purchases (${pu.period}): business purchases ${fmt.money(pu.total)}, food purchases ${fmt.money(pu.food)}, food cost ${fmt.pct(pu.foodPct)} on sales ${fmt.money(pu.sales)}, ${pu.receipts} receipts`);
     if (p) L.push(`Personnel: active headcount ${p.headcount}, turnover ${fmt.pct(p.turnover)}, avg tenure ${isNaN(p.avgTenure) ? 'n/a' : (+p.avgTenure).toFixed(1) + ' yrs'}`);

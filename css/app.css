@@ -474,6 +474,7 @@ a.alert:hover { transform: translateX(3px); border-color: var(--border-strong); 
 
 
 /* ---------- AI Assistant ---------- */
+#cmpPill { background: var(--bad); white-space: nowrap; min-width: 18px; text-align: center; }
 .nav-pill { margin-left: auto; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--accent-grad); color: #fff; letter-spacing: .02em; }
 .ai-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 .ai-chat { display: flex; flex-direction: column; padding: 0; height: calc(100vh - 140px); min-height: 520px; overflow: hidden; }
@@ -557,6 +558,18 @@ a.alert:hover { transform: translateX(3px); border-color: var(--border-strong); 
 .sheet .rn { width: 40px; text-align: center; font-size: 11.5px; }
 .sheet td { min-width: 120px; }
 @media (max-width: 760px) { .rcpt-foot { grid-template-columns: 1fr; } }
+
+
+/* ---------- Tax & compliance ---------- */
+.meter { height: 6px; border-radius: 6px; background: var(--panel-3); margin-top: 10px; overflow: hidden; }
+.meter i { display: block; height: 100%; border-radius: 6px; background: currentColor; color: var(--accent); transition: width .8s var(--ease); }
+.kpi.good .meter i { color: var(--good); } .kpi.warn .meter i { color: var(--warn); } .kpi.bad .meter i { color: var(--bad); }
+.dl-item { display: flex; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); flex-wrap: wrap; }
+.dl-item.overdue { border-color: color-mix(in srgb, var(--bad) 45%, var(--border)); background: var(--bad-soft); }
+.dl-item.soon { border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+.dl-date { width: 44px; height: 46px; border-radius: 10px; background: var(--panel-3); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; flex-shrink: 0; }
+.dl-date b { font-size: 10.5px; text-transform: uppercase; color: var(--accent); letter-spacing: .05em; }
+.dl-date span { font-size: 17px; font-weight: 650; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }

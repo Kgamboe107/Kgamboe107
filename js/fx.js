@@ -34,6 +34,7 @@
     keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8.4-8 9-4.6-.6-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
     receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
     edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'
   };
@@ -153,7 +154,7 @@
 
   /* ---------- Command palette ---------- */
   const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['purchases', 'Purchases'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
-    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['businesses', 'Businesses'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
+    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['businesses', 'Businesses'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
   function commands(q) {
     const items = [];
     PAGES.filter(([r]) => App.biz.enabled(r)).forEach(([r, l]) => items.push({ g: 'Go to', icon: r, label: l, run: () => App.go(r) }));
@@ -162,6 +163,7 @@
     items.push(
       { g: 'Actions', icon: 'sparkles', label: 'AI briefing: what needs my attention?', run: () => aiBriefing() },
       ...(App.biz.enabled('purchases') && !App.biz.isMaster() ? [{ g: 'Actions', icon: 'receipt', label: 'New receipt (purchase journal)', run: () => App.go('purchases').then(() => App.purchasesEditor()) }] : []),
+      ...(!App.biz.isMaster() ? [{ g: 'Actions', icon: 'download', label: 'Download accountant workbook (tax & compliance)', run: () => App.go('compliance').then(() => App.complianceWorkbook()) }] : []),
       { g: 'Actions', icon: 'explorer', label: 'New table (type data in by hand)', run: () => App.newTable() },
       { g: 'Actions', icon: 'upload', label: 'Upload files', hint: '', run: () => $('#quickUpload').click() },
       { g: 'Actions', icon: 'plus', label: 'New business or venture', run: () => App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }) },
