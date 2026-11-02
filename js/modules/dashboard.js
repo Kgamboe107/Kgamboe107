@@ -5,7 +5,7 @@
   /* Re-run each analysis off-screen so the dashboard always reflects current data */
   async function refreshKpis() {
     App.bsettings.set('kpis', {});
-    const runs = [['finance'], ['purchases'], ['compliance'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
+    const runs = [['finance'], ['purchases'], ['compliance'], ['legal'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
     for (const [mod, params] of runs) {
       if (!App.biz.enabled(mod)) continue;
       try { await App.modules[mod].render(document.createElement('div'), params || {}); } catch (e) { console.warn('KPI refresh', mod, e); }
@@ -40,10 +40,11 @@
       }
       view.innerHTML = App.ui.skeleton();
       const k = await refreshKpis();
-      const pu = k.purchases || {}, cm = k.compliance || {};
+      const pu = k.purchases || {}, cm = k.compliance || {}, lg = k.legal || {};
       const f = k.finance || {}, o = k.operations || {}, t = k.trading || {}, tp = k['trading-perf'] || {}, mk = k.marketing || {}, p = k.personnel || {};
       const openResearch = notes.filter(n => n.module === 'research' && (n.status || 'Open question') !== 'Archived' && n.status !== 'Findings ready').length;
       const tiles = [
+        lg.score !== undefined && ['Lawsuit protection', isNaN(lg.score) ? '—' : Math.round(lg.score * 100) + '%', lg.high ? `${lg.high} high-risk gap${lg.high > 1 ? 's' : ''}` : `${lg.gaps || 0} gaps`, lg.high ? 'bad' : lg.score >= 0.85 ? 'good' : 'warn', 'legal'],
         cm.score !== undefined && ['Audit readiness', isNaN(cm.score) ? '—' : Math.round(cm.score * 100) + '%', cm.overdue ? `${cm.overdue} overdue filing${cm.overdue > 1 ? 's' : ''}` : `${cm.dueSoon || 0} due in 30 days`, cm.overdue ? 'bad' : cm.score >= 0.85 ? 'good' : 'warn', 'compliance'],
         pu.receipts && ['Food cost %', fmt.pct(pu.foodPct), `${fmt.money(pu.food)} food · ${pu.receipts} receipts`, isNaN(pu.foodPct) ? '' : pu.foodPct <= (App.bsettings.get('ops.targets', {}).food || 0.3) ? 'good' : 'bad', 'purchases'],
         f.revenue !== undefined && ['Revenue', fmt.compact(f.revenue), `net margin ${fmt.pct(f.margin)}`, f.margin >= 0 ? 'good' : 'bad', 'finance'],
@@ -56,7 +57,7 @@
         p.headcount !== undefined && ['Active headcount', fmt.num(p.headcount), `turnover ${fmt.pct(p.turnover)}`, '', 'personnel'],
         App.biz.enabled('research') && ['Open research', fmt.num(openResearch), `${notes.length} notes`, '', 'research']
       ].filter(Boolean);
-      const alertMods = [['compliance', 'Tax & compliance', cm], ['purchases', 'Purchases', pu], ['finance', 'Financials', f], ['operations', 'Operations', o], ['trading', 'Positions', t], ['trading', 'Trade performance', tp], ['marketing', 'Marketing', mk], ['personnel', 'Personnel', p]].filter(([, , d]) => d.alerts);
+      const alertMods = [['legal', 'Legal & risk', lg], ['compliance', 'Tax & compliance', cm], ['purchases', 'Purchases', pu], ['finance', 'Financials', f], ['operations', 'Operations', o], ['trading', 'Positions', t], ['trading', 'Trade performance', tp], ['marketing', 'Marketing', mk], ['personnel', 'Personnel', p]].filter(([, , d]) => d.alerts);
       const byCat = {};
       files.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + 1);
       const bySrc = {};

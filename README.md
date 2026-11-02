@@ -82,6 +82,41 @@ Audit readiness also checks that active employees have an **I-9 and W-4** in the
 
 > These are estimates for tracking and preparation, not tax or legal advice. Confirm with your CPA, payroll provider and state/local agencies.
 
+## Legal & Risk
+
+**Legal & Risk** (under *Reports*) helps you avoid the lawsuits that most often hit small businesses, and have the paperwork ready if one comes.
+
+**Risk check:** about 30 yes/no checks weighted by how often each leads to lawsuits and how costly they are. Many answer themselves from your data:
+- **Insurance** (general liability, liquor liability, workers' comp, EPLI, cyber, delivery auto) is matched against your license/insurance register, including expiry.
+- **Entity & money:** LLC/corporation status from your tax profile, and **commingling** (personal items paid with business funds, owner-paid purchases to reimburse) from your receipts.
+- **Employment:** **overtime**, meaning employee-weeks over 40 hours with no overtime recorded in your timesheets (grouped by employee ID); I-9/W-4 on file; handbook acknowledgments; contractor agreements and W-9s; tip pool, breaks, harassment training, posters, minors, biometric time clocks.
+- **Premises & guests:** floor checks, allergen procedures, incident write-ups, alcohol service training, physical accessibility.
+- **Online & data:** privacy policy, **website accessibility** (ADA website suits are rising fast), **text-message consent** (TCPA: $500–$1,500 per text), email rules, card security, disk encryption + app lock, breach plan.
+
+The **Fix first** list ranks gaps by risk, with a button that takes you to the fix.
+
+**Documents:** 16 templates filled in from your business details. The ones that apply are chosen from what you do (website, online ordering, texts, alcohol, events, employees…):
+
+| For | Documents |
+|---|---|
+| Your website | Privacy policy, Terms of use, Accessibility statement, Cookie banner & notice |
+| Customers | SMS marketing terms & opt-in, Email sign-up & CAN-SPAM footer, Event/class liability waiver, Photo & video release, Signs & notices (allergen, consumer advisory, cameras, alcohol, posters) |
+| Employees | Handbook & policies acknowledgment, Confidentiality agreement, Employee privacy notice, Biometric time-clock consent |
+| Contractors | Independent contractor agreement |
+| Internal | Data breach response plan, Record retention & destruction policy |
+
+Preview, edit, then **Save version**: a dated copy goes to the Data Library so you can prove which version was in effect. Export to **Word** or **Print/PDF**, or copy the text into your website builder. Blanks you still need to fill are highlighted.
+
+**Signatures:** a matrix of employees and 1099 contractors against the documents they need to sign. Record each signature with its date and method, attach the signed copy (it's filed in the employee's personnel folder), and see who's still missing.
+
+**Incident log:** same-day reports of slip-and-falls, injuries, allergic reactions, illness complaints, intoxicated guests, security incidents, harassment complaints and breaches, with witnesses, actions taken, police and insurer claim numbers, photos and status. There's also a one-click **floor/safety check** log, the best defense to slip-and-fall claims.
+
+**App lock** (Settings → Security): a passcode required to open the app, auto-lock after inactivity, and **Ctrl/⌘ Shift L** to lock instantly. The passcode is stored only as a PBKDF2-SHA256 hash, and repeated wrong attempts slow down. Pair it with BitLocker/FileVault disk encryption.
+
+Everything is recorded in the activity log, and the protection score appears on the dashboards and in the AI Assistant's context.
+
+> Templates and checklists to reduce risk, not legal advice. Have a licensed attorney in your state review documents before relying on them.
+
 ## AI Assistant (Perplexity + Grok)
 
 Open **AI Assistant** in the sidebar (or press **Ctrl/⌘ + /**).
@@ -177,6 +212,8 @@ js/fx.js              icons, animations, toasts, command palette, onboarding
 js/ai.js              Perplexity + Grok clients, business context, answer formatting, receipt photo reading
 js/purchasing.js      receipt parsing, auto-categories, item memory, price watch, food cost
 js/compliance.js      deadlines, sales/payroll tax estimates, 1099 tally, licenses, audit log, readiness
+js/legal.js           legal document templates, lawsuit-risk checklist + data signals
+js/lock.js            app passcode lock
 main.js / preload.js  Electron desktop shell
 server.js             local server (Google/Microsoft sign-in + allowlisted AI relay)
 build/icon.png        app icon

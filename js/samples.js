@@ -178,6 +178,18 @@
       past.forEach((d, i) => { if (!done[d.key]) done[d.key] = { date: d.due, amount: d.cat === 'Sales tax' ? 10800 + (i % 5) * 340 : d.cat === 'Payroll' && /941/.test(d.title) ? 18400 + (i % 3) * 610 : null, confirmation: 'CONF-' + (100000 + i * 7919), by: d.cat === 'Payroll' ? 'Payroll provider' : 'Owner', sample: true }; });
       App.bsettings.set('cmp.done', done);
       App.compliance.audit('Sample data loaded', 'Tax profile, licenses, contractor payments and filing history');
+      if (App.legal && !App.bsettings.get('legal.profile', null)) {
+        App.bsettings.set('legal.profile', { sample: true, legalName: 'Gamboe Hospitality LLC', dba: 'The Corner Table', owner: 'Jordan Reyes', address: '1420 Pike St', city: 'Seattle', state: 'WA', zip: '98101', email: 'hello@cornertable.example', phone: '(206) 555-0142', website: 'https://cornertable.example', effective: '2026-11-01',
+          practices: { website: true, onlineOrders: true, reservations: true, loyalty: false, email: true, sms: true, analytics: true, wifi: true, cameras: true, alcohol: true, events: true, delivery: false, employees: true, contractors: true, tips: true, minors: false, biometric: false } });
+        const inc = App.bsettings.get('legal.incidents', []);
+        inc.push({ id: App.uid(), sample: true, when: '2026-10-11T19:42', type: 'Customer injury (slip, trip, fall)', location: 'Hallway by restrooms', people: 'Guest: M. Alvarez, (206) 555-0199', witnesses: 'Server Ava Garcia', description: 'Guest slipped near the restroom hallway after a drink spill from a nearby table. Guest got up unassisted, said her wrist hurt. Spill had been reported to staff about 2 minutes earlier; wet-floor sign was being placed.', injuries: 'Guest reported right wrist pain; no visible injury', actions: 'Offered ice and first aid, comped meal, saved camera footage 19:30–20:00, area mopped and signed', insurer: '', status: 'Open', photos: [] });
+        inc.push({ id: App.uid(), sample: true, type: 'Routine safety check', when: '2026-11-01T17:00:00.000Z', location: 'Dining room floors', people: 'AG', description: 'Clear', status: 'Closed' });
+        inc.push({ id: App.uid(), sample: true, type: 'Routine safety check', when: '2026-11-01T21:00:00.000Z', location: 'Restrooms', people: 'LS', description: 'Restocked, floor dry', status: 'Closed' });
+        App.bsettings.set('legal.incidents', inc);
+        const sg = App.bsettings.get('legal.signed', []);
+        sg.push({ id: App.uid(), sample: true, doc: 'contractor', person: 'Sparkle Cleaning Services', role: 'contractor', date: '2026-01-02', method: 'E-signature' });
+        App.bsettings.set('legal.signed', sg);
+      }
     });
   }
 

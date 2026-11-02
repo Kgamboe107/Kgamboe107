@@ -34,6 +34,7 @@
     keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    scale: '<path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/>',
     shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8.4-8 9-4.6-.6-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
     receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
     edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'
@@ -154,7 +155,7 @@
 
   /* ---------- Command palette ---------- */
   const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['purchases', 'Purchases'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
-    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['businesses', 'Businesses'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
+    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['legal', 'Legal & Risk: documents, incidents'], ['businesses', 'Businesses'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
   function commands(q) {
     const items = [];
     PAGES.filter(([r]) => App.biz.enabled(r)).forEach(([r, l]) => items.push({ g: 'Go to', icon: r, label: l, run: () => App.go(r) }));
@@ -164,6 +165,8 @@
       { g: 'Actions', icon: 'sparkles', label: 'AI briefing: what needs my attention?', run: () => aiBriefing() },
       ...(App.biz.enabled('purchases') && !App.biz.isMaster() ? [{ g: 'Actions', icon: 'receipt', label: 'New receipt (purchase journal)', run: () => App.go('purchases').then(() => App.purchasesEditor()) }] : []),
       ...(!App.biz.isMaster() ? [{ g: 'Actions', icon: 'download', label: 'Download accountant workbook (tax & compliance)', run: () => App.go('compliance').then(() => App.complianceWorkbook()) }] : []),
+      ...(!App.biz.isMaster() ? [{ g: 'Actions', icon: 'alert', label: 'Report an incident (injury, allergy, complaint)', run: () => App.go('legal', { tab: 'incidents' }).then(() => document.getElementById('icNew')?.click()) }] : []),
+      ...(App.lock?.enabled() ? [{ g: 'Actions', icon: 'lock', label: 'Lock the app now', run: () => App.lock.lock() }] : []),
       { g: 'Actions', icon: 'explorer', label: 'New table (type data in by hand)', run: () => App.newTable() },
       { g: 'Actions', icon: 'upload', label: 'Upload files', hint: '', run: () => $('#quickUpload').click() },
       { g: 'Actions', icon: 'plus', label: 'New business or venture', run: () => App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }) },
@@ -228,7 +231,7 @@
   function shortcuts() {
     const mod = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl';
     App.ui.modal(`<div class="card-head"><h2>Keyboard shortcuts</h2><button class="btn small" data-close>Close</button></div>
-      <div class="stack">${[[`${mod} K`, 'Command palette'], [`${mod} U`, 'Upload files'], [`${mod} B`, 'New business'], [`${mod} J`, 'Toggle light / dark'], [`${mod} /`, 'AI Assistant'], [`${mod} E`, 'New receipt'],
+      <div class="stack">${[[`${mod} K`, 'Command palette'], [`${mod} U`, 'Upload files'], [`${mod} B`, 'New business'], [`${mod} J`, 'Toggle light / dark'], [`${mod} /`, 'AI Assistant'], [`${mod} E`, 'New receipt'], [`${mod} Shift L`, 'Lock the app'],
         ['G then D', 'Go to dashboard'], ['G then L', 'Go to Data Library'], ['G then M', 'Master dashboard'], ['?', 'Show this list']]
         .map(([k, l]) => `<div class="row spread"><span>${l}</span><span class="row" style="gap:4px">${k.split(' ').map(x => x === 'then' ? '<span class="muted small">then</span>' : `<kbd>${x}</kbd>`).join('')}</span></div>`).join('')}</div>`);
   }
@@ -239,6 +242,7 @@
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#cmdk') && !$('#cmdk').hidden ? closePalette() : openPalette(); return; }
     if (mod && e.key.toLowerCase() === 'e' && !e.shiftKey && App.biz.enabled('purchases') && !App.biz.isMaster()) { e.preventDefault(); App.go('purchases').then(() => App.purchasesEditor()); return; }
+    if (mod && e.shiftKey && e.key.toLowerCase() === 'l' && App.lock?.enabled()) { e.preventDefault(); App.lock.lock(); return; }
     if (mod && e.key === '/') { e.preventDefault(); App.go('ai'); return; }
     if (mod && e.key.toLowerCase() === 'u') { e.preventDefault(); $('#quickUpload').click(); return; }
     if (mod && e.key.toLowerCase() === 'b') { e.preventDefault(); App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }); return; }

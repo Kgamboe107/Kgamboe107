@@ -4,7 +4,7 @@
   const TITLES = {
     dashboard: 'Dashboard', library: 'Data Library', finance: 'Financial Analysis', operations: 'Business Operations',
     trading: 'Trading Risk Management', marketing: 'Marketing Strategy', research: 'Research Management',
-    personnel: 'Personnel', businesses: 'Businesses', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
+    personnel: 'Personnel', businesses: 'Businesses', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';
 
@@ -51,6 +51,7 @@
     const theme = App.settings.get('theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.dataset.theme = theme;
     if (window.desktop) { document.documentElement.classList.add('desktop', window.desktop.platform); window.desktop.setTheme?.(theme); }
+    App.lock?.boot();
     App.fx.hydrateIcons();
     App.fx.updateThemeButton();
     App.fx.watch($('#view'));

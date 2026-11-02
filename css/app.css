@@ -571,6 +571,31 @@ a.alert:hover { transform: translateX(3px); border-color: var(--border-strong); 
 .dl-date b { font-size: 10.5px; text-transform: uppercase; color: var(--accent); letter-spacing: .05em; }
 .dl-date span { font-size: 17px; font-weight: 650; }
 
+
+/* ---------- Legal & risk ---------- */
+.risk-q { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--panel); }
+.seg.yn button { padding: 5px 12px; }
+.seg.yn button.on.yes { background: var(--good-soft); color: var(--good); box-shadow: none; }
+.seg.yn button.on.no { background: var(--bad-soft); color: var(--bad); box-shadow: none; }
+.seg.yn button.on.na { background: var(--panel); color: var(--muted); }
+.doc-card { display: flex; flex-direction: column; gap: 8px; cursor: pointer; padding: 14px; }
+.doc-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.doc-card.dim { opacity: .62; }
+.doc-prev { max-height: 56vh; overflow: auto; padding: 22px 26px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); line-height: 1.6; }
+.doc-prev h2 { font-size: 20px; margin-top: 0; } .doc-prev h3 { font-size: 15px; margin: 16px 0 6px; }
+.doc-prev blockquote, .md blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; }
+mark.ph { background: var(--warn-soft); color: var(--warn); padding: 0 3px; border-radius: 4px; font-weight: 600; }
+/* App lock */
+body.locked .app, body.locked .toast-stack, body.locked .modal, body.locked #cmdk { visibility: hidden; }
+.lock-screen { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 16px;
+  background: radial-gradient(800px 400px at 80% 0%, rgba(139,92,246,.25), transparent 60%), radial-gradient(700px 400px at 0% 100%, rgba(16,185,129,.12), transparent 60%), #07090f; }
+.lock-card { width: min(380px, 100%); text-align: center; padding: 30px 26px; border-radius: 20px; background: rgba(15,19,29,.85); border: 1px solid #283044; color: #e8eaf2; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8); animation: popIn .4s var(--spring); }
+.lock-card h2 { font-size: 18px; } .lock-card .muted { color: #8790a8; }
+.lock-card input { width: 100%; margin: 14px 0 6px; text-align: center; font-size: 18px; letter-spacing: .2em; background: #0b0f17; color: #fff; border-color: #283044; }
+.lock-card .onb-logo svg.i { width: 26px; height: 26px; }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
