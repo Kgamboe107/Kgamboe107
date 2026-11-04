@@ -596,6 +596,43 @@ body.locked .app, body.locked .toast-stack, body.locked .modal, body.locked #cmd
 .shake { animation: shake .35s; }
 @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
 
+
+/* ---------- Drill-down panel ---------- */
+.kpi.link { cursor: pointer; }
+.kpi.link:hover, .kpi.link:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--accent); outline: none; }
+.kpi .kpi-go { position: absolute; top: 12px; right: 14px; font-size: 13px; color: var(--muted); opacity: 0; transform: translate(-3px, 3px); transition: opacity .2s, transform .25s var(--spring), color .2s; }
+.kpi.link:hover .kpi-go, .kpi.link:focus-visible .kpi-go { opacity: 1; transform: none; color: var(--accent); }
+.drill { position: fixed; inset: 0; z-index: 95; }
+.drill[hidden] { display: none; }
+.drill-scrim { position: absolute; inset: 0; background: rgba(5, 7, 12, .35); backdrop-filter: blur(2px); opacity: 0; transition: opacity .25s var(--ease); }
+.drill-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(720px, 100%); background: var(--panel); border-left: 1px solid var(--border); box-shadow: -24px 0 60px -20px rgba(0,0,0,.35); transform: translateX(100%); transition: transform .32s var(--ease); display: flex; flex-direction: column; }
+.drill.open .drill-scrim { opacity: 1; } .drill.open .drill-panel { transform: none; }
+#drillBody { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.drill-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: calc(18px + var(--titlebar-pad)) 20px 14px; border-bottom: 1px solid var(--border); padding-right: max(20px, var(--titlebar-controls, 0px)); }
+.drill-head h2 { font-size: 18px; }
+.drill-content { flex: 1; overflow: auto; padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 18px; animation: pageIn .3s var(--ease) both; }
+.drill-foot { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--panel-2); }
+.drill-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.drill-stats > div { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; }
+.drill-stats .l { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.drill-stats .v { font-weight: 650; font-size: 16px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.drill-stats .good .v { color: var(--good); } .drill-stats .bad .v { color: var(--bad); } .drill-stats .warn .v { color: var(--warn); } .drill-stats .muted .v { color: var(--muted); }
+.drill-sec { display: flex; flex-direction: column; gap: 8px; }
+.drill-sec h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.drill-sec .table-wrap { max-height: 420px; }
+.drill-bars { display: flex; flex-direction: column; gap: 6px; }
+.db-row { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: 10px; align-items: center; font-size: 12.5px; padding: 2px 4px; border-radius: 6px; }
+.db-row[data-drill]:hover { background: var(--accent-soft); }
+.db-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.db-track { height: 8px; border-radius: 6px; background: var(--panel-3); overflow: hidden; }
+.db-track i { display: block; height: 100%; border-radius: 6px; background: var(--accent-grad); animation: grow .6s var(--ease) both; transform-origin: left; }
+.db-v { font-variant-numeric: tabular-nums; color: var(--text-2); white-space: nowrap; }
+.drill-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.drill-kv > div { display: flex; flex-direction: column; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; }
+.drill-kv span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.drill-content a[data-drill] { font-weight: 500; }
+@media (max-width: 600px) { .db-row { grid-template-columns: 1fr auto; } .db-track { grid-column: 1 / -1; grid-row: 2; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }

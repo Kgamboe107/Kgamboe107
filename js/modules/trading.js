@@ -284,10 +284,10 @@
       shares = Math.min(shares, capShares);
       const rr = riskPer ? Math.abs(c.target - c.entry) / riskPer : NaN;
       body.querySelector('#cOut').innerHTML =
-        App.ui.kpi('Shares', fmt.num(shares), capped ? 'capped by max position %' : `risking ${fmt.money(riskBudget)}`, capped ? 'warn' : '') +
-        App.ui.kpi('Position value', fmt.money(shares * c.entry), fmt.pct(shares * c.entry / L.account) + ' of equity') +
-        App.ui.kpi('$ at risk', fmt.money(shares * riskPer), fmt.money(riskPer, 2) + '/share') +
-        App.ui.kpi('Reward : risk', isNaN(rr) ? '—' : rr.toFixed(2) + ' : 1', fmt.money(shares * Math.abs(c.target - c.entry)) + ' potential', rr >= 2 ? 'good' : 'warn');
+        App.ui.kpi('Shares', fmt.num(shares), capped ? 'capped by max position %' : `risking ${fmt.money(riskBudget)}`, capped ? 'warn' : '', false) +
+        App.ui.kpi('Position value', fmt.money(shares * c.entry), fmt.pct(shares * c.entry / L.account) + ' of equity', false) +
+        App.ui.kpi('$ at risk', fmt.money(shares * riskPer), fmt.money(riskPer, 2) + '/share', false) +
+        App.ui.kpi('Reward : risk', isNaN(rr) ? '—' : rr.toFixed(2) + ' : 1', fmt.money(shares * Math.abs(c.target - c.entry)) + ' potential', rr >= 2 ? 'good' : 'warn', false);
     }
     body.querySelectorAll('input[type=number]').forEach(i => i.oninput = save);
     size();

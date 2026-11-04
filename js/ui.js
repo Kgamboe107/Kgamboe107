@@ -23,8 +23,10 @@
     return close;
   }
 
-  function kpi(label, value, sub = '', tone = '') {
-    return `<div class="card kpi ${tone}"><div class="label">${esc(label)}</div><div class="value">${value}</div>${sub ? `<div class="sub muted">${sub}</div>` : ''}</div>`;
+  function kpi(label, value, sub = '', tone = '', drill) {
+    const d = drill === false ? null : (drill || App.drillFor?.(label));
+    const attrs = d ? ` data-drill="${esc(d[0])}" data-arg="${esc(d[1] || '')}" tabindex="0" role="button" title="Click for details"` : '';
+    return `<div class="card kpi ${tone}${d ? ' link' : ''}"${attrs}>${d ? '<span class="kpi-go" aria-hidden="true">↗</span>' : ''}<div class="label">${esc(label)}</div><div class="value">${value}</div>${sub ? `<div class="sub muted">${sub}</div>` : ''}</div>`;
   }
 
   function empty(msg, action = '') {

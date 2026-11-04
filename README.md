@@ -14,6 +14,24 @@ A desktop command center for an operations manager. Upload spreadsheets, reports
 | **Personnel** | Headcount, tenure, turnover, early attrition, pay range, and a searchable directory. Each employee's record can hold their personnel files (reviews, I-9s, certifications). |
 | **Data Explorer** | Pivot any table: group by any column, sum/avg/min/max/count, bucket by day or month, chart it, and export it. |
 
+## Click any number for the details
+
+Every number box on the dashboards and analysis pages is clickable (look for ↗ on hover). A panel slides out with the records behind it, and links go deeper:
+
+| Click | You see |
+|---|---|
+| **Active headcount** | Who worked on the latest day (hours, cost), spend by department/role, and everyone's shifts, hours, overtime, cost and $/hr. Click a name for their profile, every shift, labor cost, I-9/W-4 status, signed documents and files. |
+| Labor cost / hours / % · Sales per labor hour | By day (staff, hours, cost, sales, labor %), by position, top employees by cost |
+| Turnover · Tenure · Pay rate | Who left and when (early quits flagged), tenure distribution, pay by position |
+| Net sales | By location, average by weekday, by day |
+| Food cost % · Purchases · Owed to you · Personal | By category and vendor, top items, price increases, receipts (click one to see its lines and photo) |
+| Revenue · Net income | By period with margins |
+| Exposure · Unrealized P&L | Weights, winners and losers, sector exposure, positions |
+| Marketing spend · ROAS | By campaign, colored against your target |
+| Overdue filings · 1099s · Licenses · Audit readiness · Lawsuit protection | The exact items behind the count |
+
+Every table in the panel sorts and exports to CSV. **Esc** closes the panel and **←** goes back.
+
 ## Multiple businesses & the Master dashboard
 
 Use the **Viewing** switcher at the top of the sidebar to move between businesses, or pick **+ New business…** to add one. You can also manage them on the **Businesses** page.
@@ -214,6 +232,7 @@ js/purchasing.js      receipt parsing, auto-categories, item memory, price watch
 js/compliance.js      deadlines, sales/payroll tax estimates, 1099 tally, licenses, audit log, readiness
 js/legal.js           legal document templates, lawsuit-risk checklist + data signals
 js/lock.js            app passcode lock
+js/drill.js           click-through detail panels for every KPI
 main.js / preload.js  Electron desktop shell
 server.js             local server (Google/Microsoft sign-in + allowlisted AI relay)
 build/icon.png        app icon
