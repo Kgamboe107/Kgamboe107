@@ -72,7 +72,7 @@
     $('#quickUpload').onchange = async e => {
       await App.ingest.ingestMany([...e.target.files]);
       e.target.value = '';
-      go(current === 'dashboard' ? 'library' : current);
+      go(current);
     };
 
     let dragDepth = 0;

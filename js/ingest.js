@@ -57,9 +57,10 @@
 
   function detectCategory(fileName, headers = [], source) {
     const fn = fileName.toLowerCase();
-    if (/personnel|employee|roster|staff|hr[_\- ]|onboard|review|w-?4|i-?9/.test(fn)) return 'personnel';
+    if (/personnel|employee|roster|staff|hr[_\- ]|onboard|performance.?review|w-?4|i-?9/.test(fn)) return 'personnel';
     if (/p&l|pnl|profit|balance|cash ?flow|budget|ledger|financ|invoice/.test(fn)) return 'financial';
-    if (/timesheet|labor|schedul|inventory|avt|variance|daily.?sales/.test(fn)) return 'operations';
+    if (/timesheet|labor|schedul|inventory|avt|actual.?vs|theoretical|variance|daily.?sales/.test(fn)) return 'operations';
+    if (/purchase.?journal|purchases/.test(fn)) return 'financial';
     if (/trade|position|portfolio|brokerage|order/.test(fn)) return 'trading';
     if (/campaign|marketing|ads|seo|social/.test(fn)) return 'marketing';
     if (/research|study|whitepaper|analysis|notes/.test(fn)) return 'research';
@@ -104,20 +105,61 @@
     return { headers, rows };
   }
 
-  async function parseSpreadsheet(file) {
-    const buf = await file.arrayBuffer();
+  async function parseSpreadsheet(file, buf) {
+    buf = buf || await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array', cellDates: true });
-    const out = [];
+    const out = [], sheets = [];
     for (const name of wb.SheetNames) {
+      sheets.push({ sheet: name, aoa: XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '', raw: true, blankrows: false }) });
       const t = sheetToTable(wb.Sheets[name]);
       if (t && t.rows.length) out.push({ sheet: name, ...t });
     }
+    out.sheets = sheets;
     return out;
   }
 
+  /* PDF text + tables (pdf.js) */
+  let pdfReady = null;
+  function pdfjs() {
+    if (!window.pdfjsLib) return null;
+    if (!pdfReady) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js'; pdfReady = true; }
+    return window.pdfjsLib;
+  }
+  async function readPdf(buf) {
+    const lib = pdfjs();
+    if (!lib || !App.pdfx) return null;
+    const doc = await App.pdfx.readItems(lib, new Uint8Array(buf));
+    return { tables: App.pdfx.tables(doc), text: doc.pages.map(App.pdfx.pageText).join('\n\n'), pages: doc.numPages };
+  }
+
+  const DOC_EXT = /\.(pdf|pptx|docx)$/i;
+  const fmtDay = d => { const [y, m, dd] = d.split('-'); return `${+m}/${+dd}/${y}`; };
+
+  /* Merge rows into a rolling table (one row per key, newest file wins) */
+  async function mergeRolling(m, rec) {
+    const id = `${m.id}-${rec.businessId}`;
+    const prev = await App.store.get('datasets', id);
+    const byKey = new Map((prev?.rows || []).map(r => [r[m.key], r]));
+    let replaced = 0, same = 0;
+    for (const r of m.rows) {
+      const old = byKey.get(r[m.key]);
+      if (old) { replaced++; if (m.headers.every(h => String(old[h]) === String(r[h]))) same++; }
+      byKey.set(r[m.key], { ...r, __f: rec.id });
+    }
+    const rows = [...byKey.values()].sort((a, b) => String(a[m.key]).localeCompare(String(b[m.key])));
+    const headers = [...new Set([...(prev?.headers || []), ...m.headers])];
+    await App.store.put('datasets', { id, fileId: null, name: m.name, headers, rows, category: m.category, source: m.source, businessId: rec.businessId, createdAt: Date.now(), rolling: true });
+    const warnings = [];
+    if (same && same === m.rows.length) warnings.push('These exact days were already imported from another file (same numbers), so nothing changed. You may have uploaded the same week twice.');
+    else if (replaced) warnings.push(`${replaced} day${replaced > 1 ? 's were' : ' was'} already imported; the numbers from this file replaced them.`);
+    return { id, rows: rows.length, warnings };
+  }
+
   /**
-   * Ingest one File/Blob. opts: { source, category, tags, origin }
-   * Returns the stored file record (without blob).
+   * Ingest one File/Blob. opts: { source, category, tags, origin, businessId }
+   * Known reports (CrunchTime labor variance, purchase journal, inventory, AvT, decks…) are translated
+   * into the tables each page reads; everything else is kept as tables / searchable text.
+   * Returns the stored file record (without blob) plus `report` describing where the data went.
    */
   async function ingestFile(file, opts = {}) {
     const name = file.name || opts.name || 'untitled';
@@ -126,23 +168,52 @@
       origin: opts.origin || 'upload', tags: opts.tags || [], notes: '', datasetIds: [],
       businessId: opts.businessId || App.biz.target()
     };
+    const sample = (opts.tags || []).includes('Sample');
     let tables = [];
-    if (SHEET_EXT.test(name) || /spreadsheet|csv|excel/.test(file.type)) {
-      try { tables = await parseSpreadsheet(file); } catch (e) { console.warn('Parse failed', name, e); }
+    const ctx = { name, businessId: rec.businessId };
+    const isSheet = SHEET_EXT.test(name) || /spreadsheet|csv|excel/.test(file.type);
+    if (isSheet || DOC_EXT.test(name)) {
+      const buf = await file.arrayBuffer();
+      try {
+        if (isSheet) { tables = await parseSpreadsheet(file, buf); ctx.sheets = tables.sheets; }
+        else if (/\.pdf$/i.test(name)) { ctx.pdf = await readPdf(buf); if (ctx.pdf) rec.text = ctx.pdf.text.slice(0, 300000); }
+        else if (/\.pptx$/i.test(name)) { ctx.deck = await App.pptx.readPptx(buf); rec.text = App.pptx.toMarkdown(ctx.deck, name).slice(0, 300000); }
+        else if (/\.docx$/i.test(name)) { ctx.docx = await App.pptx.readDocx(buf); rec.text = ctx.docx.text.slice(0, 300000); }
+      } catch (e) { console.warn('Parse failed', name, e); rec.parseError = String(e.message || e); }
     }
-    const allHeaders = tables.flatMap(t => t.headers);
-    rec.source = opts.source || detectSource(name, allHeaders);
-    rec.category = opts.category || detectCategory(name, allHeaders, rec.source);
+    const report = App.reports ? App.reports.translate(ctx) : null;
+    const allHeaders = report?.kind === 'labor-variance' ? [] : tables.flatMap(t => t.headers);
+    rec.source = opts.source || report?.source || detectSource(name, allHeaders);
+    rec.category = opts.category || report?.category || detectCategory(name, allHeaders, rec.source);
     rec.blob = file;
 
-    for (const t of tables) {
-      const ds = {
-        id: App.uid(), fileId: rec.id, name: tables.length > 1 ? `${name} › ${t.sheet}` : name,
-        sheet: t.sheet, headers: t.headers, rows: t.rows.slice(0, 250000),
-        category: rec.category, source: rec.source, businessId: rec.businessId, createdAt: Date.now()
-      };
-      await App.store.put('datasets', ds);
-      rec.datasetIds.push(ds.id);
+    // Plain spreadsheets keep their tables as-is (a translated report replaces its raw layout)
+    if (!report || report.kind === 'pdf' || report.kind === 'deck') {
+      for (const t of tables) {
+        const ds = {
+          id: App.uid(), fileId: rec.id, name: tables.length > 1 ? `${name} › ${t.sheet}` : name,
+          sheet: t.sheet, headers: t.headers, rows: t.rows.slice(0, 250000),
+          category: rec.category, source: rec.source, businessId: rec.businessId, createdAt: Date.now(), sample
+        };
+        await App.store.put('datasets', ds);
+        rec.datasetIds.push(ds.id);
+      }
+    }
+
+    const warnings = [...(report?.warnings || [])];
+    if (report) {
+      for (const d of report.datasets || []) {
+        const ds = { ...d, id: d.id ? `${d.id}-${rec.businessId}` : App.uid(), fileId: rec.id, category: d.category || rec.category, source: d.source || rec.source, businessId: rec.businessId, createdAt: Date.now(), sample };
+        await App.store.put('datasets', ds);
+        rec.datasetIds.push(ds.id);
+      }
+      for (const m of report.merge || []) { const r = await mergeRolling(m, rec); warnings.push(...r.warnings); }
+      for (const n of report.notes || []) await App.store.put('notes', { ...n, id: `${n.id}-${rec.businessId}`, fileId: rec.id, businessId: rec.businessId, updated: Date.now() });
+      if (report.purchases?.length) {
+        for (const p of report.purchases) await App.store.put('purchases', { ...p, id: `${p.id}-${rec.businessId}`, fileId: rec.id, businessId: rec.businessId });
+        await App.purchasing?.syncDataset();
+      }
+      rec.report = { kind: report.kind, label: report.label, summary: report.summary, lands: report.lands, warnings, store: report.store || '' };
     }
 
     /* Markdown / text research exports (e.g. Anara) become notes too */
@@ -159,23 +230,56 @@
     return meta;
   }
 
+  /* Whole weeks missing in a rolling daily table (checked once, after a batch) */
+  async function weekGaps(bizIds) {
+    const out = [];
+    for (const d of (await App.store.all('datasets', { raw: true })).filter(d => d.rolling && d.headers.includes('Date') && bizIds.includes(d.businessId))) {
+      const days = d.rows.map(r => r.Date).filter(Boolean).sort();
+      if (days.length < 8) continue;
+      const have = new Set(days), missing = [];
+      for (let x = new Date(days[0] + 'T12:00'); x <= new Date(days[days.length - 1] + 'T12:00'); x.setDate(x.getDate() + 7)) {
+        const wk = [...Array(7)].map((_, i) => { const y = new Date(x); y.setDate(y.getDate() + i); return y.toISOString().slice(0, 10); });
+        if (!wk.some(k => have.has(k))) missing.push(fmtDay(wk[0]));
+      }
+      out.push({ name: d.name, from: days[0], to: days[days.length - 1], days: days.length, missing });
+    }
+    return out;
+  }
+
   async function ingestMany(files, opts = {}) {
     const results = [];
     const list = [...files], many = list.length > 1;
     for (const [i, f] of list.entries()) {
-      if (many || f.size > 2e6) App.ux?.task(`Importing ${many ? `${i + 1} of ${list.length} · ` : ''}${f.name}`, i / list.length * 100);
+      if (many || f.size > 2e6 || DOC_EXT.test(f.name)) App.ux?.task(`Reading ${many ? `${i + 1} of ${list.length} · ` : ''}${f.name}`, i / list.length * 100);
       try { results.push(await ingestFile(f, opts)); }
       catch (e) { console.error(e); App.ui.toast(`Could not import ${f.name}: ${e.message}`); }
     }
-    if (many || list.some(f => f.size > 2e6)) App.ux?.taskDone(`Imported ${results.length} of ${list.length} file${list.length > 1 ? 's' : ''}`);
+    if (many || list.some(f => f.size > 2e6 || DOC_EXT.test(f.name))) App.ux?.taskDone(`Imported ${results.length} of ${list.length} file${list.length > 1 ? 's' : ''}`);
     if (results.length) {
-      const ds = results.reduce((a, r) => a + r.datasetIds.length, 0);
-      App.ui.toast(`Imported ${results.length} file${results.length > 1 ? 's' : ''}${ds ? ` · ${ds} data table${ds > 1 ? 's' : ''}` : ''}`);
+      App.bus?.emit?.('data-changed', results);
+      if (!opts.quiet && !(opts.tags || []).includes('Sample') && App.importSummary) App.importSummary(results, { gaps: await weekGaps([...new Set(results.map(r => r.businessId))]) });
+      else {
+        const ds = results.reduce((a, r) => a + r.datasetIds.length, 0);
+        App.ui.toast(`Imported ${results.length} file${results.length > 1 ? 's' : ''}${ds ? ` · ${ds} data table${ds > 1 ? 's' : ''}` : ''}`);
+      }
     }
     return results;
   }
 
+  /* Re-file an import under another business (re-reads the stored originals) */
+  async function moveImport(fileIds, toId) {
+    const out = [];
+    for (const id of fileIds) {
+      const f = await App.store.get('files', id);
+      if (!f?.blob) continue;
+      const blob = f.blob instanceof File ? f.blob : new File([f.blob], f.name, { type: f.mime });
+      await App.store.deleteFile(id);
+      out.push(await ingestFile(blob, { businessId: toId, tags: f.tags, origin: f.origin }));
+    }
+    return out;
+  }
+
   App.categories = CATEGORIES;
   App.sources = SOURCES;
-  App.ingest = { ingestFile, ingestMany, detectSource, detectCategory, parseSpreadsheet };
+  App.ingest = { ingestFile, ingestMany, moveImport, detectSource, detectCategory, parseSpreadsheet, readPdf };
 })(window.App);

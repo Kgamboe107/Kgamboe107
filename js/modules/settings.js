@@ -38,16 +38,8 @@
         </div>`;
       view.querySelector('#sLoad').onclick = async () => { await App.samples.load(); App.go('dashboard'); };
       view.querySelector('#sRemove').onclick = async () => {
-        const fs = (await App.store.files()).filter(f => (f.tags || []).includes('Sample'));
-        for (const f of fs) await App.store.deleteFile(f.id);
-        for (const n of await App.store.all('notes')) if (fs.some(f => f.id === n.fileId)) await App.store.del('notes', n.id);
-        for (const pr of await App.store.all('purchases')) if (pr.sample) await App.store.del('purchases', pr.id);
-        await App.purchasing.syncDataset();
-        for (const k of ['cmp.licenses', 'cmp.cpay', 'cmp.custom', 'legal.incidents', 'legal.signed']) App.bsettings.set(k, App.bsettings.get(k, []).filter(x => !x.sample));
-        const dn = App.bsettings.get('cmp.done', {}); Object.keys(dn).forEach(k => { if (dn[k].sample) delete dn[k]; }); App.bsettings.set('cmp.done', dn);
-        if (App.bsettings.get('cmp.setup', {}).sample) App.bsettings.set('cmp.setup', null);
-        if (App.bsettings.get('legal.profile', {})?.sample) App.bsettings.set('legal.profile', null);
-        App.ui.toast(`Removed ${fs.length} sample files`); App.go('settings');
+        const n = await App.samples.remove();
+        App.ui.toast(`Removed ${n} sample files`); App.go('settings');
       };
       view.querySelector('#sExport').onclick = async () => {
         const data = await App.store.exportAll();

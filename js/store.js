@@ -45,7 +45,11 @@
     async all(name, opts = {}) {
       const db = await open();
       const rows = await reqP(db.transaction(name).objectStore(name).getAll());
-      return opts.raw || !SCOPED.includes(name) || !App.biz ? rows : rows.filter(App.biz.inScope);
+      if (opts.raw || !SCOPED.includes(name) || !App.biz) return rows;
+      const scoped = rows.filter(App.biz.inScope);
+      // Once real receipts exist, sample receipts stop counting (they'd distort food cost and taxes)
+      if (name === 'purchases' && scoped.some(p => !p.sample) && scoped.some(p => p.sample)) return scoped.filter(p => !p.sample);
+      return scoped;
     },
     async del(name, id) { await tx(name, 'readwrite', s => s.delete(id)); App.bus.emit('data-changed', name); },
     async clear(name) { await tx(name, 'readwrite', s => s.clear()); App.bus.emit('data-changed', name); },
@@ -61,8 +65,18 @@
       return all.sort((a, b) => b.createdAt - a.createdAt);
     },
     async deleteFile(id) {
-      const ds = (await this.all('datasets', { raw: true })).filter(d => d.fileId === id);
-      for (const d of ds) await tx('datasets', 'readwrite', s => s.delete(d.id));
+      const all = await this.all('datasets', { raw: true });
+      for (const d of all.filter(d => d.fileId === id)) await tx('datasets', 'readwrite', s => s.delete(d.id));
+      // Rolling tables (e.g. daily sales & labor built from many weekly reports): drop this file's rows only
+      for (const d of all.filter(d => d.rolling && d.rows.some(r => r.__f === id))) {
+        d.rows = d.rows.filter(r => r.__f !== id);
+        if (d.rows.length) await this.put('datasets', d); else await tx('datasets', 'readwrite', s => s.delete(d.id));
+      }
+      // Notes and purchase-journal entries that came from this file
+      for (const n of (await this.all('notes', { raw: true })).filter(n => n.fileId === id)) await this.del('notes', n.id);
+      const ps = (await this.all('purchases', { raw: true })).filter(p => p.fileId === id);
+      for (const p of ps) await this.del('purchases', p.id);
+      if (ps.length) await App.purchasing?.syncDataset();
       await this.del('files', id);
     },
     async exportAll() {

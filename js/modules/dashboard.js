@@ -13,6 +13,29 @@
     return App.bsettings.get('kpis', {});
   }
 
+  /* Goals scorecard (e.g. from a team-meeting deck) with live numbers where the app can measure them */
+  async function goalsCard(datasets) {
+    const sc = datasets.filter(d => d.meta?.kind === 'scorecard').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+    if (!sc) return '';
+    const daily = datasets.find(d => d.rolling && d.headers.includes('Net Sales') && d.headers.includes('Date'));
+    let week = null;
+    if (daily) {
+      const byWeek = new Map();
+      for (const r of daily.rows) { const k = r.Week || r.Date; const w = byWeek.get(k) || { start: k, days: 0, sales: 0, labor: 0 }; w.days++; w.sales += +r['Net Sales'] || 0; w.labor += +r['Labor Cost'] || 0; byWeek.set(k, w); }
+      week = [...byWeek.values()].filter(w => w.days >= 7).sort((a, b) => b.start.localeCompare(a.start))[0] || null;
+    }
+    const H = sc.headers;
+    const live = row => {
+      const m = String(Object.values(row)[0] || '');
+      if (week && /weekly sales|sales a week|sales per week/i.test(m) && !/catering/i.test(m)) return `<b>${fmt.compact(week.sales)}</b> <span class="muted tiny">week of ${fmt.date(week.start)}</span>`;
+      return '';
+    };
+    const anyLive = sc.rows.some(r => live(r));
+    return `<div class="card"><div class="card-head"><div><h2>Goals scorecard</h2><div class="muted small">From ${esc(sc.meta.deck || sc.name)}${sc.meta.slide ? `, slide ${sc.meta.slide}` : ''}${anyLive ? ' · live numbers from your CrunchTime reports' : ''}</div></div><a data-go="research" class="small">Meeting note →</a></div>
+      <div class="table-wrap"><table><thead><tr>${H.map(h => `<th>${esc(h)}</th>`).join('')}${anyLive ? '<th>This week (live)</th>' : ''}</tr></thead>
+      <tbody>${sc.rows.map(r => `<tr>${H.map((h, i) => `<td${i ? '' : ' style="font-weight:600"'}>${esc(r[h])}</td>`).join('')}${anyLive ? `<td>${live(r)}</td>` : ''}</tr>`).join('')}</tbody></table></div></div>`;
+  }
+
   App.modules.dashboard = {
     refreshKpis,
     async render(view) {
@@ -69,6 +92,7 @@
           <div class="row no-print"><button class="btn small primary" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn small" id="dEdit">Edit business</button><button class="btn small" id="dMaster">Master dashboard</button></div>
         </div>
         <div class="grid k4">${tiles.map(([l, v, s, tone, go]) => `<a data-go="${go}" style="text-decoration:none;color:inherit">${App.ui.kpi(l, v, s, tone)}</a>`).join('')}</div>
+        ${await goalsCard(datasets)}
         <div class="grid c2">
           <div class="card"><div class="card-head"><h2>Needs attention</h2><span class="badge ${alertMods.length ? 'warn' : 'good'}">${App.sum(alertMods.map(a => a[2].alerts))} flags</span></div>
             <div class="stack">${alertMods.map(([go, l, d]) => `<a data-go="${go}" class="alert warn" style="text-decoration:none;color:inherit"><b>${esc(l)}</b><span>${d.alerts} item${d.alerts > 1 ? 's' : ''} flagged — review →</span></a>`).join('') || '<div class="alert good">No flags across modules.</div>'}</div>

@@ -8,6 +8,7 @@
     { k: 'dry', label: 'Dry goods & pantry', group: 'food' },
     { k: 'frozen', label: 'Frozen', group: 'food' },
     { k: 'bakery', label: 'Bread & bakery', group: 'food' },
+    { k: 'food', label: 'Food (general)', group: 'food' },
     { k: 'bev', label: 'Beverages (non-alcoholic)', group: 'beverage' },
     { k: 'alcohol', label: 'Beer, wine & liquor', group: 'alcohol' },
     { k: 'paper', label: 'Paper & disposables', group: 'supplies' },

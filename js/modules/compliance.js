@@ -64,7 +64,7 @@
       card.querySelector('#mfFile').onchange = e => { file = e.target.files[0]; card.querySelector('#mfF').textContent = file ? '📎 ' + file.name : ''; };
       card.querySelector('#mfSave').onclick = async () => {
         const rec = { date: card.querySelector('#mfDate').value, amount: card.querySelector('#mfAmt').value === '' ? null : +card.querySelector('#mfAmt').value, confirmation: card.querySelector('#mfConf').value.trim(), by: card.querySelector('#mfBy').value.trim(), note: card.querySelector('#mfNote').value.trim(), fileId: cur.fileId, fileName: cur.fileName };
-        if (file) { const [f] = await App.ingest.ingestMany([file], { category: 'report', tags: ['Compliance', d.title] }); if (f) { rec.fileId = f.id; rec.fileName = f.name; } }
+        if (file) { const [f] = await App.ingest.ingestMany([file], { quiet: true, category: 'report', tags: ['Compliance', d.title] }); if (f) { rec.fileId = f.id; rec.fileName = f.name; } }
         const all = App.bsettings.get('cmp.done', {}); all[d.key] = rec; App.bsettings.set('cmp.done', all);
         C().audit('Filing recorded', `${d.title}: filed ${rec.date}${rec.amount != null ? ', paid ' + fmt.money(rec.amount, 2) : ''}${rec.confirmation ? ', conf ' + rec.confirmation : ''}`);
         close(); App.ui.toast('Filing record saved'); after ? after() : App.go('compliance');
@@ -318,7 +318,7 @@
       $('#lIs').onchange = () => { if (months && !$('#lE').value && $('#lIs').value) { const d = new Date($('#lIs').value + 'T00:00:00'); d.setMonth(d.getMonth() + months); $('#lE').value = d.toISOString().slice(0, 10); } };
       $('#lS').onclick = async () => {
         Object.assign(l, { name: $('#lN').value.trim() || 'License', number: $('#lNum').value.trim(), issuer: $('#lI').value.trim(), holder: $('#lH').value.trim(), issued: $('#lIs').value, expires: $('#lE').value, cost: $('#lC').value, notes: $('#lNo').value.trim() });
-        if (file) { const [f] = await App.ingest.ingestMany([file], { category: 'report', tags: ['Compliance', l.name] }); if (f) { l.fileId = f.id; l.fileName = f.name; } }
+        if (file) { const [f] = await App.ingest.ingestMany([file], { quiet: true, category: 'report', tags: ['Compliance', l.name] }); if (f) { l.fileId = f.id; l.fileName = f.name; } }
         const all = App.bsettings.get('cmp.licenses', []).filter(x => x.id !== l.id); all.push(l); App.bsettings.set('cmp.licenses', all);
         C().audit(isNew ? 'License added' : 'License updated', `${l.name}${l.number ? ' #' + l.number : ''}${l.expires ? ', expires ' + l.expires : ''}`);
         close(); App.go('compliance');

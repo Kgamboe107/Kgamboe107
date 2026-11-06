@@ -136,41 +136,62 @@
    * fields: [{key, label, syn:[], optional?}]
    * Calls onChange(dataset, map) whenever selection changes and on first render.
    */
+  /* Which table should an analysis use?
+     Real data beats sample data, then the best column fit, then the newest upload.
+     A table the user picked by hand sticks until newer data that fits as well arrives. */
+  async function resolve(key, { categories, fields, includeLive = true }) {
+    const F = fields.map(f => ({ key: f.key || f.k, syn: f.syn, required: f.req != null ? !!f.req : !f.optional }));
+    let all = await App.store.datasets();
+    if (!includeLive) all = all.filter(d => !d.live);
+    if (!all.length) return { ds: null, map: {}, datasets: [] };
+    const sampleFiles = new Set((await App.store.files()).filter(f => (f.tags || []).includes('Sample')).map(f => f.id));
+    const isSample = d => !!d.sample || sampleFiles.has(d.fileId);
+    const fit = d => F.reduce((s, f) => s + (App.findCol(d.headers, f.syn) ? (f.required ? 4 : 1) : 0), 0) + (categories && categories.includes(d.category) ? 2 : 0);
+    const ok = d => F.filter(f => f.required).every(f => App.findCol(d.headers, f.syn));
+    const inCat = d => !categories || categories.includes(d.category);
+    const ranked = [...all].sort((a, b) => (ok(b) - ok(a)) || (inCat(b) - inCat(a)) || (isSample(a) - isSample(b)) || (fit(b) - fit(a)) || ((b.createdAt || 0) - (a.createdAt || 0)));
+    let best = ranked[0];
+    // Never fall back to an unrelated table (e.g. labor cost read as ad spend)
+    if (!ok(best) && !inCat(best)) best = null;
+    const saved = App.bsettings.get('map.' + key, {});
+    let ds = best;
+    const chosen = saved.ds && all.find(d => d.id === saved.ds);
+    if (chosen && saved.manual) {
+      const newer = best && best !== chosen && ok(best) && (best.createdAt || 0) > (saved.at || 0) && !isSample(best) && (fit(best) >= fit(chosen) || isSample(chosen));
+      ds = newer ? best : chosen;
+    }
+    if (!ds) return { ds: null, map: {}, datasets: ranked, isSample };
+    const map = {};
+    for (const f of F) {
+      const prev = saved.ds === ds.id ? saved.map?.[f.key] : undefined;
+      map[f.key] = prev !== undefined && (prev === '' || ds.headers.includes(prev)) ? prev : App.findCol(ds.headers, f.syn);
+    }
+    const order = [ds, ...ranked.filter(d => d !== ds && (!categories || categories.includes(d.category))), ...ranked.filter(d => d !== ds && categories && !categories.includes(d.category))];
+    return { ds, map, datasets: order, isSample, switched: chosen && chosen !== ds };
+  }
+
   async function mapper(el, { title = 'Data source', categories, fields, key, onChange, hint = '' }) {
-    let datasets = await App.store.datasets();
-    const preferred = datasets.filter(d => !categories || categories.includes(d.category));
-    const others = datasets.filter(d => categories && !categories.includes(d.category));
-    datasets = [...preferred, ...others];
-    if (!datasets.length) {
+    const r = await resolve(key, { categories, fields });
+    const datasets = r.datasets;
+    if (!r.ds) {
       el.innerHTML = `<div class="card"><div class="card-head"><h2>${esc(title)}</h2></div>
-        <div class="muted">No data tables yet. ${hint} <a data-go="library">Upload a spreadsheet</a> or load the sample data in <a data-go="settings">Settings</a>.</div></div>`;
+        <div class="muted">${datasets.length ? 'None of your tables have the columns this needs yet.' : 'No data tables yet.'} ${hint} <a data-go="library">Upload a spreadsheet or report</a> or load the sample data in <a data-go="settings">Settings</a>.</div>
+        ${datasets.length ? `<label class="field" style="margin-top:10px">Use a table anyway<select data-pick><option value="">Choose a table…</option>${datasets.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label>` : ''}</div>`;
+      el.querySelector('[data-pick]')?.addEventListener('change', e => { if (!e.target.value) return; App.bsettings.set('map.' + key, { ds: e.target.value, map: {}, manual: true, at: Date.now() }); mapper(el, { title, categories, fields, key, onChange, hint }); });
       onChange(null, {});
       return;
     }
-    const saved = App.bsettings.get('map.' + key, {});
-    /* Pick the table whose columns best fit this analysis (required fields weigh most) */
-    const fit = d => fields.reduce((s, f) => s + (App.findCol(d.headers, f.syn) ? (f.optional ? 1 : 4) : 0), 0)
-      + (categories && categories.includes(d.category) ? 2 : 0);
-    const best = [...datasets].sort((a, b) => fit(b) - fit(a))[0];
-    let ds = datasets.find(d => d.id === saved.ds) || best;
-
-    function autoMap(d, prev = {}) {
-      const m = {};
-      for (const f of fields) {
-        if (prev[f.key] !== undefined && (prev[f.key] === '' || d.headers.includes(prev[f.key]))) m[f.key] = prev[f.key];
-        else m[f.key] = App.findCol(d.headers, f.syn);
-      }
-      return m;
-    }
-    let map = autoMap(ds, saved.ds === ds.id ? saved.map : {});
+    let ds = r.ds, map = r.map, manual = !!App.bsettings.get('map.' + key, {}).manual && !r.switched;
+    function autoMap(d) { const m = {}; for (const f of fields) m[f.key] = App.findCol(d.headers, f.syn); return m; }
 
     function render() {
       const cat = c => App.categories[c]?.label || c;
+      const age = ds.createdAt ? new Date(ds.createdAt).toLocaleDateString() : '';
       el.innerHTML = `<div class="card"><div class="card-head"><h2>${esc(title)}</h2>
-          <span class="badge">${ds.rows.length.toLocaleString()} rows · ${esc(App.sources[ds.source]?.label || ds.source)}</span></div>
+          <span class="badge${r.isSample(ds) ? ' warn' : ''}">${r.isSample(ds) ? 'Sample data · ' : ''}${ds.rows.length.toLocaleString()} rows · ${esc(App.sources[ds.source]?.label || ds.source)}${age ? ' · updated ' + age : ''}</span></div>
         <div class="stack">
-          <label class="field">Table
-            <select data-ds>${datasets.map(d => `<option value="${d.id}" ${d.id === ds.id ? 'selected' : ''}>${App.biz.isMaster() ? esc(App.biz.get(App.biz.idOf(d))?.name || '') + ' · ' : ''}${esc(d.name)} — ${esc(cat(d.category))}</option>`).join('')}</select>
+          <label class="field">Table <span class="tiny">${manual ? '(picked by you; switches when newer data arrives)' : '(follows your newest matching upload)'}</span>
+            <select data-ds>${datasets.map(d => `<option value="${d.id}" ${d.id === ds.id ? 'selected' : ''}>${App.biz.isMaster() ? esc(App.biz.get(App.biz.idOf(d))?.name || '') + ' · ' : ''}${r.isSample(d) ? '[Sample] ' : ''}${esc(d.name)} — ${esc(cat(d.category))}</option>`).join('')}</select>
           </label>
           <details ${fields.some(f => !f.optional && !map[f.key]) ? 'open' : ''}>
             <summary class="small muted" style="cursor:pointer">Column mapping (auto-detected — adjust if needed)</summary>
@@ -180,14 +201,16 @@
         </div></div>`;
       el.querySelector('[data-ds]').onchange = e => {
         ds = datasets.find(d => d.id === e.target.value);
-        map = autoMap(ds);
-        persist(); render(); onChange(ds, map);
+        map = autoMap(ds); manual = true;
+        persist(true); render(); onChange(ds, map);
       };
       el.querySelectorAll('[data-f]').forEach(s => s.onchange = () => {
         map[s.dataset.f] = s.value; persist(); onChange(ds, map);
       });
     }
-    function persist() { App.bsettings.set('map.' + key, { ds: ds.id, map }); }
+    // `at` marks when the user picked the table by hand, so newer uploads can take over later
+    function persist(picked) { const prev = App.bsettings.get('map.' + key, {}); App.bsettings.set('map.' + key, { ds: ds.id, map, manual, at: picked ? Date.now() : (prev.ds === ds.id && prev.at) || 0 }); }
+    persist();
     render();
     onChange(ds, map);
   }
@@ -199,5 +222,5 @@
     App.bsettings.set('kpis', all);
   }
 
-  App.ui = { toast, modal, kpi, empty, table, chart, options, mapper, publish, PALETTE, cssVar };
+  App.ui = { toast, modal, kpi, empty, table, chart, options, mapper, resolve, publish, PALETTE, cssVar };
 })(window.App);

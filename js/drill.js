@@ -5,14 +5,10 @@
 
   /* ---------- Data finders (use the user's saved column mapping, else auto-detect) ---------- */
   async function find(key, categories, fields) {
-    const all = (await App.store.datasets()).filter(d => !d.live || key === 'purchases');
-    const saved = App.bsettings.get('map.' + key, {});
-    const auto = d => Object.fromEntries(fields.map(f => [f.k, App.findCol(d.headers, f.syn)]));
-    let ds = saved.ds && all.find(d => d.id === saved.ds);
-    if (ds) return { ds, m: { ...auto(ds), ...Object.fromEntries(Object.entries(saved.map || {}).filter(([, v]) => v !== undefined)) } };
-    const fit = d => fields.reduce((s, f) => s + (App.findCol(d.headers, f.syn) ? (f.req ? 4 : 1) : 0), 0) + (categories.includes(d.category) ? 2 : 0);
-    ds = all.filter(d => fields.filter(f => f.req).every(f => App.findCol(d.headers, f.syn))).sort((a, b) => fit(b) - fit(a))[0];
-    return ds ? { ds, m: auto(ds) } : null;
+    const r = await App.ui.resolve(key, { categories, fields, includeLive: key === 'purchases' });
+    if (!r.ds) return null;
+    const ok = fields.filter(f => f.req).every(f => r.map[f.k]);
+    return ok ? { ds: r.ds, m: r.map } : null;
   }
 
   async function roster() {
@@ -298,10 +294,12 @@
     async foodcost() {
       const ps = await App.store.all('purchases'); const S = await sales();
       if (!ps.length) return null;
-      const food = ps.flatMap(p => p.lines.filter(l => App.purchasing.CAT[l.cat]?.group === 'food').map(l => ({ ...l, date: p.date, vendor: p.vendor })));
+      const days = S ? S.rows.map(r => r.date).filter(Boolean).sort() : [];
+      const cov = days.length ? [days[0], days[days.length - 1]] : null;
+      const food = ps.filter(p => !cov || (p.date >= cov[0] && p.date <= cov[1])).flatMap(p => p.lines.filter(l => App.purchasing.CAT[l.cat]?.group === 'food').map(l => ({ ...l, date: p.date, vendor: p.vendor })));
       const total = App.sum(food.map(l => l.amount)), sl = S ? App.sum(S.rows.map(r => r.sales)) : NaN;
       const byCat = sumBy(food, l => App.purchasing.CAT[l.cat]?.label, l => l.amount), byVendor = sumBy(food, l => l.vendor, l => l.amount);
-      return { title: 'Food cost', subtitle: 'All-time purchases vs. sales' + (S ? ' · ' + esc(S.source) : ''),
+      return { title: 'Food cost', subtitle: (cov ? `Purchases and sales ${fmt.date(cov[0])} – ${fmt.date(cov[1])}` : 'All-time purchases vs. sales') + (S ? ' · ' + esc(S.source) : ''),
         stats: [['Food purchases', fmt.money(total)], ['Sales', fmt.money(sl)], ['Food cost %', fmt.pct(sl ? total / sl : NaN)]],
         sections: [{ title: 'By category (share of sales)', bars: [...byCat.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: k, v, text: `${fmt.money(v)} · ${fmt.pct(sl ? v / sl : NaN)}` })) },
           { title: 'By vendor', bars: [...byVendor.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: k, v, text: fmt.money(v) })) },

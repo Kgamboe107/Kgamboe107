@@ -263,6 +263,56 @@
     pillTimer = setTimeout(() => { pill?.classList.add('out'); setTimeout(() => { pill?.remove(); pill = null; }, 250); }, text ? 1400 : 0);
   }
 
+  /* ---------- Import summary: where each file's data went ---------- */
+  const fmtD = d => { const [y, m, dd] = String(d).split('-'); return `${+m}/${+dd}/${y}`; };
+  const PAGE_OF = { operations: ['operations', 'Operations'], personnel: ['personnel', 'Personnel'], financial: ['finance', 'Financials'], trading: ['trading', 'Trading Risk'], marketing: ['marketing', 'Marketing'], research: ['research', 'Research'], report: ['library', 'Data Library'], other: ['library', 'Data Library'] };
+  const LABEL_OF = { dashboard: 'Dashboard', operations: 'Operations', personnel: 'Personnel', purchases: 'Purchases', finance: 'Financials', compliance: 'Tax & Compliance', research: 'Research', explorer: 'Data Explorer', library: 'Data Library' };
+  async function importSummary(results, { gaps = [] } = {}) {
+    const hasSample = (await App.store.files()).some(f => (f.tags || []).includes('Sample'));
+    const biz = App.biz.get(results[0].businessId);
+    const stores = [...new Set(results.map(r => r.report?.store).filter(Boolean))];
+    const st = stores[0] ? stores[0].match(/^(\d+)\s*-\s*([^-]+?)\s*-/) : null;
+    const city = st ? st[2].trim() : '', num = st ? st[1] : '';
+    const mismatch = city && !new RegExp(city + '|' + num, 'i').test(biz?.name || '');
+    const match = mismatch && App.biz.active().find(b => new RegExp(city + '|' + num, 'i').test(b.name));
+    const item = r => {
+      const rep = r.report;
+      const lands = rep?.lands?.length ? rep.lands : [[PAGE_OF[r.category]?.[0] || 'library', `${PAGE_OF[r.category]?.[1] || 'Data Library'}${r.datasetIds.length ? `: ${r.datasetIds.length} table${r.datasetIds.length > 1 ? 's' : ''}` : ''}`]];
+      return `<div class="imp-item">
+        <div class="row spread" style="align-items:flex-start"><div style="min-width:0"><b class="imp-name">${esc(r.name)}</b><div class="muted tiny">${esc(rep?.label || (r.datasetIds.length ? 'Spreadsheet' : 'File'))}${r.parseError ? ' · could not be read: ' + esc(r.parseError) : ''}</div></div>
+          <span class="badge ${rep?.warnings?.length ? 'warn' : 'good'}">${rep?.warnings?.length ? 'Check' : 'Added'}</span></div>
+        ${rep?.summary?.length ? `<ul class="imp-sum small">${rep.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+        ${(rep?.warnings || []).map(w => `<div class="alert warn small">${esc(w)}</div>`).join('')}
+        <div class="row imp-go">${lands.map(([route, label]) => `<button class="btn small" data-imp-go="${route}">${esc(label)} →</button>`).join('')}</div>
+      </div>`;
+    };
+    App.ui.modal(`<div class="card-head"><div><h2>Imported ${results.length} file${results.length > 1 ? 's' : ''} into ${esc(biz?.name || 'this business')}</h2>
+        <div class="muted small">Every page and dashboard has already been updated.</div></div></div>
+      ${mismatch ? `<div class="alert small" style="margin-bottom:12px"><span>These reports are for <b>${esc(stores[0])}</b>.${match ? '' : ' You can give that store its own business so its numbers stay separate.'}</span>
+        <button class="btn small primary" id="impMove">${match ? `Move to ${esc(match.name)}` : `Create “${esc(city)} #${esc(num)}” and move them`}</button></div>` : ''}
+      ${gaps.map(g => `<div class="alert ${g.missing.length ? 'warn' : 'good'} small" style="margin-bottom:10px">${esc(g.name)}: ${g.days} days, ${fmtD(g.from)} – ${fmtD(g.to)}.${g.missing.length ? ` Missing the week${g.missing.length > 1 ? 's' : ''} of ${esc(g.missing.join(', '))}; upload ${g.missing.length > 1 ? 'those reports' : 'that report'} to fill the gap.` : ' No missing weeks.'}</div>`).join('')}
+      ${hasSample ? `<div class="alert small" style="margin-bottom:10px"><span>Sample data is still loaded. Your real data is used first, but samples still appear where you have no real data yet (for example the sample employee roster).</span><button class="btn small" id="impNoSample">Remove sample data</button></div>` : ''}
+      <div class="stack imp-list">${results.map(item).join('')}</div>
+      <div class="confirm-actions"><button class="btn" data-close>Done</button><button class="btn primary" data-imp-go="dashboard">Open dashboard</button></div>`, (card, close) => {
+      card.classList.add('wide');
+      card.querySelectorAll('[data-imp-go]').forEach(b => b.onclick = () => { close(); App.go(b.dataset.impGo); });
+      card.querySelector('#impNoSample')?.addEventListener('click', async e => {
+        e.target.disabled = true;
+        await App.samples.remove?.();
+        e.target.closest('.alert').innerHTML = '<span>Sample data removed. Only your own data is used now.</span>';
+      });
+      card.querySelector('#impMove')?.addEventListener('click', async e => {
+        e.target.disabled = true; e.target.textContent = 'Moving…';
+        const to = match ? match.id : App.biz.create({ name: `${city} #${num}`, type: 'restaurant', description: stores[0] }).id;
+        const moved = await App.ingest.moveImport(results.map(r => r.id), to);
+        App.biz.setCurrent(to);
+        close();
+        App.ui.toast(`Moved ${moved.length} files to ${App.biz.get(to).name}`);
+        App.go('dashboard');
+      });
+    });
+  }
+
   /* ---------- Surface style (liquid glass vs solid) ---------- */
   function setSurface(v) {
     App.settings.set('surface', v);
@@ -271,5 +321,6 @@
   document.documentElement.dataset.surface = App.settings.get('surface', 'glass');
 
   App.confirm = confirmDialog;
+  App.importSummary = importSummary;
   App.ux = { task, taskDone, setSurface, steps, greeting, today, enhance, scan, masks: MASKS };
 })(window.App);

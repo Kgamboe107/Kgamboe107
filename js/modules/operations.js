@@ -19,17 +19,19 @@
     { key: 'sales', label: 'Net sales', syn: ['net sales', 'sales', 'revenue', 'gross sales'] },
     { key: 'cogs', label: 'Food / product cost', syn: ['food cost', 'cogs', 'actual cost', 'cost of sales', 'product cost'], optional: true },
     { key: 'theo', label: 'Theoretical cost', syn: ['theoretical cost', 'theoretical', 'ideal cost'], optional: true },
-    { key: 'guests', label: 'Guests / transactions', syn: ['guests', 'guest count', 'covers', 'transactions', 'checks', 'orders'], optional: true }
+    { key: 'guests', label: 'Guests / transactions', syn: ['guests', 'guest count', 'covers', 'transactions', 'checks', 'orders'], optional: true },
+    { key: 'fc', label: 'Sales forecast', syn: ['sales forecast', 'forecast sales', 'adjusted sales forecast', 'forecast'], optional: true }
   ];
   const INV = [
     { key: 'item', label: 'Item', syn: ['item', 'item name', 'menu item', 'product', 'description', 'ingredient'] },
     { key: 'theo', label: 'Theoretical usage', syn: ['theoretical usage', 'theoretical', 'ideal usage', 'expected'], optional: true },
     { key: 'actual', label: 'Actual usage', syn: ['actual usage', 'actual', 'used'], optional: true },
     { key: 'var', label: 'Variance $', syn: ['variance $', 'variance amount', 'variance cost', 'variance', 'var $'], optional: true },
-    { key: 'unit', label: 'Unit cost', syn: ['unit cost', 'cost per unit', 'price', 'cost'], optional: true }
+    { key: 'unit', label: 'Unit cost', syn: ['unit cost', 'cost per unit', 'price', 'cost'], optional: true },
+    { key: 'count', label: 'Counted on hand', syn: ['physical qty', 'physical', 'counted', 'on hand'], optional: true }
   ];
 
-  let L = { ds: null, m: {} }, S = { ds: null, m: {} };
+  let L = { ds: null, m: {} }, S = { ds: null, m: {} }, avtChoice = null;
 
   App.modules.operations = {
     async render(view) {
@@ -45,6 +47,7 @@
           </div></div>
         <div class="grid c2"><div id="lMap"></div><div id="sMap"></div></div>
         <div id="opsOut" class="stack" style="gap:16px"></div>
+        <div id="avtOut"></div>
         <div id="iMap"></div><div id="iOut"></div>`;
       view.querySelectorAll('.row input').forEach(i => i.onchange = () => {
         App.bsettings.set('ops.targets', {
@@ -59,6 +62,7 @@
         onChange: (ds, m) => { S = { ds, m }; analyze(view); } });
       await App.ui.mapper(view.querySelector('#iMap'), { title: 'Inventory variance (e.g. CrunchTime AvT)', categories: ['operations'], fields: INV, key: 'ops-inv',
         onChange: (ds, m) => inventory(view.querySelector('#iOut'), ds, m) });
+      await foodGap(view.querySelector('#avtOut'));
     }
   };
 
@@ -80,9 +84,12 @@
     const cogs = sm.cogs ? App.sum(sRows.map(r => n0(r[sm.cogs]))) : 0;
     const theo = sm.theo ? App.sum(sRows.map(r => n0(r[sm.theo]))) : 0;
     const guests = sm.guests ? App.sum(sRows.map(r => n0(r[sm.guests]))) : 0;
+    const fcSales = sm.fc ? App.sum(sRows.map(r => n0(r[sm.fc]))) : 0;
+    const sDays = sm.date ? [...new Set(sRows.map(r => App.dateKey(r[sm.date])).filter(Boolean))].sort() : [];
+    const weeks = sDays.length > 7 ? (new Date(sDays[sDays.length - 1]) - new Date(sDays[0])) / (7 * 864e5) + 1 / 7 : 0;
     const laborPct = sales && lcost ? lcost / sales : NaN;
     const foodPct = sales && cogs ? cogs / sales : NaN;
-    const primePct = sales && (cogs || lcost) ? (cogs + lcost) / sales : NaN;
+    const primePct = sales && cogs && lcost ? (cogs + lcost) / sales : NaN;
     const splh = sales && hours ? sales / hours : NaN;
     const otPct = hours && lm.ot ? ot / hours : NaN;
 
@@ -124,12 +131,13 @@
 
     el.innerHTML = `
       <div class="grid k4">
-        ${hasS ? App.ui.kpi('Net sales', fmt.compact(sales), guests ? `${fmt.num(guests)} guests · avg ${fmt.money(sales / guests, 2)}` : '') : ''}
+        ${hasS ? App.ui.kpi('Net sales', fmt.compact(sales), [weeks ? `avg ${fmt.compact(sales / weeks)}/week over ${Math.round(weeks)} weeks` : '', sDays.length ? `${fmt.date(sDays[0])} – ${fmt.date(sDays[sDays.length - 1])}` : '', guests ? `${fmt.num(guests)} guests · avg ${fmt.money(sales / guests, 2)}` : ''].filter(Boolean).join(' · ')) : ''}
+        ${fcSales ? App.ui.kpi('Sales vs forecast', (sales >= fcSales ? '+' : '') + fmt.compact(sales - fcSales), `${fmt.pct(sales / fcSales - 1)} vs ${fmt.compact(fcSales)} forecast`, sales >= fcSales ? 'good' : 'warn') : ''}
         ${hasL ? App.ui.kpi('Labor hours', fmt.num(hours, 1), lm.ot ? `${fmt.num(ot, 1)} OT hrs (${fmt.pct(otPct)})` : (sched ? `${fmt.num(sched, 1)} scheduled` : '')) : ''}
         ${lcost ? App.ui.kpi('Labor cost', fmt.compact(lcost), lm.cost ? '' : 'estimated from pay rate') : ''}
         ${App.ui.kpi('Labor %', fmt.pct(laborPct), 'target ' + fmt.pct(t.labor), tone(laborPct, t.labor))}
         ${sm.cogs ? App.ui.kpi('Food cost %', fmt.pct(foodPct), 'target ' + fmt.pct(t.food), tone(foodPct, t.food)) : ''}
-        ${App.ui.kpi('Prime cost %', fmt.pct(primePct), 'target ' + fmt.pct(t.prime), tone(primePct, t.prime))}
+        ${isNaN(primePct) ? '' : App.ui.kpi('Prime cost %', fmt.pct(primePct), 'target ' + fmt.pct(t.prime), tone(primePct, t.prime))}
         ${App.ui.kpi('Sales / labor hr', fmt.money(splh, 2), 'target ' + fmt.money(t.splh), tone(splh, t.splh, false))}
         ${sched ? App.ui.kpi('Schedule variance', fmt.num(hours - sched, 1) + ' hrs', fmt.pct(hours / sched - 1) + ' vs schedule', Math.abs(hours / sched - 1) < 0.03 ? 'good' : 'warn') : ''}
       </div>
@@ -163,6 +171,28 @@
     ];
     App.ui.table(el.querySelector('#opsTable'), cols, rows);
     el.querySelector('#opsCsv').onclick = () => App.download('operations.csv', App.toCSV(cols.map(c => c.key), rows));
+  }
+
+  /* Actual vs theoretical food cost (CrunchTime AvT): the gap between what was used and what should have been */
+  async function foodGap(el) {
+    const avts = (await App.store.datasets()).filter(d => d.meta?.kind === 'avt').sort((a, b) => (b.meta.to || '').localeCompare(a.meta.to || ''));
+    if (!avts.length || !el) { if (el) el.innerHTML = ''; return; }
+    const d = avts.find(x => x.id === avtChoice) || avts[0], M = d.meta;
+    const older = avts.filter(x => x !== d && (x.meta.to || '') < (M.to || ''));
+    const rows = d.rows.map(r => ({ item: r.Item, a: n0(r['Actual Cost']), t: n0(r['Theoretical Cost']), v: n0(r['Variance $']), pts: n0(r['Variance pts']), w: n0(r['Logged Waste $']) })).sort((a, b) => b.v - a.v);
+    const goal = 1.0;
+    el.innerHTML = `<div class="card stack">
+      <div class="card-head"><h2>Food cost gap: actual vs. theoretical</h2>
+        <select id="avtPick" class="small" data-native>${avts.map(x => `<option value="${x.id}" ${x === d ? 'selected' : ''}>${esc(fmt.date(x.meta.from))} – ${esc(fmt.date(x.meta.to))}</option>`).join('')}</select></div>
+      <div class="grid k4">
+        ${App.ui.kpi('Food cost gap', M.gapPts.toFixed(2) + ' pts', `${fmt.money(M.overspend)} above theoretical · gold standard 0.8–1.0`, M.gapPts <= goal ? 'good' : M.gapPts <= 1.8 ? 'warn' : 'bad', false)}
+        ${App.ui.kpi('Actual food cost', M.costPct.toFixed(2) + '%', `of ${fmt.money(M.netSales)} sales`, '', false)}
+        ${App.ui.kpi('Biggest gap', esc(rows[0]?.item || '—'), rows[0] ? `${fmt.money(rows[0].v)} · ${rows[0].pts.toFixed(2)} pts` : '', 'bad', false)}
+        ${older.length ? App.ui.kpi('Trend', (M.gapPts - older[0].meta.gapPts >= 0 ? '+' : '') + (M.gapPts - older[0].meta.gapPts).toFixed(2) + ' pts', `vs ${fmt.date(older[0].meta.from)} – ${fmt.date(older[0].meta.to)} (${older[0].meta.gapPts.toFixed(2)} pts)`, M.gapPts <= older[0].meta.gapPts ? 'good' : 'bad', false) : ''}
+      </div>
+      <div class="chart-box" style="height:260px"><canvas id="avtChart"></canvas></div></div>`;
+    App.ui.chart('avtChart', 'bar', { labels: rows.map(r => r.item), datasets: [{ label: 'Actual − theoretical $', data: rows.map(r => +r.v.toFixed(2)), backgroundColor: rows.map(r => r.v > 0 ? '#dc2626' : '#059669') }] }, { indexAxis: 'y' });
+    el.querySelector('#avtPick').onchange = e => { avtChoice = e.target.value; foodGap(el); };
   }
 
   function inventory(el, ds, m) {

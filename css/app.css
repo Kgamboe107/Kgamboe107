@@ -892,3 +892,14 @@ label > .combo, .field > .combo, .mapper .combo { display: flex; }
   .orb { animation: none; }
   :root[data-surface="glass"] .kpi::before { display: none; }
 }
+
+/* ---------- Import summary ---------- */
+.imp-list { max-height: min(46vh, 560px); overflow: auto; padding-right: 4px; }
+.imp-item { border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; background: var(--panel-2); display: flex; flex-direction: column; gap: 8px; }
+.imp-name { word-break: break-word; }
+.imp-sum { margin: 0; padding-left: 18px; color: var(--text-2); }
+.imp-sum li + li { margin-top: 2px; }
+.imp-go { gap: 6px; }
+.modal-card .alert:has(> .btn) { flex-wrap: wrap; justify-content: space-between; }
+.modal-card .alert > .btn { flex-shrink: 0; margin-left: auto; }
+.modal-card .alert > span { flex: 1 1 320px; min-width: 0; }

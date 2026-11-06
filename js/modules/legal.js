@@ -149,7 +149,7 @@
         const all = App.bsettings.get('legal.docs', {});
         const version = (all[id]?.version || 0) + 1;
         const file = new File([docHTML(d.title, text)], `${fname} v${version} ${new Date().toISOString().slice(0, 10)}.html`, { type: 'text/html' });
-        const [f] = await App.ingest.ingestMany([file], { category: 'report', tags: ['Legal', d.title] });
+        const [f] = await App.ingest.ingestMany([file], { quiet: true, category: 'report', tags: ['Legal', d.title] });
         all[id] = { text, version, savedAt: Date.now(), fileId: f?.id };
         App.bsettings.set('legal.docs', all);
         App.compliance?.audit('Legal document saved', `${d.title} v${version}`);
@@ -192,7 +192,7 @@
         const name = card.querySelector('#sgP').value.trim(); if (!name) return App.ui.toast('Who signed?');
         const doc = card.querySelector('#sgD').value, d = L().DOCS.find(x => x.id === doc);
         const rec = { id: App.uid(), doc, person: name, role: d.sign, date: card.querySelector('#sgDt').value, method: card.querySelector('#sgM').value, version: App.bsettings.get('legal.docs', {})[doc]?.version || null };
-        if (file) { const tags = ['Legal', d.title]; if (d.sign === 'employee') tags.push(name); const [f] = await App.ingest.ingestMany([file], { category: d.sign === 'employee' ? 'personnel' : 'report', tags }); if (f) { rec.fileId = f.id; rec.fileName = f.name; } }
+        if (file) { const tags = ['Legal', d.title]; if (d.sign === 'employee') tags.push(name); const [f] = await App.ingest.ingestMany([file], { quiet: true, category: d.sign === 'employee' ? 'personnel' : 'report', tags }); if (f) { rec.fileId = f.id; rec.fileName = f.name; } }
         const all = App.bsettings.get('legal.signed', []); all.push(rec); App.bsettings.set('legal.signed', all);
         App.compliance?.audit('Signature recorded', `${d.title}: ${name} (${rec.date}, ${rec.method})`);
         close(); tab = 'signatures'; App.go('legal');
@@ -294,7 +294,7 @@
       $('#iSave').onclick = async () => {
         Object.assign(i, { when: $('#iW').value, type: $('#iT').value, location: $('#iL').value.trim(), status: $('#iS').value, people: $('#iP').value.trim(), witnesses: $('#iWi').value.trim(), description: $('#iD').value.trim(), injuries: $('#iI').value.trim(), actions: $('#iA').value.trim(), police: $('#iPo').value.trim(), insurer: $('#iIn').value.trim(), followup: $('#iF').value.trim(), updated: Date.now() });
         if (!i.description) return App.ui.toast('Describe what happened');
-        if (files.length) { const fs = await App.ingest.ingestMany(files, { category: 'report', tags: ['Incident', i.type, i.when.slice(0, 10)] }); i.photos = [...(i.photos || []), ...fs.map(f => f.id)]; }
+        if (files.length) { const fs = await App.ingest.ingestMany(files, { quiet: true, category: 'report', tags: ['Incident', i.type, i.when.slice(0, 10)] }); i.photos = [...(i.photos || []), ...fs.map(f => f.id)]; }
         const all = App.bsettings.get('legal.incidents', []).filter(x => x.id !== i.id); all.push(i); App.bsettings.set('legal.incidents', all);
         App.compliance?.audit(isNew ? 'Incident reported' : 'Incident updated', `${i.type} · ${i.when} · ${i.status}`);
         close(); App.ui.toast('Incident report saved'); App.go('legal');

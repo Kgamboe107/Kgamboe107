@@ -44,6 +44,24 @@ Use the **Viewing** switcher at the top of the sidebar to move between businesse
 
 Column names are matched automatically. If an export uses different names, open **Column mapping** on any page and pick the right column. The app remembers your choice.
 
+## Reports it reads automatically
+
+Drop files on the window (or click **Upload**) and the app works out what each one is and sends its numbers to the right pages. Every page and dashboard updates immediately, and a summary shows where each file went.
+
+| You upload | It becomes |
+|---|---|
+| **CrunchTime Labor Variance** (CSV, one week, days across the top) | One rolling **daily sales & labor** table: actual vs. forecast sales, labor $, hours, OT, shifts, SPLH, bread count. Feeds Operations, Personnel and the sales side of food cost. Weeks are combined; uploading a week again replaces it. |
+| **CrunchTime Purchase Journal** (PDF) | Every invoice and store transfer in the **Purchases** journal, split into food, produce, beverage, paper, cleaning, kitchen supplies and misc. Feeds food cost % and Tax & Compliance. The total is checked against the report. |
+| **CrunchTime inventory count / variance** (PDF) | Operations **inventory variance by item**: book vs. physical, actual vs. theoretical usage, dollars missing. |
+| **CrunchTime Actual vs. Theoretical cost** (PDF) | Operations **food cost gap** panel: points and dollars above theoretical by category (meat, bread, cheese…), with the trend between periods. |
+| **PowerPoint** (.pptx) / **Word** (.docx) | A searchable Research note, with slide titles, bullets, tables and speaker notes. A **scorecard table** (Measure / Now / goal dates) shows on the dashboard, with a live "this week" number where the app can measure it. |
+| Any other **PDF** | Its tables become data tables you can map or explore, and its text is searchable. |
+| Spreadsheets (CSV/XLSX) | Data tables, matched to pages by their columns, as before. |
+
+It also flags problems: a file whose name doesn't match the dates inside it, the same week uploaded twice, missing weeks, and totals that don't match the report. If the reports belong to a specific store (e.g. "11053 - Auburn"), the summary offers to give that store its own business.
+
+**Which table a page uses:** real data always beats sample data, then the best column fit, then the newest upload. If you pick a table by hand, that choice sticks until newer data that fits as well arrives. Once you have real receipts, sample receipts stop counting. Food cost % compares purchases and sales over the same days.
+
 ## Entering data by hand
 
 ### Purchases: receipts → purchase journal → food cost
@@ -237,7 +255,10 @@ js/biz.js             businesses: workspaces, scoping, per-business settings
 js/store.js           IndexedDB storage
 js/ingest.js          file parsing, source + category detection
 js/ui.js              tables, charts, KPI cards, column mapper
-js/ux.js              confirm dialogs, searchable dropdowns, input masks, stepped forms, progress pill
+js/ux.js              confirm dialogs, searchable dropdowns, input masks, stepped forms, progress pill, import summary
+js/pdfx.js            PDF table reader (column edges from data alignment, wrapped-cell rejoining)
+js/pptx.js            PowerPoint / Word reader (slides, tables, speaker notes)
+js/reports.js         report translators (CrunchTime labor variance, purchase journal, inventory, AvT, decks)
 js/samples.js         sample data generator
 js/modules/*.js       one file per page
 js/fx.js              icons, animations, toasts, command palette, onboarding

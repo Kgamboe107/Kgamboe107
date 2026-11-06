@@ -9,27 +9,23 @@
 
   /* Sales for the period: from the Operations sales mapping (uploaded or manual table), else typed in */
   async function salesFor(from, to, key) {
-    let saved = App.bsettings.get('map.ops-sales', {});
     const manual = App.bsettings.get('pur.sales', {})[key];
-    if (!saved.ds) {
-      // No mapping chosen yet: find a daily sales table (uploaded or typed in) on our own
-      const cands = (await App.store.datasets()).filter(d => !d.live && ['operations', 'financial'].includes(d.category));
-      for (const d of cands) {
-        const sales = App.findCol(d.headers, ['net sales', 'sales', 'gross sales']);
-        const date = App.findCol(d.headers, ['business date', 'date', 'day']);
-        if (sales && date && !/^month$/i.test(date)) { saved = { ds: d.id, map: { sales, date } }; break; }
-      }
-    }
+    // Same table the Operations page uses (newest real daily sales upload unless you picked one)
+    const r = await App.ui.resolve('ops-sales', { categories: ['operations', 'financial'], includeLive: false, fields: [
+      { key: 'sales', syn: ['net sales', 'sales', 'gross sales', 'revenue'] }, { key: 'date', syn: ['business date', 'date', 'day'] }] });
+    const saved = r.ds && r.map.sales && r.map.date && !/^month$/i.test(r.map.date) ? { ds: r.ds.id, map: r.map } : {};
     if (saved.ds && saved.map?.sales) {
       const d = await App.store.get('datasets', saved.ds);
       if (d) {
-        let sum = 0, n = 0;
+        let sum = 0, n = 0, lo = '', hi = '';
         for (const r of d.rows) {
           const dk = saved.map.date ? App.dateKey(r[saved.map.date]) : null;
           if (dk && (dk < from || dk > to)) continue;
           sum += App.n0(r[saved.map.sales]); n++;
+          if (dk) { if (!lo || dk < lo) lo = dk; if (!hi || dk > hi) hi = dk; }
         }
-        if (n) return { sales: sum, source: d.name, auto: true };
+        // Dates the sales actually cover, so food purchases are compared over the same days
+        if (n) return { sales: sum, source: d.name, auto: true, cov: lo && hi ? [lo, hi] : null };
       }
     }
     return { sales: manual ? +manual : NaN, source: 'entered manually', auto: false };
@@ -52,7 +48,10 @@
       const pkey = state.period === 'custom' ? `${from}_${to}` : `${state.period}:${from}`;
       const sales = await salesFor(from, to, pkey);
       const inv = App.bsettings.get('pur.inv', {})[pkey] || {};
-      const cogs = (+inv.beg || 0) + food - (+inv.end || 0);
+      // Only count food bought on the days the sales cover (sales reports often cover fewer weeks than purchases)
+      const cov = sales.cov && (sales.cov[0] > from || sales.cov[1] < to) ? sales.cov : null;
+      const foodMatched = cov ? sum(x => x.p.date >= cov[0] && x.p.date <= cov[1] ? x.t.food : 0) : food;
+      const cogs = (+inv.beg || 0) + foodMatched - (+inv.end || 0);
       const foodPct = sales.sales ? cogs / sales.sales : NaN;
       const target = App.bsettings.get('ops.targets', { food: 0.30 }).food || 0.30;
       const changes = PU().priceChanges(purchases);
@@ -88,7 +87,7 @@
         <div class="grid k4">
           ${App.ui.kpi('Business purchases', fmt.money(business, 2), `${list.length} receipt${list.length === 1 ? '' : 's'} · ${esc(label)}`)}
           ${App.ui.kpi('Food purchases', fmt.money(food, 2), business ? fmt.pct(food / business) + ' of purchases' : '')}
-          ${App.ui.kpi('Food cost %', fmt.pct(foodPct), sales.sales ? `on ${fmt.money(sales.sales)} sales · target ${fmt.pct(target)}` : 'add sales below', isNaN(foodPct) ? '' : foodPct <= target ? 'good' : 'bad')}
+          ${App.ui.kpi('Food cost %', fmt.pct(foodPct), sales.sales ? `${fmt.money(foodMatched)} food on ${fmt.money(sales.sales)} sales${cov ? ` (${fmt.date(cov[0])} – ${fmt.date(cov[1])})` : ''} · target ${fmt.pct(target)}` : 'add sales below', isNaN(foodPct) ? '' : foodPct <= target ? 'good' : 'bad')}
           ${App.ui.kpi('Beverage & alcohol', fmt.money(bev, 2), '')}
           ${App.ui.kpi('Supplies & paper', fmt.money(supplies, 2), `tax paid ${fmt.money(taxes, 2)}`)}
           ${personal ? App.ui.kpi('Personal (excluded)', fmt.money(personal, 2), 'not counted as business', 'warn') : ''}
