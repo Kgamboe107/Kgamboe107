@@ -20,7 +20,7 @@
           <div class="card"><div class="row">
             <label class="field" style="flex:2">Table<select id="xDs">${datasets.map(d => `<option value="${d.id}" ${d.id === ds.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>
             <label class="field">Group by<select id="xBy">${App.ui.options(ds.headers, by)}</select></label>
-            <label class="field">Bucket dates<select id="xBucket">${App.ui.options([{ value: '', label: 'No' }, { value: 'day', label: 'Day' }, { value: 'month', label: 'Month' }], st.bucket || '')}</select></label>
+            <label class="field">Bucket dates<select id="xBucket">${App.ui.options([{ value: '', label: 'Keep each date' }, { value: 'day', label: 'Group by day' }, { value: 'month', label: 'Group by month' }], st.bucket || '')}</select></label>
             <label class="field">Value<select id="xVal"><option value="">(row count)</option>${App.ui.options(numCols, val)}</select></label>
             <label class="field">Aggregate<select id="xAgg">${App.ui.options(['sum', 'avg', 'min', 'max', 'count'], agg)}</select></label>
             <label class="field">Chart<select id="xChart">${App.ui.options(['bar', 'line', 'doughnut'], chartType)}</select></label>

@@ -7,8 +7,9 @@
     const type = b.type || 'restaurant';
     const mods = b.modules || App.biz.TEMPLATES[type].modules;
     return `
-      <div class="card-head"><h2>${b.id ? 'Edit business' : 'New business or venture'}</h2><button class="btn small" data-close>Cancel</button></div>
-      <div class="stack">
+      <div class="card-head"><h2>${b.id ? 'Edit business' : 'New business or venture'}</h2><button class="btn small ghost" data-close>${b.id ? 'Discard changes' : 'Cancel'}</button></div>
+      <div class="stack"${b.id ? '' : ' data-steps'}>
+        <section data-step="Name &amp; type" class="stack form-group">
         <label class="field">Name<input id="bName" value="${esc(b.name || '')}" placeholder="e.g. Gamboe Consulting, Taco Truck #2, Swing Trading"></label>
         <div class="row">
           <label class="field" style="flex:1">Type<select id="bType">${App.ui.options(Object.entries(App.biz.TEMPLATES).map(([k, t]) => ({ value: k, label: t.label })), type)}</select></label>
@@ -16,15 +17,19 @@
           <label class="field">Started<input type="date" id="bStart" value="${esc(b.started || '')}"></label>
         </div>
         <label class="field">Description<textarea id="bDesc" rows="2" placeholder="What this venture does, goals, partners…">${esc(b.description || '')}</textarea></label>
+        </section>
+        <section data-step="Pick modules" class="stack form-group">
         <div class="field">Modules this business uses
           <div class="check-grid" id="bMods">${App.biz.ALL_MODULES.map(m => `<label class="row small" style="color:var(--text)"><input type="checkbox" value="${m}" ${mods.includes(m) ? 'checked' : ''}> ${App.biz.MODULE_LABELS[m]}</label>`).join('')}</div>
         </div>
-        <div class="row"><button class="btn primary" id="bSave">${b.id ? 'Save changes' : 'Create business'}</button></div>
+        <div class="row form-submit"><button class="btn primary" id="bSave">${b.id ? 'Save changes' : 'Create business'}</button></div>
+        </section>
       </div>`;
   }
 
   function openForm(b, after) {
     App.ui.modal(form(b), (card, close) => {
+      if (!b?.id) App.ux.steps(card.querySelector('[data-steps]'), { finish: '#bSave' });
       card.querySelector('#bType').onchange = e => {
         const mods = App.biz.TEMPLATES[e.target.value].modules;
         card.querySelectorAll('#bMods input').forEach(i => i.checked = mods.includes(i.value));
@@ -82,14 +87,16 @@
         const biz = App.biz.get(b.dataset.del);
         const others = App.biz.list().filter(x => x.id !== biz.id);
         App.ui.modal(`
-          <div class="card-head"><h2>Delete ${esc(biz.name)}?</h2><button class="btn small" data-close>Cancel</button></div>
+          <div class="card-head"><h2>Delete ${esc(biz.name)}?</h2></div>
           <div class="stack">
             <div class="muted">${counts[biz.id] || 0} files belong to this business.</div>
             ${others.length ? `<label class="row"><input type="radio" name="dm" value="move" checked> Move its files and notes to <select id="dTo">${App.ui.options(others.map(o => ({ value: o.id, label: o.name })), others[0].id)}</select></label>` : ''}
             <label class="row"><input type="radio" name="dm" value="delete" ${others.length ? '' : 'checked'}> Permanently delete its files and notes</label>
-            <div class="row"><button class="btn danger" id="dGo">Delete business</button></div>
+            <div class="confirm-actions"><button class="btn" data-close>Keep ${esc(biz.name)}</button><button class="btn destructive" id="dGo">${others.length ? 'Delete business &amp; move files' : 'Delete business &amp; its files'}</button></div>
           </div>`, (card, close) => {
-          card.querySelector('#dGo').onclick = async () => {
+          const go = card.querySelector('#dGo');
+          card.querySelectorAll('input[name=dm]').forEach(r => r.onchange = () => { go.textContent = card.querySelector('input[name=dm]:checked').value === 'move' ? 'Delete business & move files' : 'Delete business & its files'; });
+          go.onclick = async () => {
             const mode = card.querySelector('input[name=dm]:checked').value;
             await App.biz.remove(biz.id, mode === 'move' ? { moveTo: card.querySelector('#dTo').value } : {});
             close(); App.ui.toast(`Deleted ${biz.name}`); App.go('businesses');

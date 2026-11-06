@@ -28,8 +28,8 @@
       const has = key => rows.some(r => r.k[key]);
 
       view.innerHTML = `
-        <div class="card row spread">
-          <div><h2>Master dashboard</h2><div class="muted small">${bizs.length} active business${bizs.length > 1 ? 'es' : ''} · ${allFiles.length} files · updated ${new Date().toLocaleTimeString()}</div></div>
+        <div class="card greet row spread">
+          <div><div class="greet-hi">${App.esc(App.ux.greeting())}</div><div class="muted small">${App.esc(App.ux.today())} · Master dashboard · ${bizs.length} active business${bizs.length > 1 ? 'es' : ''} · ${allFiles.length} files · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div></div>
           <div class="row no-print"><button class="btn" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn" data-go="businesses">Manage businesses</button><button class="btn primary" id="mNew">+ New business</button></div>
         </div>
         <div class="grid k4">

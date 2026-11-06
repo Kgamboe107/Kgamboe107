@@ -82,7 +82,7 @@
     };
     el.querySelectorAll('input,textarea,select').forEach(i => i.addEventListener('input', save));
     el.querySelector('#nExport').onclick = () => App.download((n.title || 'note') + '.md', `# ${n.title}\n\nStatus: ${n.status}\nTags: ${(n.tags || []).join(', ')}\nSource: ${n.link || ''}\n\n${n.body}`, 'text/markdown');
-    el.querySelector('#nDel').onclick = async () => { if (!confirm('Delete this note?')) return; await App.store.del('notes', n.id); activeId = null; list(view); edit(view); };
+    el.querySelector('#nDel').onclick = async () => { if (!await App.confirm({ title: `Delete “${n.title || 'Untitled note'}”?`, body: 'This note is removed from Research. Export it first if you want a copy.', ok: 'Delete note', cancel: 'Keep note', danger: true })) return; await App.store.del('notes', n.id); activeId = null; list(view); edit(view); };
   }
 
   async function files(view) {

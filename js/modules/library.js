@@ -91,7 +91,7 @@
           App.ui.toast(`Moved to ${App.biz.get(s.value).name}`); renderList();
         });
         el.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
-          if (!confirm('Delete this file and its data tables?')) return;
+          if (!await App.confirm({ title: 'Delete this file?', body: 'The file and every data table read from it are removed. Dashboards that use them will update.', ok: 'Delete file and tables', cancel: 'Keep file', danger: true })) return;
           const gone = await App.store.get('files', b.dataset.del);
           await App.store.deleteFile(b.dataset.del);
           App.compliance?.audit('File deleted', gone?.name || '', gone?.businessId); renderList();

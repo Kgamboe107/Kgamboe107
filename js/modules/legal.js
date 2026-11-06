@@ -158,7 +158,7 @@
       $('#dWord').onclick = () => App.download(fname + '.doc', new Blob(['﻿' + docHTML(d.title, cur())], { type: 'application/msword' }));
       $('#dPdf').onclick = () => printHTML(docHTML(d.title, cur()));
       $('#dCopy').onclick = () => { navigator.clipboard?.writeText(cur()); App.ui.toast('Copied. Paste into your website builder.'); };
-      $('#dReset')?.addEventListener('click', () => { if (!confirm('Replace the text with a fresh version from your business details? Your saved versions stay in the Data Library.')) return; text = d.body(L().profile()); $('#dEdit').value = text; $('#dPrev').innerHTML = renderDoc(text); upd(); });
+      $('#dReset')?.addEventListener('click', async () => { if (!await App.confirm({ title: 'Replace your edits with a fresh draft?', body: 'The editor is refilled from your business details. Versions you already saved stay in the Data Library.', ok: 'Replace with fresh draft', cancel: 'Keep my edits' })) return; text = d.body(L().profile()); $('#dEdit').value = text; $('#dPrev').innerHTML = renderDoc(text); upd(); });
       $('#dSign')?.addEventListener('click', () => { close(); signDialog(id); });
     });
   }
@@ -305,14 +305,23 @@
   /* ---------- Business details ---------- */
   async function profile(body, a) {
     const p = a.p;
-    const f = (k, l, ph = '', type = 'text') => `<label>${l}<input data-k="${k}" type="${type}" value="${esc(p[k] || '')}" placeholder="${esc(ph)}"></label>`;
-    body.innerHTML = `<div class="card stack"><h2>Business details used in your documents</h2>
-      <div class="mapper">${f('legalName', 'Legal name (as registered)', 'Gamboe Hospitality LLC')}${f('dba', 'DBA / brand name', 'The Corner Diner')}${f('owner', 'Owner / privacy contact', 'Your name')}
-        ${f('address', 'Street address')}${f('city', 'City')}${f('state', 'State', 'WA')}${f('zip', 'ZIP')}
-        ${f('email', 'Contact email', 'hello@yourbusiness.com', 'email')}${f('phone', 'Phone')}${f('website', 'Website', 'https://')}${f('effective', 'Effective date for policies', '', 'date')}</div>
-      <h3>What your business does</h3><div class="muted small">This decides which documents and risk checks apply.</div>
-      <div class="check-grid">${L().PRACTICES.map(([k, l]) => `<label class="row small" style="color:var(--text)"><input type="checkbox" data-pr="${k}" ${L().has(p, k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>
-      <div class="row"><button class="btn primary" id="pfSave">Save details</button></div></div>`;
+    const f = (k, l, ph = '', type = 'text', mask = '') => `<label>${l}<input data-k="${k}" type="${type}" value="${esc(p[k] || '')}" placeholder="${esc(ph)}"${mask ? ` data-mask="${mask}"` : ''}></label>`;
+    body.innerHTML = `<div class="card stack"><div><h2>Business details used in your documents</h2><div class="muted small">Three short steps. Everything stays on this computer.</div></div>
+      <div class="stack" data-steps>
+        <section data-step="Who you are" class="form-group">
+          <div class="mapper">${f('legalName', 'Legal name (as registered)', 'Gamboe Hospitality LLC')}${f('dba', 'DBA / brand name', 'The Corner Diner')}${f('owner', 'Owner / privacy contact', 'Your name')}${f('effective', 'Effective date for policies', '', 'date')}</div>
+        </section>
+        <section data-step="How to reach you" class="form-group">
+          <div class="mapper">${f('address', 'Street address', '123 Main St')}${f('city', 'City')}${f('state', 'State', 'WA', 'text', 'state')}${f('zip', 'ZIP', '98101', 'text', 'zip')}
+            ${f('email', 'Contact email', 'hello@yourbusiness.com', 'email')}${f('phone', 'Phone', '(555) 123-4567', 'tel', 'phone')}${f('website', 'Website', 'https://')}</div>
+        </section>
+        <section data-step="What you do" class="form-group">
+          <div class="muted small">This decides which documents and risk checks apply.</div>
+          <div class="check-grid">${L().PRACTICES.map(([k, l]) => `<label class="row small" style="color:var(--text)"><input type="checkbox" data-pr="${k}" ${L().has(p, k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>
+          <div class="row form-submit"><button class="btn primary" id="pfSave">Save business details</button></div>
+        </section>
+      </div></div>`;
+    App.ux.steps(body.querySelector('[data-steps]'), { finish: '#pfSave' });
     body.querySelector('#pfSave').onclick = () => {
       const next = { practices: {} };
       body.querySelectorAll('[data-k]').forEach(i => next[i.dataset.k] = i.value.trim());

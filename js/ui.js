@@ -23,10 +23,25 @@
     return close;
   }
 
+  const ICO_BY_DRILL = { headcount: 'personnel', employee: 'personnel', turnover: 'personnel', tenure: 'personnel', pay: 'personnel', labor: 'operations',
+    sales: 'finance', finance: 'finance', purchases: 'receipt', receipt: 'receipt', foodcost: 'receipt', positions: 'trading', marketing: 'marketing',
+    filings: 'shield', contractors: 'shield', licenses: 'shield', audit: 'shield', legal: 'scale' };
+  const ICO_BY_LABEL = [[/staff|head|employee|people|turnover|tenure|hire/i, 'personnel'], [/labor|hours|shift|ticket|cover|avt|variance|waste/i, 'operations'],
+    [/revenue|sales|income|profit|margin|cash|expense|net|cost|spend/i, 'finance'], [/receipt|purchase|food|vendor|owed/i, 'receipt'],
+    [/position|p&l|pnl|trade|win|drawdown|exposure|risk|sharpe/i, 'trading'], [/roas|click|campaign|ctr|lead|conversion|ad|cac/i, 'marketing'],
+    [/filing|tax|1099|license|deadline|compliance|audit/i, 'shield'], [/legal|risk score|document|incident/i, 'scale'],
+    [/research|note/i, 'research'], [/file|table|upload/i, 'library'], [/business/i, 'businesses']];
+  function kpiIcon(label, drill) {
+    if (drill && ICO_BY_DRILL[drill]) return ICO_BY_DRILL[drill];
+    for (const [re, k] of ICO_BY_LABEL) if (re.test(label)) return k;
+    return '';
+  }
+
   function kpi(label, value, sub = '', tone = '', drill) {
     const d = drill === false ? null : (drill || App.drillFor?.(label));
     const attrs = d ? ` data-drill="${esc(d[0])}" data-arg="${esc(d[1] || '')}" tabindex="0" role="button" title="Click for details"` : '';
-    return `<div class="card kpi ${tone}${d ? ' link' : ''}"${attrs}>${d ? '<span class="kpi-go" aria-hidden="true">↗</span>' : ''}<div class="label">${esc(label)}</div><div class="value">${value}</div>${sub ? `<div class="sub muted">${sub}</div>` : ''}</div>`;
+    const ico = kpiIcon(label, d && d[0]);
+    return `<div class="card kpi ${tone}${d ? ' link' : ''}${ico ? ' has-ico' : ''}"${attrs}>${d ? '<span class="kpi-go" aria-hidden="true">↗</span>' : ''}${ico ? `<span class="kpi-ico" aria-hidden="true">${App.fx?.icon(ico) || ''}</span>` : ''}<div class="label">${esc(label)}</div><div class="value">${value}</div>${sub ? `<div class="sub muted">${sub}</div>` : ''}</div>`;
   }
 
   function empty(msg, action = '') {

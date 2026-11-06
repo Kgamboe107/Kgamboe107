@@ -7,11 +7,12 @@
   <meta name="color-scheme" content="light dark">
   <link rel="preload" href="vendor/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
-  <script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("ocd.theme"))||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
+  <script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("ocd.theme"))||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}try{document.documentElement.dataset.surface=JSON.parse(localStorage.getItem("ocd.surface"))||"glass"}catch(e){document.documentElement.dataset.surface="glass"}</script>
 </head>
 <body>
   <script>setTimeout(function(){var s=document.getElementById("splash");if(s){s.classList.add("done");setTimeout(function(){s.remove()},500)}},6000)</script>
   <div id="splash" class="splash"><div class="splash-inner"><div class="splash-mark">OC</div><div>Ops Command Desk</div><div class="splash-bar"></div></div></div>
+  <div class="ambient" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><i class="orb o4"></i></div>
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
@@ -79,6 +80,7 @@
   <script src="js/store.js"></script>
   <script src="js/ingest.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/ux.js"></script>
   <script src="js/fx.js"></script>
   <script src="js/ai.js"></script>
   <script src="js/purchasing.js"></script>

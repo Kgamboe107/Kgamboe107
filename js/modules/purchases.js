@@ -342,7 +342,7 @@
       $('#rSave').onclick = () => save(false);
       $('#rSaveNew').onclick = () => save(true);
       $('#rDel')?.addEventListener('click', async () => {
-        if (!confirm('Delete this receipt?')) return;
+        if (!await App.confirm({ title: 'Delete this receipt?', body: 'Its line items leave the purchase journal and food cost. The attached photo is removed too.', ok: 'Delete receipt', cancel: 'Keep receipt', danger: true })) return;
         await App.store.del('purchases', existing.id); await App.purchasing.syncDataset();
         App.compliance?.audit('Receipt deleted', `${existing.vendor} ${existing.date} · ${fmt.money(App.purchasing.totals(existing).computed, 2)}`, existing.businessId);
         close(); App.ui.toast('Receipt deleted'); App.go('purchases');

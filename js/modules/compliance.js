@@ -323,7 +323,7 @@
         C().audit(isNew ? 'License added' : 'License updated', `${l.name}${l.number ? ' #' + l.number : ''}${l.expires ? ', expires ' + l.expires : ''}`);
         close(); App.go('compliance');
       };
-      $('#lD')?.addEventListener('click', () => { if (!confirm('Delete this record?')) return; App.bsettings.set('cmp.licenses', App.bsettings.get('cmp.licenses', []).filter(x => x.id !== l.id)); C().audit('License deleted', l.name); close(); App.go('compliance'); });
+      $('#lD')?.addEventListener('click', async () => { if (!await App.confirm({ title: `Delete ${l.name || 'this license'}?`, body: 'Renewal reminders stop and the record leaves your compliance file. The deletion is noted in the audit log.', ok: 'Delete license', cancel: 'Keep license', danger: true })) return; App.bsettings.set('cmp.licenses', App.bsettings.get('cmp.licenses', []).filter(x => x.id !== l.id)); C().audit('License deleted', l.name); close(); App.go('compliance'); });
     });
   }
 

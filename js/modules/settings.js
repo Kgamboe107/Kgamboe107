@@ -23,7 +23,9 @@
             : `<div class="row"><button class="btn primary" id="lkSet">Set a passcode</button></div>`}
           </div>
           <div class="card stack"><h2>Appearance</h2>
-            <div class="row"><button class="btn" id="sTheme">Toggle light / dark</button></div>
+            <label class="field" style="max-width:280px">Your first name (for the dashboard greeting)<input id="sName" value="${App.esc(App.settings.get('userName', ''))}" placeholder="e.g. Alex" autocomplete="given-name"></label>
+            <div class="seg" role="radiogroup" aria-label="Surface style">${[['glass', 'Liquid glass'], ['solid', 'Solid (faster on older PCs)']].map(([v, l]) => `<button data-surface="${v}" class="${(App.settings.get('surface', 'glass') === v) ? 'on' : ''}">${l}</button>`).join('')}</div>
+            <div class="row"><button class="btn" id="sTheme">Switch light / dark mode</button></div>
           </div>
           ${window.desktop ? `<div class="card stack"><h2>Troubleshooting</h2>
             <p class="muted small">If the window ever opens blank, the app switches itself to safe graphics mode on the next launch. Developer tools: <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>I</kbd>. Reload: <kbd>F5</kbd>.</p>
@@ -31,7 +33,7 @@
           </div>` : ''}
           <div class="card stack"><h2>Reset</h2>
             <p class="muted small">Permanently deletes all files, data tables, notes, and settings on this computer.</p>
-            <div class="row"><button class="btn danger" id="sClear">Delete all data</button></div>
+            <div class="row"><button class="btn destructive" id="sClear">Erase all data…</button></div>
           </div>
         </div>`;
       view.querySelector('#sLoad').onclick = async () => { await App.samples.load(); App.go('dashboard'); };
@@ -80,9 +82,11 @@
       view.querySelector('#lkOff')?.addEventListener('click', () => App.ui.modal(`<div class="card-head"><h2>Turn off app lock</h2><button class="btn small" data-close>Cancel</button></div><div class="stack"><label class="field">Passcode<input type="password" id="lkOffP"></label><div class="row"><button class="btn danger" id="lkOffGo">Turn off</button></div></div>`, (card, close) => {
         card.querySelector('#lkOffGo').onclick = async () => { if (!(await App.lock.check(card.querySelector('#lkOffP').value))) return App.ui.toast('Incorrect passcode'); App.lock.disable(); App.compliance?.audit('App passcode removed', ''); close(); App.go('settings'); };
       }));
+      view.querySelector('#sName').onchange = e => { App.settings.set('userName', e.target.value.trim()); App.ui.toast('Name saved'); };
+      view.querySelectorAll('[data-surface]').forEach(b => b.onclick = () => { App.ux.setSurface(b.dataset.surface); view.querySelectorAll('[data-surface]').forEach(x => x.classList.toggle('on', x === b)); });
       view.querySelector('#sTheme').onclick = () => document.getElementById('themeToggle').click();
       view.querySelector('#sClear').onclick = async () => {
-        if (!confirm('Delete ALL data on this computer? This cannot be undone.')) return;
+        if (!await App.confirm({ title: 'Erase all data on this computer?', body: 'Every business, file, data table, receipt, note and setting is permanently deleted. Download a backup first if you might need it. This cannot be undone.', ok: 'Erase everything', cancel: 'Keep my data', danger: true })) return;
         for (const s of ['files', 'datasets', 'notes', 'purchases']) await App.store.clear(s);
         Object.keys(localStorage).filter(k => k.startsWith('ocd.')).forEach(k => localStorage.removeItem(k));
         App.ui.toast('All data deleted'); App.go('dashboard');

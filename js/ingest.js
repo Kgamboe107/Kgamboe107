@@ -161,10 +161,13 @@
 
   async function ingestMany(files, opts = {}) {
     const results = [];
-    for (const f of files) {
+    const list = [...files], many = list.length > 1;
+    for (const [i, f] of list.entries()) {
+      if (many || f.size > 2e6) App.ux?.task(`Importing ${many ? `${i + 1} of ${list.length} · ` : ''}${f.name}`, i / list.length * 100);
       try { results.push(await ingestFile(f, opts)); }
       catch (e) { console.error(e); App.ui.toast(`Could not import ${f.name}: ${e.message}`); }
     }
+    if (many || list.some(f => f.size > 2e6)) App.ux?.taskDone(`Imported ${results.length} of ${list.length} file${list.length > 1 ? 's' : ''}`);
     if (results.length) {
       const ds = results.reduce((a, r) => a + r.datasetIds.length, 0);
       App.ui.toast(`Imported ${results.length} file${results.length > 1 ? 's' : ''}${ds ? ` · ${ds} data table${ds > 1 ? 's' : ''}` : ''}`);

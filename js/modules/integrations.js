@@ -1,6 +1,19 @@
 /* Integrations: live connectors (Google Drive, Outlook via Microsoft Graph) + guided import for
    Harri, CrunchTime, Webull, Dub, and Anara exports. */
 (function (App) {
+  const ADDONS = [
+    { repo: 'anthropics/claude-plugins-community', name: 'Claude plugins marketplace', mono: 'C+', color: 'linear-gradient(135deg,#d97757,#b4532a)',
+      what: 'Community-built plugins for Claude Cowork and Claude Code.', use: 'Finding ready-made workflows (bookkeeping, HR, marketing) to pair with your exports from this app.' },
+    { repo: 'tt-a1i/archify', name: 'Archify', mono: 'Ar', color: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+      what: 'Has an AI agent draw architecture and workflow diagrams as self-checking HTML pages.', use: 'Mapping your processes, like receipt → purchase journal → food cost → tax report.' },
+    { repo: 'MadsLorentzen/ai-job-search', name: 'AI job search', mono: 'Jb', color: 'linear-gradient(135deg,#10b981,#0d9488)',
+      what: 'A job-application framework built on Claude Code: tailored resumes, cover letters, tracking.', use: 'Hiring side: borrow its structure for job posts and candidate tracking alongside Personnel.' },
+    { repo: 'bilawalsidhu/gods-eye-view', name: "God's Eye View", mono: '3D', color: 'linear-gradient(135deg,#1e293b,#475569)',
+      what: 'An interactive 3D globe for exploring places and data on a map.', use: 'Visualizing locations: stores, vendors, delivery zones, ad reach.' },
+    { repo: 'freestylefly/awesome-gpt-image-2', name: 'Awesome GPT Image 2', mono: 'Im', color: 'linear-gradient(135deg,#d946ef,#8b5cf6)',
+      what: 'A curated library of image-generation prompts, packaged as an agent skill.', use: 'Marketing: menu photos, social posts and flyers to test in your campaigns.' }
+  ];
+
   const { esc } = App;
 
   /* ---------- Google Drive (Google Identity Services + Picker) ---------- */
@@ -177,7 +190,7 @@
               <a class="btn small" href="${p.keyUrl}" target="_blank" rel="noopener">Get an API key</a></div>
             <div class="row"><input type="password" data-aikey="${k}" placeholder="${aiConn[k] ? '•••••••• saved. Paste to replace' : p.keyHint}" style="flex:1">
               <button class="btn primary small" data-aisave="${k}">Save</button><button class="btn small" data-aitest="${k}" ${aiConn[k] ? '' : 'disabled'}>Test</button>
-              ${aiConn[k] ? `<button class="btn small danger" data-airm="${k}">Remove</button>` : ''}</div>
+              ${aiConn[k] ? `<button class="btn small danger" data-airm="${k}">Remove key</button>` : ''}</div>
             <div class="muted tiny">${k === 'perplexity' ? 'Uses the Perplexity Agent API (web search with citations). Billed per request by Perplexity.' : 'Uses the xAI API. Models are loaded from your account. Billed per token by xAI.'} ${window.desktop ? 'Keys are encrypted by your operating system.' : 'Keys stay in this browser and are never included in backups.'}</div>
           </div>`).join('')}</div>
         <h2 style="margin-top:8px">Export-based connectors</h2>
@@ -190,7 +203,16 @@
               <label class="btn primary">Import ${esc(App.sources[s].label)} file<input type="file" data-src="${s}" multiple hidden></label>
               ${gd.template ? `<button class="btn small" data-tpl="${s}">Download template</button>` : ''}
             </div>
-          </div>`).join('')}</div>`;
+          </div>`).join('')}</div>
+        <h2 style="margin-top:8px">Add-ons &amp; resources</h2>
+        <div class="muted small" style="margin-top:-10px">Open-source projects that work alongside Ops Command Desk. They open on GitHub; nothing is installed automatically.</div>
+        <div class="grid c3">${ADDONS.map(a => `
+          <a class="card int-card addon stack" href="https://github.com/${a.repo}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">
+            <div class="row"><div class="logo" style="background:${a.color}">${a.mono}</div><div style="min-width:0"><h3 style="margin:0">${esc(a.name)}</h3><div class="muted tiny">github.com/${esc(a.repo)}</div></div></div>
+            <div class="small">${esc(a.what)}</div>
+            <div class="muted tiny"><b>Use it for:</b> ${esc(a.use)}</div>
+            <span class="small" style="color:var(--accent);font-weight:600">View on GitHub ↗</span>
+          </a>`).join('')}</div>`;
 
       view.querySelectorAll('[data-aisave]').forEach(b => b.onclick = async () => {
         const k = b.dataset.aisave, v = view.querySelector(`[data-aikey="${k}"]`).value.trim();

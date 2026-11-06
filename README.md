@@ -168,6 +168,19 @@ Open **AI Assistant** in the sidebar (or press **Ctrl/⌘ + /**).
 
 Harri, CrunchTime, Webull, and Dub don't offer an open API that an individual can sign in to from a desktop app. Harri's and CrunchTime's APIs are partner/enterprise-only. Webull's OpenAPI requires signing requests on a server with an app secret. So these connect through their exports, which the app recognizes automatically by file name and column headers.
 
+**Add-ons & resources.** The bottom of the Integrations page links to open-source projects that pair well with the app: the Claude plugins marketplace, Archify (workflow diagrams), AI job search (hiring), God's Eye View (3D map) and Awesome GPT Image 2 (marketing image prompts). They open on GitHub; nothing is installed automatically.
+
+## Look & feel
+
+- **Liquid glass.** Frosted, layered cards float over a slowly drifting color backdrop: warm sand and teal in light mode, deep teal and indigo in dark mode. Cards catch light along their top edge, and KPI cards show a glossy sweep on hover. On an older PC, switch to **Settings → Appearance → Solid** for a faster flat look.
+- **Greeting.** The dashboard says good morning/afternoon/evening, with today's date. Add your first name in Settings → Appearance.
+- **Icon chips** on every KPI card show at a glance what each number is about.
+- **Searchable dropdowns.** Any list with 8+ choices lets you type to filter, scroll, or use ↑ ↓ and Enter.
+- **Clear confirmations.** Deleting asks with specific buttons, like "Delete receipt" (red) or "Keep receipt". The safe choice is focused, and Esc cancels.
+- **Input masks.** Phone, ZIP and state fields format themselves as you type: (555) 123-4567, 98101-1234, WA.
+- **Step-by-step forms.** New business and Legal → Business details are split into short steps with a progress bar.
+- **Descriptive progress.** Importing several files shows "Importing 2 of 5 · payroll.xlsx" with a progress bar.
+
 ## Install
 
 **Download the installer** from the [Releases page](https://github.com/Kgamboe107/Kgamboe107/releases/latest):
@@ -224,6 +237,7 @@ js/biz.js             businesses: workspaces, scoping, per-business settings
 js/store.js           IndexedDB storage
 js/ingest.js          file parsing, source + category detection
 js/ui.js              tables, charts, KPI cards, column mapper
+js/ux.js              confirm dialogs, searchable dropdowns, input masks, stepped forms, progress pill
 js/samples.js         sample data generator
 js/modules/*.js       one file per page
 js/fx.js              icons, animations, toasts, command palette, onboarding
