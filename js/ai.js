@@ -20,23 +20,21 @@
       prefer: [/gpt-oss-120b/, /llama-3\.3-70b/, /qwen3/, /gpt-oss-20b/, /llama/],
       skip: /whisper|guard|tts|playai|orpheus|prompt-guard|compound|allam/i
     },
-    gemini: {
-      label: 'Gemini', short: 'Free tier · Google', color: '#4285f4', mono: 'Gm', base: '/v1beta/openai', free: true,
-      keyUrl: 'https://aistudio.google.com/app/apikey', keyHint: 'AIza…', cost: 'Free tier',
-      note: 'Free tier with daily limits, no credit card. On the free tier Google may use what you send to improve its products, so avoid sending payroll or employee tables.',
-      privacy: 'On Gemini’s free tier Google may use this to improve its products.',
-      prefer: [/flash(?!.*lite)/, /flash-lite/, /pro/],
-      skip: /embed|image|imagen|tts|audio|live|veo|aqa|learnlm|gemma|robotics|computer-use|native/i
-    },
     ollama: {
-      label: 'Ollama', short: 'Free · unlimited · on this computer', color: '#3a3a3a', mono: 'Ol', base: '/v1', free: true, local: true,
+      label: 'Ollama', short: 'Free · unlimited · private, on this computer', color: '#3a3a3a', mono: 'Ol', free: true, local: true,
       keyUrl: 'https://ollama.com/download', keyHint: '', cost: 'Free, unlimited',
-      note: 'Runs AI models on this computer: no account, no limits, and nothing leaves your PC. Install Ollama, then open a terminal and run "ollama pull llama3.2" (or qwen3, gemma3). Needs about 8 GB of free memory; slower than the online services.',
+      note: 'Runs the AI on this computer: no account, no limits, and nothing you ask (or your payroll and sales data) leaves your PC. Answers are slower than the online services, especially the first one while the model loads.',
       prefer: [/qwen3/, /llama3\.3/, /gemma3/, /llama3\.2/, /llama/, /mistral/],
-      skip: /embed|nomic|bge|minilm/i
+      skip: /embed|nomic|bge|minilm|all-minilm/i
     }
   };
-  const CHAT = ['xai', 'groq', 'gemini', 'ollama'];
+  /* Models offered in the one-click Ollama setup */
+  const OLLAMA_MODELS = [
+    { id: 'llama3.2', label: 'Llama 3.2 (3B)', size: '2.0 GB', ram: '8 GB', note: 'Recommended. Quick on most computers.' },
+    { id: 'qwen3:8b', label: 'Qwen 3 (8B)', size: '5.2 GB', ram: '16 GB', note: 'Sharper analysis; needs a stronger PC.' },
+    { id: 'gemma3:4b', label: 'Gemma 3 (4B)', size: '3.3 GB', ram: '8 GB', note: 'Good middle ground.' }
+  ];
+  const CHAT = ['xai', 'groq'];
   const DEPTHS = [{ value: 'low', label: 'Quick' }, { value: 'medium', label: 'Thorough' }];
 
   /* ---------- Keys: encrypted by the OS in the desktop app, localStorage in the browser ---------- */
@@ -50,7 +48,7 @@
     return (keyCache[p] = v || '');
   }
   async function setKey(p, v) {
-    if (PROVIDERS[p]?.local) { App.settings.set('ai.ollama.on', !!v); App.bus.emit('ai-keys'); return; }
+    if (PROVIDERS[p]?.local) { App.settings.set('ai.ollama.on', !!v); App.settings.set('ai.ollama.off', !v); App.bus.emit('ai-keys'); return; }
     v = (v || '').trim();
     keyCache[p] = v;
     if (window.desktop?.setSecret) await window.desktop.setSecret('ai.' + p, v);
@@ -85,6 +83,12 @@
   /* Chat models available to this account, best first */
   async function models(provider) {
     const P = PROVIDERS[provider];
+    if (provider === 'ollama') {
+      const d = await relay('ollama', 'GET', '/api/tags');
+      const names = (d.models || []).map(m => m.name || m.model).filter(n => n && !P.skip.test(n));
+      const rank = id => { const i = P.prefer.findIndex(re => re.test(id)); return i < 0 ? 99 : i; };
+      return names.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    }
     const d = await relay(provider, 'GET', P.base + '/models');
     let ids = (d.data || d.models || []).map(m => String(m.id || m.name || '').replace(/^models\//, '')).filter(Boolean);
     if (provider === 'xai') {
@@ -100,6 +104,44 @@
     return ids.sort((a, b) => rank(a) - rank(b) || pre(a) - pre(b) || ver(b) - ver(a) || a.localeCompare(b));
   }
   const grokModels = () => models('xai');
+
+  /* ---------- Ollama: detect, download a model, turn on ---------- */
+  async function ollamaStatus() {
+    try {
+      const v = await relay('ollama', 'GET', '/api/version');
+      const list = await models('ollama');
+      return { running: true, version: v.version || '', models: list };
+    } catch (e) { return { running: false, error: e.message, models: [] }; }
+  }
+  /* Streams the download; onProgress({ status, pct, done, total }) */
+  async function ollamaPull(model, onProgress) {
+    const r = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-OCD-Client': '1' }, body: JSON.stringify({ provider: 'ollama', method: 'POST', path: '/api/pull', body: { model, name: model, stream: true } }) });
+    if (!r.ok || !r.body) { let m = r.statusText; try { m = (await r.json()).error?.message || m; } catch { /* keep */ } throw new Error(m); }
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let buf = '', last = {};
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (!line) continue;
+        let j; try { j = JSON.parse(line); } catch { continue; }
+        if (j.error) throw new Error(j.error);
+        if (j.total) last = { total: j.total, done: j.completed || 0 };
+        onProgress?.({ status: j.status || '', pct: last.total ? last.done / last.total : NaN, done: last.done, total: last.total });
+      }
+    }
+    return true;
+  }
+  /* On start-up: if Ollama is running with a model, switch it on (unless the user turned it off) */
+  async function ollamaAutodetect() {
+    if (!/^https?:$/.test(location.protocol) || App.settings.get('ai.ollama.off', false)) return false;
+    const st = await ollamaStatus();
+    if (st.running && st.models.length && !App.settings.get('ai.ollama.on', false)) { App.settings.set('ai.ollama.on', true); App.bus.emit('ai-keys'); return true; }
+    return st.running && st.models.length > 0;
+  }
   const modelKey = p => (p === 'xai' ? 'ai.grokModel' : 'ai.model.' + p);
 
   /**
@@ -132,6 +174,17 @@
       if (!text && d.output_text) text = d.output_text;
       const seen = new Set();
       return { text: text || '(No answer returned.)', sources: sources.filter(s => s.url && !seen.has(s.url) && seen.add(s.url)), model: d.model, cost: d.usage?.cost?.total_cost };
+    }
+    if (provider === 'ollama') {
+      let m = model || App.settings.get(modelKey('ollama'), '');
+      const list = await models('ollama');
+      if (!list.length) throw new Error('Ollama is running but has no AI model yet. Open Integrations → Ollama and click Download model.');
+      if (!list.includes(m)) { m = list[0]; App.settings.set(modelKey('ollama'), m); }
+      // Native API so we can give the model enough context for your business data
+      const d = await relay('ollama', 'POST', '/api/chat', { model: m, stream: false, messages: [{ role: 'system', content: sys }, ...messages],
+        options: { num_ctx: +App.settings.get('ai.ollama.ctx', 12288) || 12288, temperature: 0.4 } });
+      const text = String(d.message?.content || '').replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+      return { text: text || '(No answer returned.)', sources: [], model: d.model || m };
     }
     if (CHAT.includes(provider)) {
       const P = PROVIDERS[provider];
@@ -303,5 +356,5 @@ Rules: one entry per purchased line, with the name as printed. "amount" is the l
     };
   }
 
-  App.ai = { models, modelKey, CHAT, scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
+  App.ai = { models, modelKey, CHAT, OLLAMA_MODELS, ollamaStatus, ollamaPull, ollamaAutodetect, scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
 })(window.App);

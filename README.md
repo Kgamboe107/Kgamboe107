@@ -163,15 +163,16 @@ Everything is recorded in the activity log, and the protection score appears on 
 
 > Templates and checklists to reduce risk, not legal advice. Have a licensed attorney in your state review documents before relying on them.
 
-## AI Assistant (Perplexity, Grok, Groq, Gemini, Ollama)
+## AI Assistant (Ollama, Groq, Grok, Perplexity)
 
 | Provider | Cost | Best for | Privacy |
 |---|---|---|---|
-| **Groq** | Free plan (~1,000 requests/day) | Fast everyday analysis | Doesn't train on your data |
-| **Gemini** | Free tier (daily limits) | Capable general answers | On the free tier Google may use what you send, so avoid payroll/employee data |
-| **Ollama** | Free, unlimited | Private analysis on your own PC (install Ollama, run `ollama pull llama3.2`) | Nothing leaves your computer |
+| **Ollama** (default) | Free, unlimited | Everyday analysis of your own numbers | Runs on your PC; nothing leaves your computer |
+| **Groq** | Free plan (~1,000 requests/day) | Faster answers online | Doesn't train on your data |
 | **Grok** (xAI) | Paid per token | Strong reasoning, receipt photo scanning | |
 | **Perplexity** | Paid per request | Web research with sources | |
+
+**Setting up Ollama (no terminal needed):** open Integrations (or the AI Assistant) → Ollama → **Download Ollama**, install it, and the app finds it within a few seconds. Pick a model (Llama 3.2 is recommended, a 2 GB download) and click **Download model**. A progress bar shows the download. When it finishes, Ollama becomes your default AI, and it switches on automatically every time the app starts. Requests go through the app's local relay to Ollama's own API with a 12K-token context, so your KPIs and tables fit.
 
 Connect any of them on the Integrations page and switch between them in the AI Assistant.
 

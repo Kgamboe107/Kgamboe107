@@ -925,3 +925,14 @@ label > .combo, .field > .combo, .mapper .combo { display: flex; }
 @media (max-width: 600px) { .smg-grid { grid-template-columns: 1fr 1fr 1fr; } .smg-grid > span, .smg-grid > div:nth-child(4) { display: none; } }
 .audit-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .audit-item > span { flex: 1 1 240px; }
+
+/* ---------- Ollama setup ---------- */
+.ol-box { gap: 12px; }
+.ol-step { display: flex; align-items: center; gap: 10px; }
+.ol-steps { display: flex; gap: 6px; flex-wrap: wrap; }
+.ol-steps span { padding: 4px 10px; border-radius: 99px; background: var(--panel-3); color: var(--muted); }
+.ol-steps span.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.ol-steps span.done { background: var(--good-soft); color: var(--good); }
+.ol-model { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: var(--panel-2); }
+.ol-model:has(input:checked) { border-color: var(--accent); box-shadow: var(--ring); }
+.ol-model input { margin-top: 3px; }

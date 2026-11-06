@@ -92,7 +92,11 @@
 
     go(location.hash.slice(1) || 'dashboard')
       .catch(e => console.error('Initial render failed', e))
-      .finally(() => { App.fx.hideSplash(); window.desktop?.ready?.(); App.fx.maybeOnboard(); });
+      .finally(() => {
+        App.fx.hideSplash(); window.desktop?.ready?.(); App.fx.maybeOnboard();
+        // Turn on Ollama automatically if it's installed and has a model
+        App.ai?.ollamaAutodetect?.().then(on => { if (on && current === 'ai') go('ai'); }).catch(() => {});
+      });
   }
 
   /* Global search across files, notes, and personnel rows */

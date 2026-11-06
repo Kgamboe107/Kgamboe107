@@ -22,9 +22,8 @@ const AI_ROUTES = {
   perplexity: { host: 'api.perplexity.ai', paths: { 'POST /v1/agent': true } },
   xai: { host: 'api.x.ai', paths: { 'POST /v1/chat/completions': true, 'GET /v1/models': true } },
   groq: { host: 'api.groq.com', paths: { 'POST /openai/v1/chat/completions': true, 'GET /openai/v1/models': true } },
-  gemini: { host: 'generativelanguage.googleapis.com', paths: { 'POST /v1beta/openai/chat/completions': true, 'GET /v1beta/openai/models': true } },
   // Ollama runs on this computer; no key, plain http to the local port only
-  ollama: { local: true, host: '127.0.0.1', port: Number(process.env.OLLAMA_PORT) || 11434, paths: { 'POST /v1/chat/completions': true, 'GET /v1/models': true } }
+  ollama: { local: true, host: '127.0.0.1', port: Number(process.env.OLLAMA_PORT) || 11434, paths: { 'GET /api/version': true, 'GET /api/tags': true, 'POST /api/chat': true, 'POST /api/pull': true } }
 };
 const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
 

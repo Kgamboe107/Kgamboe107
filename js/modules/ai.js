@@ -6,7 +6,7 @@
 
   const threads = () => App.bsettings.get('ai.threads', []);
   const saveThreads = t => App.bsettings.set('ai.threads', t.slice(0, 40));
-  const prefs = () => ({ provider: 'perplexity', depth: 'low', summary: true, dataset: '', notes: false, ...App.bsettings.get('ai.prefs', {}) });
+  const prefs = () => ({ provider: 'ollama', depth: 'low', summary: true, dataset: '', notes: false, ...App.bsettings.get('ai.prefs', {}) });
   const savePrefs = p => App.bsettings.set('ai.prefs', p);
 
   function suggestions() {
@@ -28,7 +28,7 @@
       if (params.newThread) activeId = null;
       const conn = await App.ai.connected();
       // Default to an AI that's actually connected
-      if (!conn[P.provider]) { const first = ['groq', 'gemini', 'ollama', 'xai', 'perplexity'].find(k => conn[k]); if (first) { P.provider = first; App.bsettings.set('ai.prefs', { ...App.bsettings.get('ai.prefs', {}), provider: first }); } }
+      if (!conn[P.provider]) { const first = ['ollama', 'groq', 'xai', 'perplexity'].find(k => conn[k]); if (first) { P.provider = first; App.bsettings.set('ai.prefs', { ...App.bsettings.get('ai.prefs', {}), provider: first }); } }
       const datasets = await App.store.datasets();
       view.innerHTML = `
         <div class="ai-layout">
@@ -43,7 +43,7 @@
             <div class="ai-msgs" id="aiMsgs"></div>
             <div id="aiConnect"></div>
             <form class="ai-composer" id="aiForm">
-              <textarea id="aiInput" rows="1" placeholder="Ask about your business, or have Perplexity research anything…"></textarea>
+              <textarea id="aiInput" rows="1" placeholder="Ask about your business…"></textarea>
               <button class="btn primary" id="aiSend" type="submit" title="Send (Enter)">${App.fx.icon('arrow')}</button>
             </form>
             <div class="ai-ctx muted tiny" id="aiCtx"></div>
@@ -94,13 +94,8 @@
         if (conn[p]) { box.innerHTML = ''; return; }
         const P2 = App.ai.PROVIDERS[p];
         if (P2.local) {
-          box.innerHTML = `<div class="ai-connect"><span class="prov-dot" style="background:${P2.color}">${P2.mono}</span>
-            <div style="flex:1;min-width:0"><b>Turn on Ollama</b><div class="muted tiny">Free and unlimited, runs on this computer. 1) Install from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> 2) In a terminal run <code>ollama pull llama3.2</code> 3) Click Check.</div></div>
-            <button class="btn primary small" id="kSave">Check &amp; turn on</button></div>`;
-          $('#kSave').onclick = async () => {
-            try { const list = await App.ai.models('ollama'); if (!list.length) throw new Error('Ollama is running but has no models yet. Run: ollama pull llama3.2'); await App.ai.setKey('ollama', 'on'); conn.ollama = true; App.ui.toast(`Ollama connected · ${list.length} model${list.length > 1 ? 's' : ''}`); App.go('ai'); }
-            catch (e) { App.ui.toast(e.message.replace(/^Ollama error \d+: /, ''), 7000); }
-          };
+          box.innerHTML = `<div class="ai-connect" style="align-items:flex-start"><span class="prov-dot" style="background:${P2.color}">${P2.mono}</span><div style="flex:1;min-width:0"><b>Set up Ollama</b> <span class="muted tiny">free · unlimited · private</span><div data-olsetup style="margin-top:8px"></div></div></div>`;
+          App.ollamaSetup(box.querySelector('[data-olsetup]'), { compact: true, onReady: () => { conn.ollama = true; App.ui.toast('Ollama connected'); App.go('ai'); } });
           return;
         }
         box.innerHTML = `<div class="ai-connect"><span class="prov-dot" style="background:${P2.color}">${P2.mono}</span>
@@ -124,7 +119,7 @@
         const ds = datasets.find(d => d.id === p.dataset);
         const PV = App.ai.PROVIDERS[p.provider];
         $('#cWarn').innerHTML = [ds?.category === 'personnel' ? `<span style="color:var(--warn)">This table contains personnel data. It will be sent to ${esc(PV.label)}.</span>` : '',
-          PV.privacy && (p.summary || ds || p.notes) ? `<span style="color:var(--warn)">${esc(PV.privacy)} Use Groq or Ollama for payroll and employee data.</span>` : '',
+          PV.privacy && (p.summary || ds || p.notes) ? `<span style="color:var(--warn)">${esc(PV.privacy)} Use Ollama for payroll and employee data.</span>` : '',
           PV.local ? '<span style="color:var(--good)">Ollama runs on this computer: nothing is sent online.</span>' : ''].filter(Boolean).join('<br>');
       }
 
@@ -139,7 +134,7 @@
 
       // Another connected AI to compare answers with (Perplexity pairs with a reasoning model and vice versa)
       function otherOf(cur) {
-        const order = cur === 'perplexity' ? ['xai', 'groq', 'gemini', 'ollama'] : ['perplexity', 'xai', 'groq', 'gemini', 'ollama'];
+        const order = cur === 'perplexity' ? ['ollama', 'xai', 'groq'] : ['perplexity', 'xai', 'groq', 'ollama'];
         return order.find(k => k !== cur && conn[k]) || null;
       }
 
