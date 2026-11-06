@@ -27,6 +27,8 @@
       if (params.provider) P.provider = params.provider;
       if (params.newThread) activeId = null;
       const conn = await App.ai.connected();
+      // Default to an AI that's actually connected
+      if (!conn[P.provider]) { const first = ['groq', 'gemini', 'ollama', 'xai', 'perplexity'].find(k => conn[k]); if (first) { P.provider = first; App.bsettings.set('ai.prefs', { ...App.bsettings.get('ai.prefs', {}), provider: first }); } }
       const datasets = await App.store.datasets();
       view.innerHTML = `
         <div class="ai-layout">
@@ -34,7 +36,7 @@
             <header class="ai-head">
               <div class="seg" role="tablist">${Object.entries(App.ai.PROVIDERS).map(([k, p]) => `
                 <button data-prov="${k}" class="${P.provider === k ? 'on' : ''}" title="${esc(p.short)}">
-                  <span class="prov-dot" style="background:${p.color}">${p.mono}</span>${esc(p.label)}${conn[k] ? '' : ' <span class="badge warn">not connected</span>'}</button>`).join('')}
+                  <span class="prov-dot" style="background:${p.color}">${p.mono}</span>${esc(p.label)}${p.free ? ' <span class="badge good">free</span>' : ''}${conn[k] ? '' : ' <span class="badge warn">not connected</span>'}</button>`).join('')}
               </div>
               <div class="row" id="aiOpts"></div>
             </header>
@@ -71,15 +73,17 @@
         const p = prefs();
         $('#aiOpts').innerHTML = p.provider === 'perplexity'
           ? `<label class="row small muted">Depth <select id="oDepth">${App.ui.options(App.ai.DEPTHS, p.depth)}</select></label>`
-          : `<label class="row small muted">Model <select id="oModel"><option>${esc(App.settings.get('ai.grokModel', '') || 'auto')}</option></select></label>`;
+          : `<label class="row small muted">Model <select id="oModel" data-native><option>${esc(App.settings.get(App.ai.modelKey(p.provider), '') || 'auto')}</option></select></label>`;
         $('#oDepth')?.addEventListener('change', e => { savePrefs({ ...prefs(), depth: e.target.value }); });
         const om = $('#oModel');
-        if (om && conn.xai) App.ai.grokModels().then(list => {
-          const cur = App.settings.get('ai.grokModel', '') || list[0] || '';
+        const mk = App.ai.modelKey(p.provider);
+        if (om && conn[p.provider]) App.ai.models(p.provider).then(list => {
+          const saved = App.settings.get(mk, '');
+          const cur = list.includes(saved) ? saved : list[0] || '';
           om.innerHTML = list.map(m => `<option ${m === cur ? 'selected' : ''}>${esc(m)}</option>`).join('') || '<option>auto</option>';
-          if (cur) App.settings.set('ai.grokModel', cur);
+          if (cur) App.settings.set(mk, cur);
         }).catch(() => {});
-        om?.addEventListener('change', e => App.settings.set('ai.grokModel', e.target.value));
+        om?.addEventListener('change', e => App.settings.set(mk, e.target.value));
         renderConnect();
         updateCtx();
       }
@@ -89,6 +93,16 @@
         const box = $('#aiConnect');
         if (conn[p]) { box.innerHTML = ''; return; }
         const P2 = App.ai.PROVIDERS[p];
+        if (P2.local) {
+          box.innerHTML = `<div class="ai-connect"><span class="prov-dot" style="background:${P2.color}">${P2.mono}</span>
+            <div style="flex:1;min-width:0"><b>Turn on Ollama</b><div class="muted tiny">Free and unlimited, runs on this computer. 1) Install from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> 2) In a terminal run <code>ollama pull llama3.2</code> 3) Click Check.</div></div>
+            <button class="btn primary small" id="kSave">Check &amp; turn on</button></div>`;
+          $('#kSave').onclick = async () => {
+            try { const list = await App.ai.models('ollama'); if (!list.length) throw new Error('Ollama is running but has no models yet. Run: ollama pull llama3.2'); await App.ai.setKey('ollama', 'on'); conn.ollama = true; App.ui.toast(`Ollama connected · ${list.length} model${list.length > 1 ? 's' : ''}`); App.go('ai'); }
+            catch (e) { App.ui.toast(e.message.replace(/^Ollama error \d+: /, ''), 7000); }
+          };
+          return;
+        }
         box.innerHTML = `<div class="ai-connect"><span class="prov-dot" style="background:${P2.color}">${P2.mono}</span>
           <div style="flex:1;min-width:0"><b>Connect ${esc(P2.label)}</b><div class="muted tiny">Paste an API key from <a href="${P2.keyUrl}" target="_blank" rel="noopener">${esc(P2.keyUrl.replace('https://', ''))}</a>. ${window.desktop ? 'Stored encrypted on this computer.' : 'Stored only in this browser.'}</div></div>
           <input id="kIn" type="password" placeholder="${P2.keyHint}" style="width:220px"><button class="btn primary small" id="kSave">Connect</button></div>`;
@@ -108,7 +122,10 @@
         if (p.notes) parts.push('research notes');
         $('#aiCtx').innerHTML = `${App.fx.icon('lock')} Sends ${parts.length ? parts.map(esc).join(' · ') : 'only your question'} to ${esc(App.ai.PROVIDERS[p.provider].label)} · <kbd>Enter</kbd> send · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line`;
         const ds = datasets.find(d => d.id === p.dataset);
-        $('#cWarn').innerHTML = ds?.category === 'personnel' ? '<span style="color:var(--warn)">This table contains personnel data. It will be sent to the AI provider.</span>' : '';
+        const PV = App.ai.PROVIDERS[p.provider];
+        $('#cWarn').innerHTML = [ds?.category === 'personnel' ? `<span style="color:var(--warn)">This table contains personnel data. It will be sent to ${esc(PV.label)}.</span>` : '',
+          PV.privacy && (p.summary || ds || p.notes) ? `<span style="color:var(--warn)">${esc(PV.privacy)} Use Groq or Ollama for payroll and employee data.</span>` : '',
+          PV.local ? '<span style="color:var(--good)">Ollama runs on this computer: nothing is sent online.</span>' : ''].filter(Boolean).join('<br>');
       }
 
       function renderThreads() {
@@ -120,10 +137,16 @@
         view.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { saveThreads(threads().filter(t => t.id !== b.dataset.del)); if (activeId === b.dataset.del) activeId = null; renderThreads(); renderMsgs(); });
       }
 
+      // Another connected AI to compare answers with (Perplexity pairs with a reasoning model and vice versa)
+      function otherOf(cur) {
+        const order = cur === 'perplexity' ? ['xai', 'groq', 'gemini', 'ollama'] : ['perplexity', 'xai', 'groq', 'gemini', 'ollama'];
+        return order.find(k => k !== cur && conn[k]) || null;
+      }
+
       function msgHTML(m, i) {
         if (m.role === 'user') return `<div class="msg user"><div class="bubble">${esc(m.content).replace(/\n/g, '<br>')}</div></div>`;
         const P2 = App.ai.PROVIDERS[m.provider] || {};
-        const other = m.provider === 'perplexity' ? 'xai' : 'perplexity';
+        const other = otherOf(m.provider);
         return `<div class="msg bot"><span class="prov-dot lg" style="background:${P2.color}">${P2.mono}</span>
           <div class="bot-body">
             <div class="bot-meta"><b>${esc(P2.label)}</b><span class="muted tiny">${esc(m.model || '')}${m.cost ? ' · $' + (+m.cost).toFixed(4) : ''}</span></div>
@@ -132,7 +155,7 @@
             ${m.error ? '' : `<div class="bot-actions">
               <button class="btn ghost small" data-copy="${i}">Copy</button>
               <button class="btn ghost small" data-save="${i}">${App.fx.icon('research')} Save to Research</button>
-              <button class="btn ghost small" data-other="${i}">Ask ${esc(App.ai.PROVIDERS[other].label)} too</button>
+              ${other ? `<button class="btn ghost small" data-other="${i}">Ask ${esc(App.ai.PROVIDERS[other].label)} too</button>` : ''}
             </div>`}
           </div></div>`;
       }
@@ -168,7 +191,8 @@
         box.querySelectorAll('[data-other]').forEach(b => b.onclick = () => {
           const i = +b.dataset.other;
           const q = [...msgs.slice(0, i)].reverse().find(x => x.role === 'user')?.content;
-          const other = msgs[i].provider === 'perplexity' ? 'xai' : 'perplexity';
+          const other = otherOf(msgs[i].provider);
+          if (!other) return;
           savePrefs({ ...prefs(), provider: other }); syncProv();
           if (q) send(q, { second: true });
         });

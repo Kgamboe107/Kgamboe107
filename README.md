@@ -66,7 +66,8 @@ It also flags problems: a file whose name doesn't match the dates inside it, the
 
 **Marketing → Guest scores & audits** tracks how guests and auditors see the store, organized by Jersey Mike's 7 Principles of Success: 1. Clean and well maintained · 2. Well stocked · 3. Fresh · 4. Neat and well-groomed · 5. Proper procedures · 6. Sharing our lives · 7. Inviting people in.
 
-- **Add SMG scores:** enter each survey period's percentages (overall satisfaction, taste, speed, cleanliness, friendliness, order and digital accuracy, likely to return, value), with optional region numbers, guest comments and the SMG report attached.
+- **Import SMG report:** upload a **Full Scale** or **Trend** report exported from SMG (Report and Analytics → Report Builder → Export → CSV or Excel). The scores fill in automatically, one period for a Full Scale report and one per week for a Trend report. Jersey Mike's system average and your franchise group come along as benchmarks, plus the "why not satisfied" follow-up answers. Reports with a store number (e.g. 11053) go to the business whose name contains that number. Re-importing replaces the same period.
+- **Type in SMG scores:** enter each survey period's percentages (overall satisfaction, taste, speed, cleanliness, friendliness, order and digital accuracy, likely to return, value), with optional region numbers, guest comments and the SMG report attached.
 - **Start an audit:** a step-by-step walk-through, one step per principle, with each check marked Yes / Needs work / N/A, plus notes per principle. Use it for self-evaluations, operational audits, district visits or health inspections. If the auditor gave an official score, enter it and it's used as the audit score. You can attach the report.
 - **The 7 Principles scoreboard** shows each principle's latest audit score next to the SMG measures guests use to judge it (cleanliness → Principle 1, taste → 3, speed and accuracy → 5, friendliness → 6, overall satisfaction and likely to return → 7). It includes the change from last period, the region comparison and the exact items to fix.
 - Trends, goals (defaults are the April 1 targets: audit 90% with an 88% gate, overall 85%, speed 80%, cleanliness 85%, digital accuracy 90%), dashboard tiles, a click-through panel, and live numbers in the dashboard's goals scorecard.
@@ -162,7 +163,17 @@ Everything is recorded in the activity log, and the protection score appears on 
 
 > Templates and checklists to reduce risk, not legal advice. Have a licensed attorney in your state review documents before relying on them.
 
-## AI Assistant (Perplexity + Grok)
+## AI Assistant (Perplexity, Grok, Groq, Gemini, Ollama)
+
+| Provider | Cost | Best for | Privacy |
+|---|---|---|---|
+| **Groq** | Free plan (~1,000 requests/day) | Fast everyday analysis | Doesn't train on your data |
+| **Gemini** | Free tier (daily limits) | Capable general answers | On the free tier Google may use what you send, so avoid payroll/employee data |
+| **Ollama** | Free, unlimited | Private analysis on your own PC (install Ollama, run `ollama pull llama3.2`) | Nothing leaves your computer |
+| **Grok** (xAI) | Paid per token | Strong reasoning, receipt photo scanning | |
+| **Perplexity** | Paid per request | Web research with sources | |
+
+Connect any of them on the Integrations page and switch between them in the AI Assistant.
 
 Open **AI Assistant** in the sidebar (or press **Ctrl/⌘ + /**).
 

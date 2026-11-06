@@ -146,8 +146,8 @@
   /* ---------- AI shortcuts ---------- */
   async function aiBriefing() {
     const c = await App.ai.connected();
-    const provider = c.xai ? 'xai' : 'perplexity';
-    App.go('ai', { newThread: true, send: c.xai || c.perplexity, provider,
+    const provider = ['xai', 'groq', 'gemini', 'ollama', 'perplexity'].find(k => c[k]) || 'groq';
+    App.go('ai', { newThread: true, send: !!c[provider], provider,
       prompt: App.biz.isMaster()
         ? 'Give me an executive briefing across all my businesses: the top 5 things that need my attention, ranked by impact, with the numbers behind each and the next step.'
         : 'Give me a briefing on this business: the top 5 things that need my attention, ranked by impact, with the numbers behind each and the next step.' });

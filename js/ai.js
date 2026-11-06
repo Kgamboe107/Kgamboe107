@@ -5,18 +5,44 @@
   const PROVIDERS = {
     perplexity: {
       label: 'Perplexity', short: 'Web research with sources', color: '#20808d', mono: 'Px',
-      keyUrl: 'https://www.perplexity.ai/account/api/keys', keyHint: 'pplx-…'
+      keyUrl: 'https://www.perplexity.ai/account/api/keys', keyHint: 'pplx-…', cost: 'Paid per request',
+      note: 'Uses the Perplexity Agent API (web search with citations). Billed per request by Perplexity.'
     },
     xai: {
-      label: 'Grok', short: 'Reasoning & analysis (xAI)', color: '#111111', mono: 'Gk',
-      keyUrl: 'https://console.x.ai', keyHint: 'xai-…'
+      label: 'Grok', short: 'Reasoning & analysis (xAI)', color: '#111111', mono: 'Gk', base: '/v1',
+      keyUrl: 'https://console.x.ai', keyHint: 'xai-…', cost: 'Paid per token',
+      note: 'Uses the xAI API. Models are loaded from your account. Billed per token by xAI.'
+    },
+    groq: {
+      label: 'Groq', short: 'Free · fast open models', color: '#f55036', mono: 'Gq', base: '/openai/v1', free: true,
+      keyUrl: 'https://console.groq.com/keys', keyHint: 'gsk_…', cost: 'Free plan',
+      note: 'Free plan: about 1,000 requests a day on models like GPT-OSS 120B. Groq does not train on what you send. Very long questions with big data tables can hit the free per-minute limit.',
+      prefer: [/gpt-oss-120b/, /llama-3\.3-70b/, /qwen3/, /gpt-oss-20b/, /llama/],
+      skip: /whisper|guard|tts|playai|orpheus|prompt-guard|compound|allam/i
+    },
+    gemini: {
+      label: 'Gemini', short: 'Free tier · Google', color: '#4285f4', mono: 'Gm', base: '/v1beta/openai', free: true,
+      keyUrl: 'https://aistudio.google.com/app/apikey', keyHint: 'AIza…', cost: 'Free tier',
+      note: 'Free tier with daily limits, no credit card. On the free tier Google may use what you send to improve its products, so avoid sending payroll or employee tables.',
+      privacy: 'On Gemini’s free tier Google may use this to improve its products.',
+      prefer: [/flash(?!.*lite)/, /flash-lite/, /pro/],
+      skip: /embed|image|imagen|tts|audio|live|veo|aqa|learnlm|gemma|robotics|computer-use|native/i
+    },
+    ollama: {
+      label: 'Ollama', short: 'Free · unlimited · on this computer', color: '#3a3a3a', mono: 'Ol', base: '/v1', free: true, local: true,
+      keyUrl: 'https://ollama.com/download', keyHint: '', cost: 'Free, unlimited',
+      note: 'Runs AI models on this computer: no account, no limits, and nothing leaves your PC. Install Ollama, then open a terminal and run "ollama pull llama3.2" (or qwen3, gemma3). Needs about 8 GB of free memory; slower than the online services.',
+      prefer: [/qwen3/, /llama3\.3/, /gemma3/, /llama3\.2/, /llama/, /mistral/],
+      skip: /embed|nomic|bge|minilm/i
     }
   };
+  const CHAT = ['xai', 'groq', 'gemini', 'ollama'];
   const DEPTHS = [{ value: 'low', label: 'Quick' }, { value: 'medium', label: 'Thorough' }];
 
   /* ---------- Keys: encrypted by the OS in the desktop app, localStorage in the browser ---------- */
   const keyCache = {};
   async function getKey(p) {
+    if (PROVIDERS[p]?.local) return App.settings.get('ai.ollama.on', false) ? 'local' : '';
     if (keyCache[p] !== undefined) return keyCache[p];
     let v = '';
     if (window.desktop?.getSecret) v = await window.desktop.getSecret('ai.' + p);
@@ -24,6 +50,7 @@
     return (keyCache[p] = v || '');
   }
   async function setKey(p, v) {
+    if (PROVIDERS[p]?.local) { App.settings.set('ai.ollama.on', !!v); App.bus.emit('ai-keys'); return; }
     v = (v || '').trim();
     keyCache[p] = v;
     if (window.desktop?.setSecret) await window.desktop.setSecret('ai.' + p, v);
@@ -40,7 +67,7 @@
   async function relay(provider, method, path, body) {
     if (!/^https?:$/.test(location.protocol)) throw new Error('AI needs the app running as the desktop app (or "npm run web"), not opened as a file.');
     const key = await getKey(provider);
-    if (!key) throw new Error(`Add your ${PROVIDERS[provider].label} API key in Integrations first.`);
+    if (!key && !PROVIDERS[provider].local) throw new Error(`Add your ${PROVIDERS[provider].label} API key in Integrations first.`);
     let r;
     try {
       r = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-OCD-Client': '1' }, body: JSON.stringify({ provider, method, path, body, key }) });
@@ -49,21 +76,31 @@
     let data; try { data = JSON.parse(text); } catch { data = { raw: text }; }
     if (!r.ok) {
       const m = data?.error?.message || data?.error || data?.detail || data?.message || data?.raw || r.statusText;
-      const hint = r.status === 401 ? ' Check that the API key is correct.' : r.status === 402 || r.status === 429 ? ' Your account may be out of credits or rate-limited.' : '';
+      const hint = r.status === 401 || r.status === 403 || /api key/i.test(typeof m === 'string' ? m : JSON.stringify(m)) ? ' Check that the API key is correct.' : r.status === 402 ? ' Your account may be out of credits.' : r.status === 429 ? (PROVIDERS[provider].free ? ' You hit the free plan’s limit for now; wait a minute (or until tomorrow for the daily cap), or switch to another AI.' : ' Your account may be out of credits or rate-limited.') : r.status === 413 ? ' The question plus data was too large; uncheck the data table or ask about a smaller one.' : '';
       throw new Error(`${PROVIDERS[provider].label} error ${r.status}: ${typeof m === 'string' ? m : JSON.stringify(m)}${hint}`);
     }
     return data;
   }
 
-  async function grokModels() {
-    const d = await relay('xai', 'GET', '/v1/models');
-    const ids = (d.data || d.models || []).map(m => m.id).filter(Boolean);
-    // Prefer chat-capable grok models, newest-looking first
-    const ver = id => parseFloat((id.match(/grok-(\d+(?:\.\d+)?)/i) || [])[1] || 0);
-    const lite = id => /mini|fast|nano|lite/i.test(id) ? 1 : 0;
-    return ids.filter(id => /grok/i.test(id) && !/image|imagine|vision-only|embed|video|tts|voice/i.test(id))
-      .sort((a, b) => ver(b) - ver(a) || lite(a) - lite(b) || a.localeCompare(b));
+  /* Chat models available to this account, best first */
+  async function models(provider) {
+    const P = PROVIDERS[provider];
+    const d = await relay(provider, 'GET', P.base + '/models');
+    let ids = (d.data || d.models || []).map(m => String(m.id || m.name || '').replace(/^models\//, '')).filter(Boolean);
+    if (provider === 'xai') {
+      const ver = id => parseFloat((id.match(/grok-(\d+(?:\.\d+)?)/i) || [])[1] || 0);
+      const lite = id => /mini|fast|nano|lite/i.test(id) ? 1 : 0;
+      return ids.filter(id => /grok/i.test(id) && !/image|imagine|vision-only|embed|video|tts|voice/i.test(id))
+        .sort((a, b) => ver(b) - ver(a) || lite(a) - lite(b) || a.localeCompare(b));
+    }
+    if (P.skip) ids = ids.filter(id => !P.skip.test(id));
+    const rank = id => { const i = (P.prefer || []).findIndex(re => re.test(id)); return i < 0 ? 99 : i; };
+    const ver = id => parseFloat((id.match(/(\d+(?:\.\d+)?)/) || [])[1] || 0);
+    const pre = id => (/preview|exp|latest/i.test(id) ? 1 : 0);
+    return ids.sort((a, b) => rank(a) - rank(b) || pre(a) - pre(b) || ver(b) - ver(a) || a.localeCompare(b));
   }
+  const grokModels = () => models('xai');
+  const modelKey = p => (p === 'xai' ? 'ai.grokModel' : 'ai.model.' + p);
 
   /**
    * ask({ provider, messages:[{role,content}], context, depth, model })
@@ -96,13 +133,20 @@
       const seen = new Set();
       return { text: text || '(No answer returned.)', sources: sources.filter(s => s.url && !seen.has(s.url) && seen.add(s.url)), model: d.model, cost: d.usage?.cost?.total_cost };
     }
-    if (provider === 'xai') {
-      let m = model || App.settings.get('ai.grokModel', '');
-      if (!m) { const list = await grokModels(); m = list[0]; if (!m) throw new Error('No Grok models are available on this xAI account.'); App.settings.set('ai.grokModel', m); }
-      const d = await relay('xai', 'POST', '/v1/chat/completions', { model: m, messages: [{ role: 'system', content: sys }, ...messages], temperature: 0.4 });
+    if (CHAT.includes(provider)) {
+      const P = PROVIDERS[provider];
+      let m = model || App.settings.get(modelKey(provider), '');
+      if (!m) {
+        const list = await models(provider);
+        m = list[0];
+        if (!m) throw new Error(provider === 'ollama' ? 'Ollama is running but has no models yet. Open a terminal and run: ollama pull llama3.2' : `No chat models are available on this ${P.label} account.`);
+        App.settings.set(modelKey(provider), m);
+      }
+      const d = await relay(provider, 'POST', P.base + '/chat/completions', { model: m, messages: [{ role: 'system', content: sys }, ...messages], temperature: 0.4, ...(provider === 'groq' ? { max_completion_tokens: 4096 } : {}) });
       const c = d.choices?.[0]?.message;
       const sources = (d.citations || []).map(u => typeof u === 'string' ? { title: u, url: u } : u);
-      return { text: c?.content || '(No answer returned.)', sources, model: d.model || m };
+      const text = String(c?.content || '').replace(/<think>[\s\S]*?<\/think>\s*/g, '');
+      return { text: text || '(No answer returned.)', sources, model: d.model || m };
     }
     throw new Error('Unknown AI provider');
   }
@@ -259,5 +303,5 @@ Rules: one entry per purchased line, with the name as printed. "amount" is the l
     };
   }
 
-  App.ai = { scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
+  App.ai = { models, modelKey, CHAT, scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
 })(window.App);

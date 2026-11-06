@@ -23,6 +23,7 @@
       headers: ['portfolio', 'creator', 'copied', 'allocation', 'copy amount', 'trader'] },
     outlook: { label: 'Outlook', color: '#0078d4', name: /\.(msg|eml)$/i, headers: [] },
     anara: { label: 'Anara', color: '#6d28d9', name: /anara/i, headers: [] },
+    smg: { label: 'SMG', color: '#0b6e4f', name: /^smg[_\- ]|fullscale|full[_ ]scale|trend\d?report/i, headers: [] },
     gdrive: { label: 'Google Drive', color: '#16a34a', name: /^$/, headers: [] },
     manual: { label: 'Manual upload', color: '#64748b', name: /^$/, headers: [] }
   };
@@ -212,6 +213,16 @@
       if (report.purchases?.length) {
         for (const p of report.purchases) await App.store.put('purchases', { ...p, id: `${p.id}-${rec.businessId}`, fileId: rec.id, businessId: rec.businessId });
         await App.purchasing?.syncDataset();
+      }
+      if (report.smg?.length) {
+        const where = new Map();
+        for (const e of report.smg) {
+          const b = App.guest?.bizForStore(e.store);
+          const bid = b ? b.id : rec.businessId;
+          await App.biz.withBiz(bid, () => App.guest.save('smg', { ...e, fileId: rec.id }));
+          where.set(bid, (where.get(bid) || 0) + 1);
+        }
+        report.summary.push(...[...where].map(([bid, n]) => `Saved ${n} period${n > 1 ? 's' : ''} to ${App.biz.get(bid)?.name || 'this business'}${bid !== rec.businessId ? ' (matched by store number)' : ''}`));
       }
       rec.report = { kind: report.kind, label: report.label, summary: report.summary, lands: report.lands, warnings, store: report.store || '' };
     }

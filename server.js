@@ -15,12 +15,16 @@ const ALLOWED = ['index.html', 'css', 'js', 'vendor', 'samples', 'assets', 'buil
 const MARKER = 'X-Ops-Command-Desk';
 
 /* ---------- AI relay ----------
-   Perplexity and xAI don't allow direct browser calls (CORS), so the app sends requests here and
+   Most AI providers don't allow direct browser calls (CORS), so the app sends requests here and
    this relays them. Only these exact endpoints are reachable, only from this machine, and only
    from the app's own pages (custom header + loopback Host/Origin checks block other websites). */
 const AI_ROUTES = {
   perplexity: { host: 'api.perplexity.ai', paths: { 'POST /v1/agent': true } },
-  xai: { host: 'api.x.ai', paths: { 'POST /v1/chat/completions': true, 'GET /v1/models': true } }
+  xai: { host: 'api.x.ai', paths: { 'POST /v1/chat/completions': true, 'GET /v1/models': true } },
+  groq: { host: 'api.groq.com', paths: { 'POST /openai/v1/chat/completions': true, 'GET /openai/v1/models': true } },
+  gemini: { host: 'generativelanguage.googleapis.com', paths: { 'POST /v1beta/openai/chat/completions': true, 'GET /v1beta/openai/models': true } },
+  // Ollama runs on this computer; no key, plain http to the local port only
+  ollama: { local: true, host: '127.0.0.1', port: Number(process.env.OLLAMA_PORT) || 11434, paths: { 'POST /v1/chat/completions': true, 'GET /v1/models': true } }
 };
 const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
 
@@ -38,17 +42,21 @@ function aiRelay(req, res) {
     const route = AI_ROUTES[msg.provider];
     const method = msg.method === 'GET' ? 'GET' : 'POST';
     if (!route || !route.paths[`${method} ${msg.path}`]) return deny(400, 'Endpoint not allowed');
-    if (!msg.key || typeof msg.key !== 'string') return deny(401, 'Missing API key');
+    if (!route.local && (!msg.key || typeof msg.key !== 'string')) return deny(401, 'Missing API key');
     const body = method === 'POST' ? JSON.stringify(msg.body || {}) : null;
-    const up = https.request({
-      host: route.host, path: msg.path, method, timeout: 180000,
-      headers: { Authorization: 'Bearer ' + msg.key.trim(), Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } : {}) }
+    const up = (route.local ? http : https).request({
+      host: route.host, port: route.port, path: msg.path, method, timeout: route.local ? 600000 : 180000,
+      headers: { ...(route.local ? {} : { Authorization: 'Bearer ' + msg.key.trim() }), Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } : {}) }
     }, upRes => {
       res.writeHead(upRes.statusCode || 502, { 'Content-Type': upRes.headers['content-type'] || 'application/json', 'Cache-Control': 'no-store' });
       upRes.pipe(res);
     });
     up.on('timeout', () => up.destroy(new Error('The AI provider took too long to respond')));
-    up.on('error', e => { if (!res.headersSent) deny(502, e.message); else res.end(); });
+    up.on('error', e => {
+      if (res.headersSent) return res.end();
+      if (route.local && /ECONNREFUSED|ECONNRESET/.test(e.code || e.message)) return deny(503, 'Ollama is not running on this computer. Install it from ollama.com, open it, then run: ollama pull llama3.2');
+      deny(502, e.message);
+    });
     if (body) up.write(body);
     up.end();
   });

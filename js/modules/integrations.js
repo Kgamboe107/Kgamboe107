@@ -184,14 +184,17 @@
           </div>
         </div>
         <h2 style="margin-top:8px">AI providers</h2>
+        <div class="muted small" style="margin-top:-10px">Connect any of these; the AI Assistant lets you switch between them. <b>Free:</b> Groq, Gemini and Ollama. For payroll or employee data, use Groq (doesn't train on your data) or Ollama (never leaves this computer).</div>
         <div class="grid c2">${Object.entries(App.ai.PROVIDERS).map(([k, p]) => `
           <div class="card int-card stack">
-            <div class="row spread"><div class="row"><div class="logo" style="background:${p.color}">${p.mono}</div><div><h2>${esc(p.label)}</h2><div class="muted small">${esc(p.short)} · <span data-aistat="${k}">${aiConn[k] ? '<span class="badge good">connected</span>' : '<span class="badge">not connected</span>'}</span></div></div></div>
-              <a class="btn small" href="${p.keyUrl}" target="_blank" rel="noopener">Get an API key</a></div>
-            <div class="row"><input type="password" data-aikey="${k}" placeholder="${aiConn[k] ? '•••••••• saved. Paste to replace' : p.keyHint}" style="flex:1">
+            <div class="row spread"><div class="row"><div class="logo" style="background:${p.color}">${p.mono}</div><div><h2>${esc(p.label)} ${p.free ? '<span class="badge good">free</span>' : ''}</h2><div class="muted small">${esc(p.short)} · <span data-aistat="${k}">${aiConn[k] ? '<span class="badge good">connected</span>' : '<span class="badge">not connected</span>'}</span></div></div></div>
+              <a class="btn small" href="${p.keyUrl}" target="_blank" rel="noopener">${p.local ? 'Download Ollama' : p.free ? 'Get a free API key' : 'Get an API key'}</a></div>
+            ${p.local ? `<div class="row"><button class="btn primary small" data-aiollama>${aiConn[k] ? 'Check again' : 'Check &amp; turn on'}</button><button class="btn small" data-aitest="${k}" ${aiConn[k] ? '' : 'disabled'}>Test</button>${aiConn[k] ? `<button class="btn small danger" data-airm="${k}">Turn off</button>` : ''}</div>
+              <ol class="small" style="margin:0;padding-left:18px"><li>Install Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> and open it.</li><li>In a terminal (Command Prompt on Windows), run <code>ollama pull llama3.2</code>. For better answers on a strong PC: <code>ollama pull qwen3</code>.</li><li>Click <b>Check &amp; turn on</b>.</li></ol>`
+            : `<div class="row"><input type="password" data-aikey="${k}" placeholder="${aiConn[k] ? '•••••••• saved. Paste to replace' : p.keyHint}" style="flex:1">
               <button class="btn primary small" data-aisave="${k}">Save</button><button class="btn small" data-aitest="${k}" ${aiConn[k] ? '' : 'disabled'}>Test</button>
-              ${aiConn[k] ? `<button class="btn small danger" data-airm="${k}">Remove key</button>` : ''}</div>
-            <div class="muted tiny">${k === 'perplexity' ? 'Uses the Perplexity Agent API (web search with citations). Billed per request by Perplexity.' : 'Uses the xAI API. Models are loaded from your account. Billed per token by xAI.'} ${window.desktop ? 'Keys are encrypted by your operating system.' : 'Keys stay in this browser and are never included in backups.'}</div>
+              ${aiConn[k] ? `<button class="btn small danger" data-airm="${k}">Remove key</button>` : ''}</div>`}
+            <div class="muted tiny">${esc(p.note)} ${p.local ? '' : window.desktop ? 'Keys are encrypted by your operating system.' : 'Keys stay in this browser and are never included in backups.'}</div>
           </div>`).join('')}</div>
         <h2 style="margin-top:8px">Export-based connectors</h2>
         <div class="grid c2">${Object.entries(GUIDES).map(([s, gd]) => `
@@ -219,13 +222,21 @@
         if (!v) return App.ui.toast('Paste a key first');
         await App.ai.setKey(k, v); App.ui.toast(`${App.ai.PROVIDERS[k].label} key saved`); App.go('integrations');
       });
-      view.querySelectorAll('[data-airm]').forEach(b => b.onclick = async () => { await App.ai.setKey(b.dataset.airm, ''); App.ui.toast('Key removed'); App.go('integrations'); });
+      view.querySelectorAll('[data-airm]').forEach(b => b.onclick = async () => { await App.ai.setKey(b.dataset.airm, ''); App.ui.toast(App.ai.PROVIDERS[b.dataset.airm].local ? 'Ollama turned off' : 'Key removed'); App.go('integrations'); });
+      view.querySelector('[data-aiollama]')?.addEventListener('click', async e => {
+        const st = view.querySelector('[data-aistat="ollama"]'); e.target.disabled = true; st.innerHTML = '<span class="badge">checking…</span>';
+        try {
+          const list = await App.ai.models('ollama');
+          if (!list.length) throw new Error('Ollama is running but has no models yet. Open a terminal and run: ollama pull llama3.2');
+          await App.ai.setKey('ollama', 'on'); App.ui.toast(`Ollama connected · ${list.length} model${list.length > 1 ? 's' : ''} (${list[0]})`); App.go('integrations');
+        } catch (err) { st.innerHTML = '<span class="badge bad">not found</span>'; App.ui.toast(err.message.replace(/^Ollama error \d+: /, ''), 8000); e.target.disabled = false; }
+      });
       view.querySelectorAll('[data-aitest]').forEach(b => b.onclick = async () => {
         const k = b.dataset.aitest, st = view.querySelector(`[data-aistat="${k}"]`);
         b.disabled = true; st.innerHTML = '<span class="badge">testing…</span>';
         try {
-          if (k === 'xai') { const m = await App.ai.grokModels(); st.innerHTML = `<span class="badge good">works · ${m.length} models</span>`; }
-          else { await App.ai.ask({ provider: 'perplexity', messages: [{ role: 'user', content: 'Reply with the single word OK.' }], depth: 'low' }); st.innerHTML = '<span class="badge good">works</span>'; }
+          if (k === 'perplexity') { await App.ai.ask({ provider: 'perplexity', messages: [{ role: 'user', content: 'Reply with the single word OK.' }], depth: 'low' }); st.innerHTML = '<span class="badge good">works</span>'; }
+          else { const m = await App.ai.models(k); if (!m.length) throw new Error(k === 'ollama' ? 'Ollama has no models yet. Run: ollama pull llama3.2' : 'No chat models on this account.'); st.innerHTML = `<span class="badge good">works · ${m.length} model${m.length > 1 ? 's' : ''} · using ${esc(App.settings.get(App.ai.modelKey(k), '') || m[0])}</span>`; }
         } catch (e) { st.innerHTML = '<span class="badge bad">failed</span>'; App.ui.toast(e.message, 7000); }
         b.disabled = false;
       });

@@ -295,7 +295,7 @@
       <div class="stack imp-list">${results.map(item).join('')}</div>
       <div class="confirm-actions"><button class="btn" data-close>Done</button><button class="btn primary" data-imp-go="dashboard">Open dashboard</button></div>`, (card, close) => {
       card.classList.add('wide');
-      card.querySelectorAll('[data-imp-go]').forEach(b => b.onclick = () => { close(); App.go(b.dataset.impGo); });
+      card.querySelectorAll('[data-imp-go]').forEach(b => b.onclick = () => { close(); const [route, q] = b.dataset.impGo.split('?'); App.go(route, Object.fromEntries(new URLSearchParams(q || ''))); });
       card.querySelector('#impNoSample')?.addEventListener('click', async e => {
         e.target.disabled = true;
         await App.samples.remove?.();

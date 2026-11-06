@@ -25,23 +25,34 @@
   /* SMG survey measures (percent of top-box / satisfied guests, as SMG reports them) */
   const METRICS = [
     { k: 'overall', label: 'Overall satisfaction', principle: 'inviting' },
+    { k: 'ingredient', label: 'Ingredient quality', principle: 'fresh' },
     { k: 'taste', label: 'Taste of food', principle: 'fresh' },
     { k: 'speed', label: 'Speed of service', principle: 'procedures' },
-    { k: 'clean', label: 'Cleanliness', principle: 'clean' },
-    { k: 'friendly', label: 'Friendliness', principle: 'sharing' },
-    { k: 'accuracy', label: 'Order accuracy (in store)', principle: 'procedures' },
+    { k: 'clean', label: 'Cleanliness of restaurant', principle: 'clean' },
+    { k: 'restroom', label: 'Cleanliness of restroom', principle: 'clean' },
+    { k: 'friendly', label: 'Friendliness of staff', principle: 'sharing' },
+    { k: 'recognized', label: 'Employee recognized by name (yes %)', principle: 'sharing', noTarget: true },
+    { k: 'accuracy', label: 'Order accuracy', principle: 'procedures' },
     { k: 'digital', label: 'Digital order accuracy', principle: 'procedures' },
+    { k: 'problem', label: 'Had a problem (yes %, lower is better)', principle: 'procedures', lower: true, noTarget: true },
     { k: 'return', label: 'Likely to return', principle: 'inviting' },
-    { k: 'value', label: 'Value', principle: null }
+    { k: 'recommend', label: 'Likely to recommend', principle: 'inviting' },
+    { k: 'value', label: 'Overall value', principle: null }
   ];
   const M = Object.fromEntries(METRICS.map(m => [m.k, m]));
 
   const AUDIT_TYPES = ['Self-evaluation', 'Operational audit (corporate)', 'District / owner visit', 'Health inspection', 'Other'];
 
   /* Goals: April 1 targets from the Auburn rebuild scorecard; editable on the page */
-  const DEFAULT_TARGETS = { overall: 85, speed: 80, clean: 85, digital: 90, friendly: 85, taste: 85, accuracy: 90, return: 85, value: 80, audit: 90, auditGate: 88 };
+  const DEFAULT_TARGETS = { overall: 85, speed: 80, clean: 85, digital: 90, friendly: 85, taste: 85, ingredient: 85, restroom: 85, accuracy: 90, return: 85, recommend: 85, value: 80, audit: 90, auditGate: 88 };
 
-  const smg = () => App.bsettings.get('guest.smg', []).slice().sort((a, b) => (a.to || a.from || '').localeCompare(b.to || b.from || ''));
+  const smg = () => App.bsettings.get('guest.smg', []).slice().sort((a, b) => (a.to || a.from || '').localeCompare(b.to || b.from || '') || (b.from || '').localeCompare(a.from || ''));
+  /* Store number → business (a business whose name or description mentions it) */
+  function bizForStore(no) {
+    if (!no) return null;
+    const re = new RegExp('(^|\\D)' + no + '(\\D|$)');
+    return App.biz.list().find(b => !b.archived && (re.test(b.name) || re.test(b.description || ''))) || null;
+  }
   const audits = () => App.bsettings.get('guest.audits', []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   const targets = () => ({ ...DEFAULT_TARGETS, ...App.bsettings.get('guest.targets', {}) });
   function save(kind, rec) {
@@ -75,21 +86,24 @@
   /* Everything the page, dashboard and drill-downs need */
   function summary() {
     const S = smg(), A = audits().map(a => ({ ...a, s: scoreAudit(a) })), T = targets();
-    const last = S[S.length - 1], prev = S[S.length - 2];
+    // Compare like with like: a week with the week before, a quarter-to-date with the previous longer period
+    const isWeek = e => !!e.week || (e.from && e.to && (new Date(e.to) - new Date(e.from)) / 864e5 <= 7);
+    const last = S[S.length - 1];
+    const prev = last ? [...S.slice(0, -1)].reverse().find(e => isWeek(e) === isWeek(last)) : undefined;
     const lastA = A[A.length - 1], prevA = A[A.length - 2];
     const lastSelf = [...A].reverse().find(a => /self/i.test(a.type)) || lastA;
     // Each principle: latest audit score + the SMG measures that reflect it
     const board = PRINCIPLES.map(p => {
       const auditScore = lastA ? lastA.s.per[p.key] : NaN;
       const prevScore = prevA ? prevA.s.per[p.key] : NaN;
-      const metrics = METRICS.filter(m => m.principle === p.key).map(m => ({ ...m, v: last ? num(last.scores?.[m.k]) : NaN, pv: prev ? num(prev.scores?.[m.k]) : NaN, region: last ? num(last.region?.[m.k]) : NaN, target: T[m.k] }));
+      const metrics = METRICS.filter(m => m.principle === p.key && (!last || last.scores?.[m.k] != null || !m.noTarget)).map(m => ({ ...m, v: last ? num(last.scores?.[m.k]) : NaN, pv: prev ? num(prev.scores?.[m.k]) : NaN, region: last ? num(last.region?.[m.k]) : NaN, target: m.noTarget ? null : T[m.k] }));
       const misses = lastA ? lastA.s.misses.filter(x => x.principle.key === p.key).map(x => x.item) : [];
       const below = metrics.filter(m => !isNaN(m.v) && m.target && m.v < m.target);
       const tone = (!isNaN(auditScore) && auditScore < 0.8) || below.length ? 'bad' : (!isNaN(auditScore) && auditScore < 0.95) || misses.length ? 'warn' : (!isNaN(auditScore) || metrics.some(m => !isNaN(m.v))) ? 'good' : '';
       return { ...p, auditScore, prevScore, metrics, misses, tone };
     });
     const flags = [];
-    if (last) METRICS.forEach(m => { const v = num(last.scores?.[m.k]); if (!isNaN(v) && T[m.k] && v < T[m.k]) flags.push(`SMG ${m.label.toLowerCase()} ${v}% is below the ${T[m.k]}% goal`); });
+    if (last) METRICS.forEach(m => { const v = num(last.scores?.[m.k]); if (!m.noTarget && !isNaN(v) && T[m.k] && v < T[m.k]) flags.push(`SMG ${m.label.toLowerCase()} ${v}% is below the ${T[m.k]}% goal`); });
     if (lastA && !isNaN(lastA.s.score) && lastA.s.score * 100 < T.audit) flags.push(`${lastA.type} ${fmt.date(lastA.date)}: ${Math.round(lastA.s.score * 100)}%, goal ${T.audit}%`);
     if (lastA) lastA.s.misses.slice(0, 6).forEach(x => flags.push(`Principle ${x.principle.n} · ${x.principle.title}: ${x.item}`));
     const weakest = board.filter(b => !isNaN(b.auditScore)).sort((a, b) => a.auditScore - b.auditScore)[0];
@@ -109,5 +123,5 @@
     return s;
   }
 
-  App.guest = { PRINCIPLES, P, METRICS, M, AUDIT_TYPES, DEFAULT_TARGETS, smg, audits, targets, save, remove, scoreAudit, summary, publish };
+  App.guest = { bizForStore, PRINCIPLES, P, METRICS, M, AUDIT_TYPES, DEFAULT_TARGETS, smg, audits, targets, save, remove, scoreAudit, summary, publish };
 })(window.App);

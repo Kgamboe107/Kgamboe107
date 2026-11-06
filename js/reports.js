@@ -207,6 +207,131 @@
     };
   }
 
+  /* ---------------- SMG guest survey exports (Full Scale + Trend reports, CSV/XLSX) ---------------- */
+  const SMG_MAP = [[/^overall satisfaction$/, 'overall'], [/^ingredient quality/, 'ingredient'], [/^taste of food$/, 'taste'], [/^accuracy of order$/, 'accuracy'],
+    [/^speed of service$/, 'speed'], [/^friendliness/, 'friendly'], [/^cleanliness of restaurant/, 'clean'], [/^cleanliness of restroom/, 'restroom'],
+    [/^overall value/, 'value'], [/^problem experienced/, 'problem'], [/^likelihood to return/, 'return'], [/^likelihood to recommend/, 'recommend'],
+    [/^employee recognition/, 'recognized'], [/^digital (order )?accuracy/, 'digital']];
+  const REASON_OF = { 'speed of service': 'speed', 'taste of food': 'taste', 'accuracy of order': 'accuracy' };
+  const smgKey = name => { const n = String(name || '').trim().toLowerCase(); const m = SMG_MAP.find(([re]) => re.test(n)); return m ? m[1] : null; };
+  const storeNo = name => (String(name || '').match(/^\s*(\d{3,6})\b/) || [])[1] || '';
+  const pctOf = v => { if (v === '' || v == null || /\*/.test(String(v))) return null; const s = String(v).trim(); const n = num(s); if (!Number.isFinite(n)) return null; return /%$/.test(s) ? n : n <= 1.0000001 ? +(n * 100).toFixed(1) : null; };
+  const todayISO = () => iso(new Date());
+  const isoWeekMonday = (y, w) => { const jan4 = new Date(y, 0, 4); const d = new Date(jan4); d.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7) + (w - 1) * 7); return d; };
+  const benchName = n => String(n || '').replace(/^\s*\d+\s*-\s*/, '').trim();
+
+  function smgSummary(entries, label, extra = []) {
+    const stores = [...new Set(entries.map(e => e.store))];
+    const last = [...entries].sort((a, b) => a.to.localeCompare(b.to)).pop();
+    return {
+      kind: 'smg', label, category: 'marketing', source: 'smg', smg: entries,
+      summary: [`${entries.length} SMG period${entries.length > 1 ? 's' : ''} for store${stores.length > 1 ? 's' : ''} ${stores.join(', ')} saved to SMG scores`,
+        last ? `Latest (${fmtD(last.from)} – ${fmtD(last.to)}, ${last.surveys} surveys): overall ${last.scores.overall ?? '—'}%, speed ${last.scores.speed ?? '—'}%, cleanliness ${last.scores.clean ?? '—'}%, accuracy ${last.scores.accuracy ?? '—'}%${last.scores.digital != null ? `, digital ${last.scores.digital}%` : ''}${last.region?.overall != null ? ` · ${last.benchLabel} ${last.region.overall}%` : ''}` : '', ...extra].filter(Boolean),
+      lands: [['marketing?tab=guest', 'Marketing: guest scores & 7 Principles'], ['dashboard', 'Dashboard: guest satisfaction']], warnings: []
+    };
+  }
+
+  function smgFullScale(ctx) {
+    for (const { aoa } of ctx.sheets || []) {
+      const title = aoa.slice(0, 5).map(r => String(r[0] || '')).find(c => /full scale report/i.test(c));
+      if (!title) continue;
+      const rng = title.match(/(\d{1,2}\/\d{1,2}\/\d{4})\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})/) || [];
+      const from = mdY(rng[1]), to0 = mdY(rng[2]);
+      const to = to0 && to0 > todayISO() ? todayISO() : to0;
+      const ent = new Map(); // name → { scores, n, reasons }
+      const get = name => { if (!ent.has(name)) ent.set(name, { name, scores: {}, n: {}, reasons: {} }); return ent.get(name); };
+      for (let i = 0; i < aoa.length; i++) {
+        if (!/^store/i.test(String(aoa[i][0] || ''))) continue;
+        const head = aoa[i], codes = aoa[i + 1] || [];
+        const starts = head.map((h, c) => [c, String(h || '').trim()]).filter(([c, h]) => c > 0 && h);
+        for (let j = i + 2; j < aoa.length && String(aoa[j][0] || '').trim() && !/^store/i.test(String(aoa[j][0])); j++) {
+          const row = aoa[j], e = get(String(row[0]).trim());
+          for (const [k, [c, name]] of starts.entries()) {
+            const end = starts[k + 1] ? starts[k + 1][0] : head.length;
+            const n = num(row[c]);
+            const col = code => { for (let x = c + 1; x < end; x++) if (String(codes[x]).trim() === code) return row[x]; return null; };
+            const key = smgKey(name);
+            const rs = name.match(/^(speed of service|taste of food|accuracy of order)\s*-\s*(.+)$/i);
+            if (key) {
+              const v = pctOf(col(key === 'problem' || key === 'recognized' ? '1' : '5'));
+              if (v != null) { e.scores[key] = v; e.n[key] = n || 0; }
+            } else if (rs) {
+              const v = pctOf(col('1'));
+              if (v != null && n) (e.reasons[REASON_OF[rs[1].toLowerCase()]] = e.reasons[REASON_OF[rs[1].toLowerCase()]] || []).push({ label: rs[2].trim(), pct: v, n });
+            }
+          }
+          i = j - 1;
+        }
+      }
+      const all = [...ent.values()];
+      const stores = all.filter(e => storeNo(e.name));
+      if (!stores.length) continue;
+      const bench = all.filter(e => !storeNo(e.name));
+      const brand = bench[0], group = bench[1];
+      const entries = stores.map(st => ({
+        id: `smg-${storeNo(st.name)}-${from}-${to0}`, store: storeNo(st.name), from, to, periodEnd: to0, surveys: st.n.overall || 0, scores: st.scores, n: st.n, reasons: st.reasons,
+        region: brand ? brand.scores : {}, benchLabel: brand ? `${benchName(brand.name)} avg` : 'Benchmark', group: group ? group.scores : {}, groupLabel: group ? benchName(group.name).split(' - ')[0] : '',
+        source: 'SMG Full Scale report', imported: true, updated: Date.now()
+      }));
+      const r = entries[0].reasons;
+      const why = Object.entries(r).map(([k, list]) => { const top = [...list].sort((a, b) => b.pct - a.pct)[0]; return top ? `${k}: ${top.label} (${top.pct}% of ${top.n})` : ''; }).filter(Boolean);
+      return smgSummary(entries, 'SMG Full Scale report', why.length ? [`Why unhappy guests weren't satisfied: ${why.join(' · ')}`] : []);
+    }
+    return null;
+  }
+
+  function smgTrend(ctx) {
+    for (const { aoa } of ctx.sheets || []) {
+      const title = aoa.slice(0, 5).map(r => String(r[0] || '')).find(c => /trend report/i.test(c));
+      if (!title) continue;
+      const out = new Map(); // `${week}` → { store entries, bench }
+      let entity = null, metrics = [];
+      for (let i = 0; i < aoa.length; i++) {
+        const row = aoa[i], c0 = String(row[0] || '').trim();
+        const wk = c0.match(/^week\s+(\d{1,2}),?\s*(\d{4})/i);
+        if (c0 && !wk && row.slice(1).every(x => x === '' || x == null)) { entity = c0; metrics = []; continue; }
+        if (!c0 && row.slice(1).some(x => smgKey(x))) { metrics = row.map((h, c) => [c, smgKey(h)]).filter(([c, k]) => c > 0 && k); continue; }
+        if (wk && entity && metrics.length) {
+          const key = `${wk[2]}-${wk[1].padStart(2, '0')}`;
+          const w = out.get(key) || { year: +wk[2], week: +wk[1], rows: new Map() };
+          const scores = {}, n = {};
+          for (const [c, k] of metrics) { const v = pctOf(row[c]); if (v != null) { scores[k] = v; n[k] = num(row[c + 1]) || 0; } }
+          w.rows.set(entity, { scores, n });
+          out.set(key, w);
+        }
+      }
+      const entries = [];
+      for (const w of out.values()) {
+        const names = [...w.rows.keys()];
+        const stores = names.filter(storeNo), bench = names.filter(x => !storeNo(x));
+        const mon = isoWeekMonday(w.year, w.week), sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+        for (const st of stores) {
+          const r = w.rows.get(st), b = bench[0] && w.rows.get(bench[0]), g = bench[1] && w.rows.get(bench[1]);
+          entries.push({ id: `smg-${storeNo(st)}-${iso(mon)}-${iso(sun)}`, store: storeNo(st), from: iso(mon), to: iso(sun), week: w.week, surveys: r.n.overall || 0, scores: r.scores, n: r.n,
+            region: b ? b.scores : {}, benchLabel: b ? `${benchName(bench[0])} avg` : 'Benchmark', group: g ? g.scores : {}, groupLabel: g ? benchName(bench[1]).split(' - ')[0] : '', source: `SMG Trend report (week ${w.week})`, imported: true, updated: Date.now() });
+        }
+      }
+      if (!entries.length) continue;
+      const small = entries.filter(e => e.surveys && e.surveys < 15);
+      const r = smgSummary(entries, 'SMG Trend report (weekly)');
+      if (small.length) r.summary.push(`Heads-up: ${small.length} of these weeks have fewer than 15 surveys, so one or two guests can swing a score by 10+ points. Compare against the Full Scale report for the quarter.`);
+      return r;
+    }
+    return null;
+  }
+
+  /* SMG's own "how to pull the report" PDF: explain instead of silently storing it */
+  function smgGuide(ctx) {
+    if (!ctx.pdf || !/SMG Reporting|Service Management Group/i.test(ctx.pdf.text) || !/Report Builder|INSTRUCTIONS/i.test(ctx.pdf.text)) return null;
+    return {
+      kind: 'smg-guide', label: 'SMG how-to guide (no scores inside)', category: 'marketing', source: 'smg',
+      notes: [{ id: 'note-smg-guide', module: 'marketing', title: 'SMG reporting guide', body: ctx.pdf.text, tags: ['SMG', 'How-to'] }],
+      summary: ['This PDF is SMG’s instructions for building reports. It has no scores in it, so nothing was added to SMG scores.', 'Saved as a note so the steps are easy to find.'],
+      warnings: ['To fill in SMG scores automatically: in SMG go to Report and Analytics → Report Builder, build a Full Scale report (Group By: Store) or a Trend report, then Export → CSV or Excel, and upload that file here.'],
+      lands: [['research', 'Research: SMG reporting guide']]
+    };
+  }
+
   /* ---------------- PowerPoint / Word ---------------- */
   function deck(ctx) {
     if (!ctx.deck) return null;
@@ -256,7 +381,7 @@
     };
   }
 
-  const ORDER = [laborVariance, purchaseJournal, inventoryCount, actualVsTheo, deck, document, genericPdf];
+  const ORDER = [laborVariance, smgFullScale, smgTrend, purchaseJournal, inventoryCount, actualVsTheo, smgGuide, deck, document, genericPdf];
   function translate(ctx) {
     for (const fn of ORDER) {
       try { const r = fn(ctx); if (r) return r; } catch (e) { console.warn('Translator failed', fn.name, e); }
@@ -264,7 +389,7 @@
     return null;
   }
 
-  const api = { translate, laborVariance, purchaseJournal, inventoryCount, actualVsTheo, deck, mdY, storeOf };
+  const api = { translate, smgFullScale, smgTrend, smgGuide, laborVariance, purchaseJournal, inventoryCount, actualVsTheo, deck, mdY, storeOf };
   root.REPORTS = api;
   if (root.App) root.App.reports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

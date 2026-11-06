@@ -77,6 +77,11 @@
       const ps = (await this.all('purchases', { raw: true })).filter(p => p.fileId === id);
       for (const p of ps) await this.del('purchases', p.id);
       if (ps.length) await App.purchasing?.syncDataset();
+      // SMG periods imported from this file (kept per business)
+      for (const b of App.biz?.list() || []) {
+        const list = App.settings.get(`b.${b.id}.guest.smg`, null) || (b.id === 'main' ? App.settings.get('guest.smg', []) : []);
+        if (list.some(e => e.fileId === id)) App.settings.set(`b.${b.id}.guest.smg`, list.filter(e => e.fileId !== id));
+      }
       await this.del('files', id);
     },
     async exportAll() {
