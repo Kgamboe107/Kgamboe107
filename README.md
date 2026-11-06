@@ -62,6 +62,15 @@ It also flags problems: a file whose name doesn't match the dates inside it, the
 
 **Which table a page uses:** real data always beats sample data, then the best column fit, then the newest upload. If you pick a table by hand, that choice sticks until newer data that fits as well arrives. Once you have real receipts, sample receipts stop counting. Food cost % compares purchases and sales over the same days.
 
+## Guest scores & store audits (7 Principles of Success)
+
+**Marketing → Guest scores & audits** tracks how guests and auditors see the store, organized by Jersey Mike's 7 Principles of Success: 1. Clean and well maintained · 2. Well stocked · 3. Fresh · 4. Neat and well-groomed · 5. Proper procedures · 6. Sharing our lives · 7. Inviting people in.
+
+- **Add SMG scores:** enter each survey period's percentages (overall satisfaction, taste, speed, cleanliness, friendliness, order and digital accuracy, likely to return, value), with optional region numbers, guest comments and the SMG report attached.
+- **Start an audit:** a step-by-step walk-through, one step per principle, with each check marked Yes / Needs work / N/A, plus notes per principle. Use it for self-evaluations, operational audits, district visits or health inspections. If the auditor gave an official score, enter it and it's used as the audit score. You can attach the report.
+- **The 7 Principles scoreboard** shows each principle's latest audit score next to the SMG measures guests use to judge it (cleanliness → Principle 1, taste → 3, speed and accuracy → 5, friendliness → 6, overall satisfaction and likely to return → 7). It includes the change from last period, the region comparison and the exact items to fix.
+- Trends, goals (defaults are the April 1 targets: audit 90% with an 88% gate, overall 85%, speed 80%, cleanliness 85%, digital accuracy 90%), dashboard tiles, a click-through panel, and live numbers in the dashboard's goals scorecard.
+
 ## Entering data by hand
 
 ### Purchases: receipts → purchase journal → food cost
@@ -258,6 +267,7 @@ js/ui.js              tables, charts, KPI cards, column mapper
 js/ux.js              confirm dialogs, searchable dropdowns, input masks, stepped forms, progress pill, import summary
 js/pdfx.js            PDF table reader (column edges from data alignment, wrapped-cell rejoining)
 js/pptx.js            PowerPoint / Word reader (slides, tables, speaker notes)
+js/guest.js           SMG scores & audits by the 7 Principles of Success
 js/reports.js         report translators (CrunchTime labor variance, purchase journal, inventory, AvT, decks)
 js/samples.js         sample data generator
 js/modules/*.js       one file per page

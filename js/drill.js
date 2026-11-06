@@ -387,6 +387,19 @@
           { title: 'Fix these', html: r.items.map(([t, s]) => `<div class="alert ${t} small">${esc(s)}</div>`).join('') || '<div class="alert good">No issues</div>' }],
         actions: [['Open Tax & Compliance', page('compliance')]] };
     },
+    /* Guest scores & audits by the 7 Principles of Success */
+    async guest() {
+      const s = App.guest.summary();
+      if (!s.last && !s.lastA) return null;
+      const pctx = v => (isNaN(v) ? '—' : Math.round(v * 100) + '%');
+      const ov = s.last ? +s.last.scores?.overall : NaN;
+      return { title: '7 Principles of Success', subtitle: [s.last ? `SMG ${fmt.date(s.last.from)} – ${fmt.date(s.last.to)}` : '', s.lastA ? `${esc(s.lastA.type)} ${fmt.date(s.lastA.date)}` : ''].filter(Boolean).join(' · '),
+        stats: [['Overall satisfaction', isNaN(ov) ? '—' : ov + '%', ov >= s.targets.overall ? 'good' : 'bad'], ['Latest audit', pctx(s.lastA?.s.score), s.lastA && s.lastA.s.score * 100 >= s.targets.audit ? 'good' : 'bad'], ['Items to fix', fmt.num(s.lastA ? s.lastA.s.misses.length : 0)]],
+        sections: [{ title: 'Audit score by principle', bars: s.board.map(b => ({ label: `${b.n}. ${b.title}`, v: isNaN(b.auditScore) ? 0 : b.auditScore * 100, text: pctx(b.auditScore) })) },
+          ...(s.last ? [{ title: 'SMG measures', bars: App.guest.METRICS.filter(m => s.last.scores?.[m.k] != null).map(m => ({ label: m.label, v: +s.last.scores[m.k], text: `${s.last.scores[m.k]}%${s.targets[m.k] ? ` · goal ${s.targets[m.k]}%` : ''}` })) }] : []),
+          ...(s.lastA?.s.misses.length ? [{ title: 'To fix from the last audit', html: s.lastA.s.misses.map(x => `<div class="row spread small"><span>${esc(x.item)}</span><span class="badge warn">${x.principle.n}. ${esc(x.principle.title)}</span></div>`).join('') }] : [])],
+        actions: [['Open guest scores & audits', page('marketing', { tab: 'guest' })]] };
+    },
     async legal() {
       if (!App.legal) return null;
       const a = await App.legal.assess();
@@ -421,7 +434,8 @@
     [/marketing spend/i, 'marketing'], [/roas/i, 'marketing', 'roas'],
     [/net income/i, 'finance', 'net'], [/^(total )?revenue$|gross profit|total expenses|latest growth|vs budget/i, 'finance'],
     [/overdue filings/i, 'filings', 'overdue'], [/due in \d+ days/i, 'filings'], [/1099s to file/i, 'contractors'], [/licenses needing/i, 'licenses'],
-    [/audit readiness/i, 'audit'], [/lawsuit protection|high-risk gaps|all gaps/i, 'legal']
+    [/audit readiness/i, 'audit'], [/lawsuit protection|high-risk gaps|all gaps/i, 'legal'],
+    [/guest satisfaction|store audit|7 principles/i, 'guest']
   ];
   App.drillFor = label => {
     const route = App.currentRoute?.();

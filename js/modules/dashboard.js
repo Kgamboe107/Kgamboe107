@@ -28,11 +28,16 @@
     const live = row => {
       const m = String(Object.values(row)[0] || '');
       if (week && /weekly sales|sales a week|sales per week/i.test(m) && !/catering/i.test(m)) return `<b>${fmt.compact(week.sales)}</b> <span class="muted tiny">week of ${fmt.date(week.start)}</span>`;
+      const G = App.guest?.summary();
+      const smgKey = /overall satisfaction/i.test(m) ? 'overall' : /speed/i.test(m) ? 'speed' : /cleanliness/i.test(m) ? 'clean' : /digital accuracy/i.test(m) ? 'digital' : /friendl/i.test(m) ? 'friendly' : /taste/i.test(m) ? 'taste' : '';
+      if (G?.last && smgKey && G.last.scores?.[smgKey] != null) return `<b>${G.last.scores[smgKey]}%</b> <span class="muted tiny">SMG to ${fmt.date(G.last.to)}</span>`;
+      if (G?.lastSelf && /audit|self-?eval/i.test(m)) return `<b>${Math.round(G.lastSelf.s.score * 100)}%</b> <span class="muted tiny">${esc(G.lastSelf.type.toLowerCase())} ${fmt.date(G.lastSelf.date)}</span>`;
       return '';
     };
     const anyLive = sc.rows.some(r => live(r));
-    return `<div class="card"><div class="card-head"><div><h2>Goals scorecard</h2><div class="muted small">From ${esc(sc.meta.deck || sc.name)}${sc.meta.slide ? `, slide ${sc.meta.slide}` : ''}${anyLive ? ' · live numbers from your CrunchTime reports' : ''}</div></div><a data-go="research" class="small">Meeting note →</a></div>
-      <div class="table-wrap"><table><thead><tr>${H.map(h => `<th>${esc(h)}</th>`).join('')}${anyLive ? '<th>This week (live)</th>' : ''}</tr></thead>
+    const liveNote = [week ? 'CrunchTime sales' : '', App.guest?.summary().last || App.guest?.summary().lastA ? 'SMG scores & audits' : ''].filter(Boolean).join(' and ');
+    return `<div class="card"><div class="card-head"><div><h2>Goals scorecard</h2><div class="muted small">From ${esc(sc.meta.deck || sc.name)}${sc.meta.slide ? `, slide ${sc.meta.slide}` : ''}${anyLive ? ` · live numbers from your ${liveNote}` : ''}</div></div><a data-go="research" class="small">Meeting note →</a></div>
+      <div class="table-wrap"><table><thead><tr>${H.map(h => `<th>${esc(h)}</th>`).join('')}${anyLive ? '<th>Latest (live)</th>' : ''}</tr></thead>
       <tbody>${sc.rows.map(r => `<tr>${H.map((h, i) => `<td${i ? '' : ' style="font-weight:600"'}>${esc(r[h])}</td>`).join('')}${anyLive ? `<td>${live(r)}</td>` : ''}</tr>`).join('')}</tbody></table></div></div>`;
   }
 
@@ -64,7 +69,7 @@
       view.innerHTML = App.ui.skeleton();
       const k = await refreshKpis();
       const pu = k.purchases || {}, cm = k.compliance || {}, lg = k.legal || {};
-      const f = k.finance || {}, o = k.operations || {}, t = k.trading || {}, tp = k['trading-perf'] || {}, mk = k.marketing || {}, p = k.personnel || {};
+      const f = k.finance || {}, o = k.operations || {}, t = k.trading || {}, tp = k['trading-perf'] || {}, mk = k.marketing || {}, p = k.personnel || {}, gs = k.guest || {};
       const openResearch = notes.filter(n => n.module === 'research' && (n.status || 'Open question') !== 'Archived' && n.status !== 'Findings ready').length;
       const tiles = [
         lg.score !== undefined && ['Lawsuit protection', isNaN(lg.score) ? '—' : Math.round(lg.score * 100) + '%', lg.high ? `${lg.high} high-risk gap${lg.high > 1 ? 's' : ''}` : `${lg.gaps || 0} gaps`, lg.high ? 'bad' : lg.score >= 0.85 ? 'good' : 'warn', 'legal'],
@@ -76,11 +81,13 @@
         t.gross !== undefined && ['Gross exposure', fmt.compact(t.gross), `${t.positions} positions · top ${fmt.pct(t.topWeight)}`, '', 'trading'],
         t.upl !== undefined && ['Unrealized P&L', fmt.money(t.upl), '', t.upl >= 0 ? 'good' : 'bad', 'trading'],
         tp.total !== undefined && ['Realized P&L', fmt.money(tp.total), `win rate ${fmt.pct(tp.winRate)} · VaR ${fmt.money(tp.hVaR)}`, tp.total >= 0 ? 'good' : 'bad', 'trading'],
+        gs.overall !== undefined && !isNaN(gs.overall) && ['Guest satisfaction', gs.overall + '%', `SMG ${gs.smgPeriod}${!isNaN(gs.overallPrev) ? ` · ${gs.overall >= gs.overallPrev ? '▲' : '▼'} ${Math.abs(gs.overall - gs.overallPrev).toFixed(1).replace(/\.0$/, '')} pts` : ''}`, gs.overall >= App.guest.targets().overall ? 'good' : 'bad', 'marketing'],
+        gs.audit !== undefined && !isNaN(gs.audit) && ['Store audit (7 Principles)', Math.round(gs.audit * 100) + '%', `${gs.auditType} · ${fmt.date(gs.auditDate)}${gs.weakest ? ' · weakest: ' + gs.weakest : ''}`, gs.audit * 100 >= App.guest.targets().audit ? 'good' : gs.audit * 100 >= App.guest.targets().auditGate ? 'warn' : 'bad', 'marketing'],
         mk.spend !== undefined && ['Marketing spend', fmt.compact(mk.spend), mk.roas ? `ROAS ${(+mk.roas).toFixed(2)}×` : '', '', 'marketing'],
         p.headcount !== undefined && ['Active headcount', fmt.num(p.headcount), `turnover ${fmt.pct(p.turnover)}`, '', 'personnel'],
         App.biz.enabled('research') && ['Open research', fmt.num(openResearch), `${notes.length} notes`, '', 'research']
       ].filter(Boolean);
-      const alertMods = [['legal', 'Legal & risk', lg], ['compliance', 'Tax & compliance', cm], ['purchases', 'Purchases', pu], ['finance', 'Financials', f], ['operations', 'Operations', o], ['trading', 'Positions', t], ['trading', 'Trade performance', tp], ['marketing', 'Marketing', mk], ['personnel', 'Personnel', p]].filter(([, , d]) => d.alerts);
+      const alertMods = [['legal', 'Legal & risk', lg], ['compliance', 'Tax & compliance', cm], ['purchases', 'Purchases', pu], ['finance', 'Financials', f], ['operations', 'Operations', o], ['trading', 'Positions', t], ['trading', 'Trade performance', tp], ['marketing', 'Marketing', mk], ['marketing', 'Guest scores & audits', gs], ['personnel', 'Personnel', p]].filter(([, , d]) => d.alerts);
       const byCat = {};
       files.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + 1);
       const bySrc = {};

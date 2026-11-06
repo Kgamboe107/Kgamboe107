@@ -1,4 +1,4 @@
-/* Marketing: campaign/channel performance + strategy workspace (SWOT, initiatives) */
+/* Marketing: campaign/channel performance, guest scores & audits (7 Principles of Success), strategy workspace */
 (function (App) {
   const { fmt, n0, esc } = App;
 
@@ -16,8 +16,10 @@
   let tab = 'performance';
 
   App.modules.marketing = {
-    async render(view) {
-      view.innerHTML = `<div class="tabs no-print"><button data-t="performance">Campaign performance</button><button data-t="strategy">Strategy workspace</button></div><div id="mkBody" class="stack" style="gap:16px"></div>`;
+    async render(view, params = {}) {
+      if (params.tab) tab = params.tab;
+      App.guest.publish();
+      view.innerHTML = `<div class="tabs no-print"><button data-t="performance">Campaign performance</button><button data-t="guest">Guest scores &amp; audits</button><button data-t="strategy">Strategy workspace</button></div><div id="mkBody" class="stack" style="gap:16px"></div>`;
       const tabs = view.querySelectorAll('.tabs button');
       const show = async t => {
         tab = t; tabs.forEach(b => b.classList.toggle('active', b.dataset.t === t));
@@ -26,7 +28,8 @@
           body.innerHTML = `<div id="mMap"></div><div id="mOut" class="stack" style="gap:16px"></div>`;
           await App.ui.mapper(body.querySelector('#mMap'), { title: 'Campaign data', categories: ['marketing'], fields: FIELDS, key: 'marketing',
             onChange: (ds, m) => perf(body.querySelector('#mOut'), ds, m) });
-        } else strategy(body);
+        } else if (t === 'guest') guestTab(body);
+        else strategy(body);
       };
       tabs.forEach(b => b.onclick = () => show(b.dataset.t));
       await show(tab);
@@ -150,5 +153,190 @@
       board();
     };
     board();
+  }
+
+  /* ================= Guest scores & audits: Jersey Mike's 7 Principles of Success ================= */
+  const G = () => App.guest;
+  const pct = v => (isNaN(v) ? '—' : Math.round(v * 100) + '%');
+  const pv = v => (v === '' || v == null || isNaN(+v) ? '—' : (+v).toFixed(+v % 1 ? 1 : 0) + '%');
+  const delta = (v, p) => (isNaN(v) || isNaN(p) ? '' : `<span class="${v >= p ? 'up' : 'down'}">${v >= p ? '▲' : '▼'} ${Math.abs(v - p).toFixed(1).replace(/\.0$/, '')}</span>`);
+
+  function guestTab(body) {
+    const s = G().publish(), T = s.targets;
+    const ov = s.last ? +s.last.scores?.overall : NaN, ovp = s.prev ? +s.prev.scores?.overall : NaN;
+    body.innerHTML = `
+      <div class="card row spread">
+        <div><h2>Guest scores &amp; store audits</h2><div class="muted small">SMG guest survey results and audits, scored against Jersey Mike's 7 Principles of Success.</div></div>
+        <div class="row"><button class="btn primary" id="gSmg">${App.fx.icon('plus')} Add SMG scores</button><button class="btn primary" id="gAudit">${App.fx.icon('shield')} Start an audit</button><button class="btn" id="gTargets">Goals</button></div>
+      </div>
+      ${!s.last && !s.lastA ? App.ui.empty('No scores yet. Add your latest SMG results or walk the store with an audit: one step per principle, about 5 minutes.', '<div class="row" style="justify-content:center"><button class="btn primary" data-g="smg">Add SMG scores</button><button class="btn" data-g="audit">Start an audit</button></div>') : `
+      <div class="grid k4">
+        ${App.ui.kpi('Overall satisfaction', pv(ov), s.last ? `SMG ${fmt.date(s.last.from)} – ${fmt.date(s.last.to)}${s.last.surveys ? ` · ${s.last.surveys} surveys` : ''} · goal ${T.overall}%` : 'add SMG scores', isNaN(ov) ? '' : ov >= T.overall ? 'good' : 'bad', false)}
+        ${App.ui.kpi('Latest audit', pct(s.lastA?.s.score), s.lastA ? `${esc(s.lastA.type)} · ${fmt.date(s.lastA.date)} · goal ${T.audit}%` : 'start an audit', !s.lastA ? '' : s.lastA.s.score * 100 >= T.audit ? 'good' : s.lastA.s.score * 100 >= T.auditGate ? 'warn' : 'bad', false)}
+        ${App.ui.kpi('Weakest principle', s.weakest ? `<span style="font-size:19px;line-height:1.25;display:block">${esc(`${s.weakest.n}. ${s.weakest.title}`)}</span>` : '—', s.weakest ? `${pct(s.weakest.auditScore)} on the last audit` : '', s.weakest && s.weakest.auditScore < 0.8 ? 'bad' : 'warn', false)}
+        ${App.ui.kpi('Items to fix', String(s.lastA ? s.lastA.s.misses.length : 0), s.lastA ? `from the ${fmt.date(s.lastA.date)} audit` : '', s.lastA?.s.misses.length ? 'warn' : 'good', false)}
+      </div>
+      <div class="card"><div class="card-head"><div><h2>The 7 Principles of Success</h2><div class="muted small">Latest audit score for each principle, with the SMG measures guests use to judge it${s.last && s.prev ? ' (▲▼ vs the previous SMG period)' : ''}.</div></div></div>
+        <div class="principles">${s.board.map(b => `
+          <div class="principle ${b.tone}">
+            <div class="pr-head"><span class="pr-n">${b.n}</span><div style="min-width:0"><b>${esc(b.title)}</b><div class="muted tiny">${esc(b.std)}</div></div></div>
+            <div class="pr-score"><span>${pct(b.auditScore)}</span><span class="muted tiny">audit${!isNaN(b.auditScore) && !isNaN(b.prevScore) ? ' ' + delta(b.auditScore * 100, b.prevScore * 100) : ''}</span></div>
+            <div class="meter"><i style="width:${isNaN(b.auditScore) ? 0 : Math.round(b.auditScore * 100)}%"></i></div>
+            ${b.metrics.map(m => `<div class="row spread small pr-m"><span>SMG ${esc(m.label.toLowerCase())}</span><span><b class="${!isNaN(m.v) && m.target ? (m.v >= m.target ? 'ok' : 'low') : ''}">${pv(m.v)}</b> ${delta(m.v, m.pv)}${!isNaN(m.region) ? ` <span class="muted tiny">region ${pv(m.region)}</span>` : ''}</span></div>`).join('')}
+            ${b.misses.length ? `<ul class="pr-miss tiny">${b.misses.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+          </div>`).join('')}</div></div>
+      <div class="grid c2">
+        <div class="card"><div class="card-head"><h2>SMG trend</h2><span class="muted small">% of guests, by survey period</span></div>${s.smg.length ? '<div class="chart-box"><canvas id="gSmgChart"></canvas></div>' : '<div class="muted small">Add two or more periods to see the trend.</div>'}</div>
+        <div class="card"><div class="card-head"><h2>Audit trend</h2><span class="muted small">Gate 1: ${T.auditGate}% · goal: ${T.audit}%</span></div>${s.audits.length ? '<div class="chart-box"><canvas id="gAudChart"></canvas></div>' : '<div class="muted small">No audits yet.</div>'}</div>
+      </div>
+      <div class="grid c2">
+        <div class="card"><div class="card-head"><h2>SMG periods</h2><span class="badge">${s.smg.length}</span></div><div id="gSmgT"></div></div>
+        <div class="card"><div class="card-head"><h2>Audits</h2><span class="badge">${s.audits.length}</span></div><div id="gAudT"></div></div>
+      </div>
+      ${s.last?.comments ? `<div class="card"><div class="card-head"><h2>Guest comments</h2><span class="muted small">SMG ${fmt.date(s.last.from)} – ${fmt.date(s.last.to)}</span></div><div class="small" style="white-space:pre-wrap">${esc(s.last.comments)}</div></div>` : ''}`}`;
+
+    const refresh = () => guestTab(body);
+    body.querySelector('#gSmg').onclick = () => smgDialog(null, refresh);
+    body.querySelector('#gAudit').onclick = () => auditDialog(null, refresh);
+    body.querySelector('#gTargets').onclick = () => targetsDialog(refresh);
+    body.querySelectorAll('[data-g]').forEach(b => b.onclick = () => (b.dataset.g === 'smg' ? smgDialog(null, refresh) : auditDialog(null, refresh)));
+    if (!s.last && !s.lastA) return;
+
+    const shown = G().METRICS.filter(m => s.smg.some(r => r.scores?.[m.k] !== '' && r.scores?.[m.k] != null));
+    if (s.smg.length) App.ui.chart('gSmgChart', 'line', { labels: s.smg.map(r => fmt.date(r.to || r.from)), datasets: shown.map(m => ({ label: m.label, data: s.smg.map(r => r.scores?.[m.k] === '' || r.scores?.[m.k] == null ? null : +r.scores[m.k]), spanGaps: true, pointRadius: 3 })) },
+      { scales: { y: { suggestedMin: 40, suggestedMax: 100, ticks: { callback: v => v + '%' } } } });
+    if (s.audits.length) App.ui.chart('gAudChart', 'line', { labels: s.audits.map(a => `${fmt.date(a.date)}`), datasets: [
+      { label: 'Audit score', data: s.audits.map(a => isNaN(a.s.score) ? null : +(a.s.score * 100).toFixed(1)), pointRadius: 5, pointHoverRadius: 7 },
+      { label: `Goal ${T.audit}%`, data: s.audits.map(() => T.audit), borderDash: [6, 4], pointRadius: 0, color: '#059669' },
+      { label: `Gate ${T.auditGate}%`, data: s.audits.map(() => T.auditGate), borderDash: [3, 4], pointRadius: 0, color: '#d97706' }] },
+      { scales: { y: { suggestedMin: 50, suggestedMax: 100, ticks: { callback: v => v + '%' } } } });
+
+    App.ui.table(body.querySelector('#gSmgT'), [
+      { key: 'period', label: 'Period' }, { key: 'surveys', label: 'Surveys', num: true },
+      { key: 'overall', label: 'Overall', num: true, fmt: v => pv(v) }, { key: 'speed', label: 'Speed', num: true, fmt: v => pv(v) }, { key: 'clean', label: 'Clean', num: true, fmt: v => pv(v) },
+      { key: 'digital', label: 'Digital acc.', num: true, fmt: v => pv(v) }, { key: 'id', label: '', fmt: v => `<button class="btn small" data-es="${v}">Edit</button>` }
+    ], [...s.smg].reverse().map(r => ({ id: r.id, period: `${fmt.date(r.from)} – ${fmt.date(r.to)}`, surveys: +r.surveys || 0, overall: num(r.scores?.overall), speed: num(r.scores?.speed), clean: num(r.scores?.clean), digital: num(r.scores?.digital) })));
+    App.ui.table(body.querySelector('#gAudT'), [
+      { key: 'date', label: 'Date', fmt: v => fmt.date(v) }, { key: 'type', label: 'Type' }, { key: 'by', label: 'By' },
+      { key: 'score', label: 'Score', num: true, fmt: v => pct(v) }, { key: 'miss', label: 'To fix', num: true }, { key: 'id', label: '', fmt: v => `<button class="btn small" data-ea="${v}">Open</button>` }
+    ], [...s.audits].reverse().map(a => ({ id: a.id, date: a.date, type: a.type, by: a.by || '', score: a.s.score, miss: a.s.misses.length })));
+    body.querySelectorAll('[data-es]').forEach(b => b.onclick = () => smgDialog(G().smg().find(r => r.id === b.dataset.es), refresh));
+    body.querySelectorAll('[data-ea]').forEach(b => b.onclick = () => auditDialog(G().audits().find(r => r.id === b.dataset.ea), refresh));
+  }
+  const num = v => (v === '' || v == null ? NaN : +v);
+
+  async function attach(file, tags) {
+    if (!file) return null;
+    const [f] = await App.ingest.ingestMany([file], { quiet: true, category: 'marketing', tags });
+    return f ? { fileId: f.id, fileName: f.name } : null;
+  }
+
+  /* ---------- SMG survey entry ---------- */
+  function smgDialog(rec, after) {
+    const isNew = !rec;
+    const today = new Date().toISOString().slice(0, 10);
+    const r = rec || { id: App.uid(), from: '', to: today, surveys: '', scores: {}, region: {}, comments: '' };
+    const T = G().targets();
+    App.ui.modal(`<div class="card-head"><div><h2>${isNew ? 'Add SMG scores' : 'Edit SMG scores'}</h2><div class="muted small">Enter the % for each measure from your SMG report. Region is optional.</div></div><button class="btn small ghost" data-close>Cancel</button></div>
+      <div class="stack form-group" style="gap:24px">
+        <div class="mapper"><label>Period start<input type="date" id="sF" value="${esc(r.from)}"></label><label>Period end<input type="date" id="sT" value="${esc(r.to)}"></label><label>Surveys (n)<input type="number" min="0" id="sN" value="${esc(r.surveys)}" placeholder="e.g. 42"></label></div>
+        <div class="smg-grid"><div class="tiny muted">Measure</div><div class="tiny muted">Your store %</div><div class="tiny muted">Region %</div><div class="tiny muted">Principle</div>
+          ${G().METRICS.map(m => `<label for="sm_${m.k}" class="small">${esc(m.label)}${T[m.k] ? ` <span class="tiny muted">goal ${T[m.k]}%</span>` : ''}</label>
+            <input id="sm_${m.k}" type="number" min="0" max="100" step="0.1" data-sc="${m.k}" value="${esc(r.scores?.[m.k] ?? '')}" inputmode="decimal">
+            <input type="number" min="0" max="100" step="0.1" data-rg="${m.k}" value="${esc(r.region?.[m.k] ?? '')}" inputmode="decimal" aria-label="${esc(m.label)} region">
+            <span class="tiny muted">${m.principle ? `${G().P[m.principle].n}. ${esc(G().P[m.principle].title)}` : '—'}</span>`).join('')}</div>
+        <label class="field">Guest comments worth sharing (optional)<textarea id="sC" rows="3" placeholder="“Great customer service from Dylan…”">${esc(r.comments || '')}</textarea></label>
+        <label class="field">Attach the SMG report (optional)<input type="file" id="sFile" accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx">${r.fileName ? `<span class="tiny muted">On file: ${esc(r.fileName)}</span>` : ''}</label>
+        <div class="confirm-actions form-submit" style="margin-top:8px">${isNew ? '' : '<button class="btn danger" id="sDel">Delete period…</button>'}<button class="btn primary" id="sSave">${isNew ? 'Save SMG scores' : 'Save changes'}</button></div>
+      </div>`, (card, close) => {
+      card.classList.add('wide');
+      card.querySelector('#sSave').onclick = async () => {
+        const g = q => card.querySelector(q).value;
+        const scores = {}, region = {};
+        card.querySelectorAll('[data-sc]').forEach(i => { if (i.value !== '') scores[i.dataset.sc] = Math.max(0, Math.min(100, +i.value)); });
+        card.querySelectorAll('[data-rg]').forEach(i => { if (i.value !== '') region[i.dataset.rg] = Math.max(0, Math.min(100, +i.value)); });
+        if (!g('#sT')) return App.ui.toast('Enter the period end date');
+        if (!Object.keys(scores).length) return App.ui.toast('Enter at least one score');
+        const next = { ...r, from: g('#sF') || g('#sT'), to: g('#sT'), surveys: g('#sN'), scores, region, comments: g('#sC').trim(), updated: Date.now() };
+        const a = await attach(card.querySelector('#sFile').files[0], ['SMG', next.to]);
+        if (a) Object.assign(next, a);
+        G().save('smg', next);
+        App.compliance?.audit(isNew ? 'SMG scores added' : 'SMG scores edited', `${next.from} – ${next.to} · overall ${next.scores.overall ?? '—'}%`);
+        close(); App.ui.toast('SMG scores saved'); after();
+      };
+      card.querySelector('#sDel')?.addEventListener('click', async () => {
+        if (!await App.confirm({ title: 'Delete this SMG period?', body: `${fmt.date(r.from)} – ${fmt.date(r.to)} will be removed from the trend and the dashboard.`, ok: 'Delete period', cancel: 'Keep period', danger: true })) return;
+        G().remove('smg', r.id); close(); after();
+      });
+    });
+  }
+
+  /* ---------- Audit: one step per principle ---------- */
+  function auditDialog(rec, after) {
+    const isNew = !rec;
+    const a = rec ? JSON.parse(JSON.stringify(rec)) : { id: App.uid(), date: new Date().toISOString().slice(0, 10), type: 'Self-evaluation', by: App.settings.get('userName', ''), official: '', answers: {}, notes: {} };
+    const step = p => `<section data-step="${p.n}. ${esc(p.title)}" class="stack form-group" data-p="${p.key}">
+        <div><b>Principle ${p.n}: ${esc(p.title)}</b><div class="muted small">${esc(p.std)}</div></div>
+        <div class="stack audit-items">${p.checks.map((c, i) => `<div class="audit-item"><span class="small">${esc(c)}</span>
+          <div class="seg yn" role="radiogroup" aria-label="${esc(c)}">${[['yes', 'Yes'], ['no', 'Needs work'], ['na', 'N/A']].map(([v, l]) => `<button type="button" data-a="${p.key}:${i}" data-v="${v}" class="${a.answers?.[p.key]?.[i] === v ? 'on ' + v : ''}">${l}</button>`).join('')}</div></div>`).join('')}</div>
+        <label class="field">Notes for ${esc(p.title.toLowerCase())}<textarea rows="2" data-note="${p.key}" placeholder="What you saw, who fixed it, follow-up">${esc(a.notes?.[p.key] || '')}</textarea></label>
+        <div class="tiny muted" data-live="${p.key}"></div>
+      </section>`;
+    App.ui.modal(`<div class="card-head"><div><h2>${isNew ? 'Store audit' : `${esc(a.type)} · ${fmt.date(a.date)}`}</h2><div class="muted small">Walk the store one principle at a time. Mark anything that isn't right as "Needs work".</div></div><button class="btn small ghost" data-close>${isNew ? 'Cancel' : 'Close'}</button></div>
+      <div class="stack" data-steps>
+        <section data-step="Details" class="stack form-group">
+          <div class="mapper"><label>Date<input type="date" id="aD" value="${esc(a.date)}"></label><label>Type<select id="aT" data-native>${App.ui.options(G().AUDIT_TYPES, a.type)}</select></label><label>Done by<input id="aBy" value="${esc(a.by || '')}" placeholder="Name"></label>
+            <label>Official score % <span class="tiny">(if the auditor gave one)</span><input type="number" id="aO" min="0" max="100" step="0.1" value="${esc(a.official ?? '')}" placeholder="optional"></label></div>
+          <label class="field">Attach the audit report (optional)<input type="file" id="aFile" accept=".pdf,.png,.jpg,.jpeg">${a.fileName ? `<span class="tiny muted">On file: ${esc(a.fileName)}</span>` : ''}</label>
+        </section>
+        ${G().PRINCIPLES.map(step).join('')}
+        <section data-step="Review" class="stack form-group"><div id="aReview"></div>
+          <div class="confirm-actions form-submit">${isNew ? '' : '<button class="btn danger" id="aDel">Delete audit…</button>'}<button class="btn primary" id="aSave">${isNew ? 'Save audit' : 'Save changes'}</button></div></section>
+      </div>`, (card, close) => {
+      card.classList.add('wide');
+      const live = () => {
+        const sc = G().scoreAudit(a);
+        G().PRINCIPLES.forEach(p => { const el = card.querySelector(`[data-live="${p.key}"]`); if (el) el.textContent = isNaN(sc.per[p.key]) ? 'Not scored yet' : `Principle score: ${pct(sc.per[p.key])}`; });
+        card.querySelector('#aReview').innerHTML = `<div class="grid k4">${App.ui.kpi('Checklist score', pct(sc.checklist), `${sc.answered} items answered`, isNaN(sc.checklist) ? '' : sc.checklist >= 0.9 ? 'good' : sc.checklist >= 0.8 ? 'warn' : 'bad', false)}${!isNaN(sc.official) ? App.ui.kpi('Official score', pct(sc.official), 'used as the audit score', '', false) : ''}</div>
+          <div class="stack" style="margin-top:12px">${G().PRINCIPLES.map(p => `<div class="row spread small"><span>${p.n}. ${esc(p.title)}</span><b>${pct(sc.per[p.key])}</b></div>`).join('')}</div>
+          ${sc.misses.length ? `<h3 style="margin-top:14px">To fix (${sc.misses.length})</h3><ul class="small">${sc.misses.map(x => `<li><b>${x.principle.n}.</b> ${esc(x.item)}</li>`).join('')}</ul>` : '<div class="alert good small" style="margin-top:12px">Nothing marked "Needs work".</div>'}`;
+      };
+      card.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+        const [pk, i] = b.dataset.a.split(':');
+        a.answers[pk] = a.answers[pk] || {};
+        a.answers[pk][i] = a.answers[pk][i] === b.dataset.v ? undefined : b.dataset.v;
+        b.parentElement.querySelectorAll('button').forEach(x => x.className = a.answers[pk][i] === x.dataset.v ? 'on ' + x.dataset.v : '');
+        live();
+      });
+      card.querySelectorAll('[data-note]').forEach(t => t.oninput = () => { a.notes[t.dataset.note] = t.value; });
+      card.querySelector('#aO').oninput = e => { a.official = e.target.value; live(); };
+      App.ux.steps(card.querySelector('[data-steps]'), { finish: '#aSave' });
+      live();
+      card.querySelector('#aSave').onclick = async () => {
+        Object.assign(a, { date: card.querySelector('#aD').value || a.date, type: card.querySelector('#aT').value, by: card.querySelector('#aBy').value.trim(), official: card.querySelector('#aO').value, updated: Date.now() });
+        for (const k of Object.keys(a.answers)) for (const i of Object.keys(a.answers[k])) if (a.answers[k][i] === undefined) delete a.answers[k][i];
+        const f = await attach(card.querySelector('#aFile').files[0], ['Audit', a.type, a.date]);
+        if (f) Object.assign(a, f);
+        G().save('audit', a);
+        const sc = G().scoreAudit(a);
+        App.compliance?.audit(isNew ? 'Store audit recorded' : 'Store audit edited', `${a.type} ${a.date} · ${pct(sc.score)} · ${sc.misses.length} to fix`);
+        close(); App.ui.toast(`Audit saved: ${pct(sc.score)}${sc.misses.length ? ` · ${sc.misses.length} item${sc.misses.length > 1 ? 's' : ''} to fix` : ''}`); after();
+      };
+      card.querySelector('#aDel')?.addEventListener('click', async () => {
+        if (!await App.confirm({ title: 'Delete this audit?', body: `The ${a.type.toLowerCase()} from ${fmt.date(a.date)} will be removed from the trend and the 7 Principles scoreboard.`, ok: 'Delete audit', cancel: 'Keep audit', danger: true })) return;
+        G().remove('audit', a.id); close(); after();
+      });
+    });
+  }
+
+  function targetsDialog(after) {
+    const T = G().targets();
+    const rows = [...G().METRICS.map(m => [m.k, `SMG ${m.label.toLowerCase()}`]), ['audit', 'Audit score goal'], ['auditGate', 'Audit gate (checkpoint)']];
+    App.ui.modal(`<div class="card-head"><h2>Goals</h2><button class="btn small ghost" data-close>Cancel</button></div>
+      <div class="stack form-group" style="gap:24px"><div class="mapper">${rows.map(([k, l]) => `<label>${esc(l)} %<input type="number" min="0" max="100" step="1" data-t="${k}" value="${T[k] ?? ''}"></label>`).join('')}</div>
+      <div class="confirm-actions form-submit"><button class="btn" id="tReset">Use the default goals</button><button class="btn primary" id="tSave">Save goals</button></div></div>`, (card, close) => {
+      card.querySelector('#tSave').onclick = () => { const o = {}; card.querySelectorAll('[data-t]').forEach(i => { if (i.value !== '') o[i.dataset.t] = +i.value; }); App.bsettings.set('guest.targets', o); close(); after(); };
+      card.querySelector('#tReset').onclick = () => { App.bsettings.set('guest.targets', {}); close(); after(); };
+    });
   }
 })(window.App);
