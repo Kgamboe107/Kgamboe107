@@ -1,6 +1,7 @@
 /* Dashboard: cross-module command view */
 (function (App) {
   const { fmt, esc } = App;
+  const num = v => typeof v === 'number' && Number.isFinite(v); // saved KPIs round-trip through JSON (NaN → null)
 
   /* Re-run each analysis off-screen so the dashboard always reflects current data */
   async function refreshKpis() {
@@ -46,6 +47,7 @@
     async render(view) {
       if (App.biz.isMaster()) return App.modules.master.render(view);
       const biz = App.biz.get(App.biz.current());
+      const personalUnit = App.biz.kindOf(biz) === 'individual';
       const files = await App.store.files();
       const datasets = await App.store.datasets();
       const notes = await App.store.all('notes');
@@ -58,7 +60,7 @@
           <div class="grid c3">${[
             ['upload', 'Drop in your exports', 'CSV/Excel from Harri, CrunchTime, Webull, Dub, P&Ls, campaign reports. Columns are matched automatically.', 'library'],
             ['integrations', 'Connect Drive & Outlook', 'Pull spreadsheets from Google Drive or attachments straight from your inbox.', 'integrations'],
-            ['businesses', 'Add more ventures', 'Each business gets its own workspace. The Master dashboard rolls them up.', 'businesses']
+            ['businesses', 'Add more units', 'Add businesses and personal units (household, investments, rentals). Each kind has its own roll-up dashboard.', 'businesses']
           ].map(([ic, t, d, go], i) => `<a class="card note-item" data-go="${go}" style="text-decoration:none;color:inherit;padding:18px">
               <div class="row" style="gap:12px"><span class="oc-i" style="width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)">${App.fx.icon(ic)}</span>
               <span class="badge">Step ${i + 1}</span></div><h3 style="margin-top:12px">${t}</h3><div class="muted small" style="margin-top:4px">${d}</div></a>`).join('')}</div>
@@ -75,14 +77,14 @@
         lg.score !== undefined && ['Lawsuit protection', isNaN(lg.score) ? '—' : Math.round(lg.score * 100) + '%', lg.high ? `${lg.high} high-risk gap${lg.high > 1 ? 's' : ''}` : `${lg.gaps || 0} gaps`, lg.high ? 'bad' : lg.score >= 0.85 ? 'good' : 'warn', 'legal'],
         cm.score !== undefined && ['Audit readiness', isNaN(cm.score) ? '—' : Math.round(cm.score * 100) + '%', cm.overdue ? `${cm.overdue} overdue filing${cm.overdue > 1 ? 's' : ''}` : `${cm.dueSoon || 0} due in 30 days`, cm.overdue ? 'bad' : cm.score >= 0.85 ? 'good' : 'warn', 'compliance'],
         pu.receipts && ['Food cost %', fmt.pct(pu.foodPct), `${fmt.money(pu.food)} food · ${pu.receipts} receipts`, isNaN(pu.foodPct) ? '' : pu.foodPct <= (App.bsettings.get('ops.targets', {}).food || 0.3) ? 'good' : 'bad', 'purchases'],
-        f.revenue !== undefined && ['Revenue', fmt.compact(f.revenue), `net margin ${fmt.pct(f.margin)}`, f.margin >= 0 ? 'good' : 'bad', 'finance'],
-        o.laborPct !== undefined && !isNaN(o.laborPct) && ['Labor %', fmt.pct(o.laborPct), `prime cost ${fmt.pct(o.primePct)}`, '', 'operations'],
-        o.splh !== undefined && !isNaN(o.splh) && ['Sales / labor hr', fmt.money(o.splh, 2), `sales ${fmt.compact(o.sales)}`, '', 'operations'],
+        f.revenue !== undefined && [personalUnit ? 'Income' : 'Revenue', fmt.compact(f.revenue), `${personalUnit ? 'savings rate' : 'net margin'} ${fmt.pct(f.margin)}`, f.margin >= 0 ? 'good' : 'bad', 'finance'],
+        num(o.laborPct) && ['Labor %', fmt.pct(o.laborPct), `prime cost ${fmt.pct(o.primePct)}`, '', 'operations'],
+        num(o.splh) && ['Sales / labor hr', fmt.money(o.splh, 2), `sales ${fmt.compact(o.sales)}`, '', 'operations'],
         t.gross !== undefined && ['Gross exposure', fmt.compact(t.gross), `${t.positions} positions · top ${fmt.pct(t.topWeight)}`, '', 'trading'],
         t.upl !== undefined && ['Unrealized P&L', fmt.money(t.upl), '', t.upl >= 0 ? 'good' : 'bad', 'trading'],
         tp.total !== undefined && ['Realized P&L', fmt.money(tp.total), `win rate ${fmt.pct(tp.winRate)} · VaR ${fmt.money(tp.hVaR)}`, tp.total >= 0 ? 'good' : 'bad', 'trading'],
-        gs.overall !== undefined && !isNaN(gs.overall) && ['Guest satisfaction', gs.overall + '%', `SMG ${gs.smgPeriod}${!isNaN(gs.overallPrev) ? ` · ${gs.overall >= gs.overallPrev ? '▲' : '▼'} ${Math.abs(gs.overall - gs.overallPrev).toFixed(1).replace(/\.0$/, '')} pts` : ''}`, gs.overall >= App.guest.targets().overall ? 'good' : 'bad', 'marketing'],
-        gs.audit !== undefined && !isNaN(gs.audit) && ['Store audit (7 Principles)', Math.round(gs.audit * 100) + '%', `${gs.auditType} · ${fmt.date(gs.auditDate)}${gs.weakest ? ' · weakest: ' + gs.weakest : ''}`, gs.audit * 100 >= App.guest.targets().audit ? 'good' : gs.audit * 100 >= App.guest.targets().auditGate ? 'warn' : 'bad', 'marketing'],
+        num(gs.overall) && ['Guest satisfaction', gs.overall + '%', `SMG ${gs.smgPeriod}${num(gs.overallPrev) ? ` · ${gs.overall >= gs.overallPrev ? '▲' : '▼'} ${Math.abs(gs.overall - gs.overallPrev).toFixed(1).replace(/\.0$/, '')} pts` : ''}`, gs.overall >= App.guest.targets().overall ? 'good' : 'bad', 'marketing'],
+        num(gs.audit) && ['Store audit (7 Principles)', Math.round(gs.audit * 100) + '%', `${gs.auditType} · ${fmt.date(gs.auditDate)}${gs.weakest ? ' · weakest: ' + gs.weakest : ''}`, gs.audit * 100 >= App.guest.targets().audit ? 'good' : gs.audit * 100 >= App.guest.targets().auditGate ? 'warn' : 'bad', 'marketing'],
         mk.spend !== undefined && ['Marketing spend', fmt.compact(mk.spend), mk.roas ? `ROAS ${(+mk.roas).toFixed(2)}×` : '', '', 'marketing'],
         p.headcount !== undefined && ['Active headcount', fmt.num(p.headcount), `turnover ${fmt.pct(p.turnover)}`, '', 'personnel'],
         App.biz.enabled('research') && ['Open research', fmt.num(openResearch), `${notes.length} notes`, '', 'research']
@@ -96,7 +98,7 @@
       view.innerHTML = `
         <div class="card biz-card greet row spread" style="--bc:${biz.color};flex-direction:row">
           <div><div class="greet-hi">${esc(App.ux.greeting())}</div><div class="muted small">${esc(App.ux.today())} · <b style="color:var(--text)">${esc(biz.name)}</b> · ${esc(App.biz.TEMPLATES[biz.type]?.label || 'Custom')}${biz.description ? ' · ' + esc(biz.description) : ''}</div></div>
-          <div class="row no-print"><button class="btn small primary" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn small" id="dEdit">Edit business</button><button class="btn small" id="dMaster">Master dashboard</button></div>
+          <div class="row no-print"><button class="btn small primary" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn small" id="dEdit">Edit unit</button><button class="btn small" id="dMaster">${App.fx.icon(personalUnit ? 'user' : 'businesses')} ${personalUnit ? 'Personal dashboard' : 'Business dashboard'}</button></div>
         </div>
         <div class="grid k4">${tiles.map(([l, v, s, tone, go]) => `<a data-go="${go}" style="text-decoration:none;color:inherit">${App.ui.kpi(l, v, s, tone)}</a>`).join('')}</div>
         ${await goalsCard(datasets)}
@@ -114,7 +116,7 @@
         </div>
         <div class="row no-print"><button class="btn" onclick="window.print()">Print / save as PDF</button><span class="muted small">Updated ${new Date().toLocaleTimeString()}</span></div>`;
       view.querySelector('#dEdit').onclick = () => App.businessForm(biz, () => App.go('dashboard'));
-      view.querySelector('#dMaster').onclick = () => { App.biz.setCurrent('all'); App.go('dashboard'); };
+      view.querySelector('#dMaster').onclick = () => { App.biz.setCurrent(App.biz.kindOf(biz) === 'individual' ? 'all:individual' : 'all:business'); App.go('dashboard'); };
       const cats = Object.keys(byCat);
       App.ui.chart('dCov', 'doughnut', { labels: cats.map(c => App.categories[c]?.label || c), datasets: [{ data: cats.map(c => byCat[c]), backgroundColor: cats.map(c => App.categories[c]?.color || '#64748b') }] }, { plugins: { legend: { position: 'right', labels: { color: App.ui.cssVar('--muted') } } } });
     }

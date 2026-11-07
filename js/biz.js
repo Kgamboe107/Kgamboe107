@@ -1,16 +1,27 @@
-/* Businesses / ventures: each has its own data, settings, targets and dashboard.
-   "all" is the Master view that consolidates every business. */
+/* Units: businesses (stores, ventures) and personal units (household finances, investment accounts,
+   rentals, side income). Each has its own data, settings, targets and dashboard.
+   Roll-up views: "all:business" (Business dashboard), "all:individual" (Personal dashboard), "all" (everything). */
 (function (App) {
   const ALL_MODULES = ['finance', 'purchases', 'operations', 'trading', 'marketing', 'research', 'personnel'];
   const MODULE_LABELS = { finance: 'Financials', purchases: 'Purchases', operations: 'Operations', trading: 'Trading Risk', marketing: 'Marketing', research: 'Research', personnel: 'Personnel' };
+  const KINDS = {
+    business: { label: 'Business', plural: 'Businesses', master: 'Business dashboard', unit: 'business', icon: 'businesses', blurb: 'Stores, locations, companies and ventures' },
+    individual: { label: 'Personal', plural: 'Personal', master: 'Personal dashboard', unit: 'personal unit', icon: 'personnel', blurb: 'Your own money: household, investments, rentals, side income' }
+  };
   const TEMPLATES = {
-    restaurant: { label: 'Restaurant / hospitality', modules: ['finance', 'purchases', 'operations', 'marketing', 'research', 'personnel'] },
-    trading: { label: 'Trading / investing', modules: ['finance', 'trading', 'research'] },
-    ecommerce: { label: 'E-commerce / retail', modules: ['finance', 'purchases', 'operations', 'marketing', 'research', 'personnel'] },
-    services: { label: 'Services / consulting', modules: ['finance', 'purchases', 'marketing', 'research', 'personnel'] },
-    realestate: { label: 'Real estate', modules: ['finance', 'purchases', 'operations', 'research'] },
-    startup: { label: 'Startup / new venture', modules: ['finance', 'purchases', 'marketing', 'research'] },
-    custom: { label: 'Custom', modules: ALL_MODULES.slice() }
+    restaurant: { kind: 'business', label: 'Restaurant / hospitality', modules: ['finance', 'purchases', 'operations', 'marketing', 'research', 'personnel'] },
+    ecommerce: { kind: 'business', label: 'E-commerce / retail', modules: ['finance', 'purchases', 'operations', 'marketing', 'research', 'personnel'] },
+    services: { kind: 'business', label: 'Services / consulting', modules: ['finance', 'purchases', 'marketing', 'research', 'personnel'] },
+    realestate: { kind: 'business', label: 'Real estate company', modules: ['finance', 'purchases', 'operations', 'research'] },
+    trading: { kind: 'business', label: 'Trading firm / fund', modules: ['finance', 'trading', 'research'] },
+    startup: { kind: 'business', label: 'Startup / new venture', modules: ['finance', 'purchases', 'marketing', 'research'] },
+    custom: { kind: 'business', label: 'Custom business', modules: ALL_MODULES.slice() },
+    personal: { kind: 'individual', label: 'Personal finances', modules: ['finance', 'purchases', 'research'] },
+    investing: { kind: 'individual', label: 'Investing & trading account', modules: ['finance', 'trading', 'research'] },
+    rental: { kind: 'individual', label: 'Rental property', modules: ['finance', 'purchases', 'operations', 'research'] },
+    freelance: { kind: 'individual', label: 'Freelance / side income', modules: ['finance', 'purchases', 'marketing', 'research'] },
+    household: { kind: 'individual', label: 'Household & family', modules: ['finance', 'purchases', 'research'] },
+    icustom: { kind: 'individual', label: 'Custom personal unit', modules: ['finance', 'purchases', 'trading', 'research'] }
   };
   const COLORS = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#ea580c', '#475569'];
 
@@ -31,21 +42,37 @@
   const get = id => list().find(b => b.id === id);
   function save(l) { App.settings.set('businesses', l); App.bus.emit('biz-changed'); }
 
+  const kindOf = b => (b && (b.kind || TEMPLATES[b.type]?.kind)) || 'business';
+  const MASTERS = ['all', 'all:business', 'all:individual'];
   function current() {
     const c = App.settings.get('activeBiz', 'main');
-    if (c === 'all') return 'all';
+    if (MASTERS.includes(c)) return c;
     return get(c) ? c : list()[0].id;
   }
-  const isMaster = () => current() === 'all';
+  const isMaster = () => MASTERS.includes(current());
+  /* 'business' | 'individual' for a roll-up view, else null */
+  const masterKind = () => ({ 'all:business': 'business', 'all:individual': 'individual' })[current()] || null;
+  /* The kind the user is working in right now (a unit's kind, or the roll-up's) */
+  const currentKind = () => isMaster() ? masterKind() : kindOf(get(current()));
+  const units = kind => active().filter(b => !kind || kindOf(b) === kind);
+  /* Units included in the current view */
+  const inView = () => isMaster() ? units(masterKind()) : [get(current())].filter(Boolean);
+  function masterLabel(id = current()) { return id === 'all:business' ? KINDS.business.master : id === 'all:individual' ? KINDS.individual.master : 'Everything'; }
   function setCurrent(id) { App.settings.set('activeBiz', id); App.bus.emit('biz-changed'); }
-  /* Where new uploads go: the active business (or the first one while in Master view) */
-  const target = () => isMaster() ? active()[0]?.id || list()[0].id : current();
+  /* Where new uploads go: the active unit (or the first one in the roll-up being viewed) */
+  const target = () => isMaster() ? (inView()[0] || active()[0] || list()[0]).id : current();
   const idOf = rec => rec.businessId || 'main';
-  const inScope = rec => isMaster() || idOf(rec) === current();
+  const inScope = rec => {
+    if (!isMaster()) return idOf(rec) === current();
+    const mk = masterKind();
+    return !mk || kindOf(get(idOf(rec))) === mk;
+  };
 
   function enabled(mod) {
+    // Payroll/sales-tax compliance and business legal documents only apply to businesses
+    if ((mod === 'compliance' || mod === 'legal') && currentKind() === 'individual') return false;
     if (!ALL_MODULES.includes(mod)) return true;
-    if (isMaster()) return active().some(b => b.modules.includes(mod));
+    if (isMaster()) return inView().some(b => b.modules.includes(mod));
     return (get(current())?.modules || ALL_MODULES).includes(mod);
   }
 
@@ -59,8 +86,8 @@
   function create(data) {
     const l = list();
     const b = {
-      id: App.uid(), name: data.name || 'New venture', type: data.type || 'custom',
-      color: data.color || COLORS[l.length % COLORS.length], modules: data.modules || TEMPLATES[data.type || 'custom'].modules.slice(),
+      id: App.uid(), name: data.name || 'New venture', type: data.type || 'custom', kind: data.kind || TEMPLATES[data.type]?.kind || 'business',
+      color: data.color || COLORS[l.length % COLORS.length], modules: data.modules || (TEMPLATES[data.type] || TEMPLATES.custom).modules.slice(),
       description: data.description || '', started: data.started || '', createdAt: Date.now()
     };
     l.push(b); save(l);
@@ -102,6 +129,6 @@
     set(k, v) { App.settings.set(`b.${current()}.${k}`, v); }
   };
 
-  App.biz = { ALL_MODULES, MODULE_LABELS, TEMPLATES, COLORS, list, active, get, current, isMaster, setCurrent, target, idOf, inScope, enabled, withBiz, create, update, remove, moveData };
+  App.biz = { KINDS, kindOf, masterKind, currentKind, units, inView, masterLabel, ALL_MODULES, MODULE_LABELS, TEMPLATES, COLORS, list, active, get, current, isMaster, setCurrent, target, idOf, inScope, enabled, withBiz, create, update, remove, moveData };
   App.bsettings = bsettings;
 })(window.App);

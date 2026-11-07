@@ -16,40 +16,49 @@
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <div class="brand-mark" id="brandMark">OC</div>
-        <div>
-          <div class="brand-name">Ops Command Desk</div>
-          <div class="brand-sub" id="brandSub">Operations Manager</div>
+        <div class="brand-mark">OC</div>
+        <div class="brand-text"><div class="brand-name">Ops Command Desk</div><div class="brand-sub">Operations Manager</div></div>
+        <button class="rail-toggle" id="railToggle" aria-label="Collapse sidebar" title="Collapse sidebar (Ctrl+\)"><span data-icon="sidebar"></span></button>
+      </div>
+      <button class="ws-btn" id="wsBtn" aria-haspopup="menu" aria-expanded="false" title="Switch between businesses and personal units">
+        <span class="ws-av" id="wsAv">OC</span>
+        <span class="ws-text"><span class="ws-kind" id="wsKind">Business</span><span class="ws-name" id="wsName">Main Business</span></span>
+        <span class="ws-chev" data-icon="chevrons"></span>
+      </button>
+      <nav id="nav" aria-label="Main">
+        <a data-route="dashboard" class="active" title="Dashboard"><span class="ico" data-icon="dashboard"></span><span class="lbl" id="dashLabel">Dashboard</span></a>
+        <a data-route="library" title="Data Library"><span class="ico" data-icon="library"></span><span class="lbl">Data Library</span></a>
+        <a data-route="ai" title="AI Assistant"><span class="ico" data-icon="sparkles"></span><span class="lbl">AI Assistant</span><span class="nav-pill">New</span></a>
+        <button class="nav-label" data-sec="analysis" aria-expanded="true"><span>Analysis</span><span class="sec-chev" data-icon="chev"></span></button>
+        <div class="nav-sec" data-sec-body="analysis">
+          <a data-route="finance" title="Financials"><span class="ico" data-icon="finance"></span><span class="lbl">Financials</span></a>
+          <a data-route="purchases" title="Purchases"><span class="ico" data-icon="receipt"></span><span class="lbl">Purchases</span></a>
+          <a data-route="operations" title="Operations"><span class="ico" data-icon="operations"></span><span class="lbl">Operations</span></a>
+          <a data-route="trading" title="Trading Risk"><span class="ico" data-icon="trading"></span><span class="lbl">Trading Risk</span></a>
+          <a data-route="marketing" title="Marketing"><span class="ico" data-icon="marketing"></span><span class="lbl">Marketing</span></a>
+          <a data-route="research" title="Research"><span class="ico" data-icon="research"></span><span class="lbl">Research</span></a>
+          <a data-route="personnel" title="Personnel"><span class="ico" data-icon="personnel"></span><span class="lbl">Personnel</span></a>
         </div>
-      </div>
-      <div class="biz-switch">
-        <label class="tiny" for="bizSelect">Viewing</label>
-        <select id="bizSelect"></select>
-      </div>
-      <nav id="nav">
-        <a data-route="dashboard" class="active"><span class="ico" data-icon="dashboard"></span><span id="dashLabel">Dashboard</span></a>
-        <a data-route="library"><span class="ico" data-icon="library"></span>Data Library</a>
-        <a data-route="ai"><span class="ico" data-icon="sparkles"></span>AI Assistant <span class="nav-pill">New</span></a>
-        <div class="nav-label">Analysis</div>
-        <a data-route="finance"><span class="ico" data-icon="finance"></span>Financials</a>
-        <a data-route="purchases"><span class="ico" data-icon="receipt"></span>Purchases</a>
-        <a data-route="operations"><span class="ico" data-icon="operations"></span>Operations</a>
-        <a data-route="trading"><span class="ico" data-icon="trading"></span>Trading Risk</a>
-        <a data-route="marketing"><span class="ico" data-icon="marketing"></span>Marketing</a>
-        <a data-route="research"><span class="ico" data-icon="research"></span>Research</a>
-        <a data-route="personnel"><span class="ico" data-icon="personnel"></span>Personnel</a>
-        <div class="nav-label">Reports</div>
-        <a data-route="compliance"><span class="ico" data-icon="shield"></span>Tax &amp; Compliance <span class="nav-pill" id="cmpPill" hidden></span></a>
-        <a data-route="legal"><span class="ico" data-icon="scale"></span>Legal &amp; Risk</a>
-        <div class="nav-label">Tools</div>
-        <a data-route="businesses"><span class="ico" data-icon="businesses"></span>Businesses</a>
-        <a data-route="explorer"><span class="ico" data-icon="explorer"></span>Data Explorer</a>
-        <a data-route="integrations"><span class="ico" data-icon="integrations"></span>Integrations</a>
-        <a data-route="settings"><span class="ico" data-icon="settings"></span>Settings</a>
+        <button class="nav-label" data-sec="reports" aria-expanded="true"><span>Reports</span><span class="sec-chev" data-icon="chev"></span></button>
+        <div class="nav-sec" data-sec-body="reports">
+          <a data-route="compliance" title="Tax &amp; Compliance"><span class="ico" data-icon="shield"></span><span class="lbl">Tax &amp; Compliance</span><span class="nav-pill" id="cmpPill" hidden></span></a>
+          <a data-route="legal" title="Legal &amp; Risk"><span class="ico" data-icon="scale"></span><span class="lbl">Legal &amp; Risk</span></a>
+        </div>
+        <button class="nav-label" data-sec="tools" aria-expanded="true"><span>Tools</span><span class="sec-chev" data-icon="chev"></span></button>
+        <div class="nav-sec" data-sec-body="tools">
+          <a data-route="businesses" title="Businesses &amp; personal"><span class="ico" data-icon="businesses"></span><span class="lbl">Units</span></a>
+          <a data-route="explorer" title="Data Explorer"><span class="ico" data-icon="explorer"></span><span class="lbl">Data Explorer</span></a>
+          <a data-route="integrations" title="Integrations"><span class="ico" data-icon="integrations"></span><span class="lbl">Integrations</span></a>
+          <a data-route="settings" title="Settings"><span class="ico" data-icon="settings"></span><span class="lbl">Settings</span></a>
+        </div>
       </nav>
       <div class="sidebar-foot">
-        <button class="btn ghost small" id="themeToggle">Toggle theme</button>
-        <div class="muted tiny lock"><span data-icon="lock"></span>Data stays on this computer</div>
+        <div class="theme-seg" role="radiogroup" aria-label="Theme">
+          <button data-theme-set="light" title="Light mode" aria-label="Light mode"><span data-icon="sun"></span><span class="lbl">Light</span></button>
+          <button data-theme-set="dark" title="Dark mode" aria-label="Dark mode"><span data-icon="moon"></span><span class="lbl">Dark</span></button>
+        </div>
+        <button class="btn ghost small" id="themeToggle" hidden>Toggle theme</button>
+        <div class="muted tiny lock" title="Your data stays on this computer"><span data-icon="lock"></span><span class="lbl">Data stays on this computer</span></div>
       </div>
     </aside>
 

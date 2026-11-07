@@ -53,6 +53,8 @@ function aiRelay(req, res) {
     up.on('timeout', () => up.destroy(new Error('The AI provider took too long to respond')));
     up.on('error', e => {
       if (res.headersSent) return res.end();
+      // Quiet "not running" answer for the start-up check, so a missing Ollama isn't logged as an error
+      if (route.local && msg.path === '/api/version' && /ECONNREFUSED|ECONNRESET/.test(e.code || e.message)) { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"running":false}'); }
       if (route.local && /ECONNREFUSED|ECONNRESET/.test(e.code || e.message)) return deny(503, 'Ollama is not running on this computer. Install it from ollama.com, open it, then run: ollama pull llama3.2');
       deny(502, e.message);
     });

@@ -109,6 +109,7 @@
   async function ollamaStatus() {
     try {
       const v = await relay('ollama', 'GET', '/api/version');
+      if (v.running === false) return { running: false, error: 'Ollama is not running on this computer.', models: [] };
       const list = await models('ollama');
       return { running: true, version: v.version || '', models: list };
     } catch (e) { return { running: false, error: e.message, models: [] }; }
@@ -242,7 +243,7 @@ ${context ? '\n--- BUSINESS CONTEXT (from the user\'s own files) ---\n' + contex
   async function buildContext({ summary = true, datasetId = '', notes = false } = {}) {
     const parts = [];
     if (summary) {
-      const ids = App.biz.isMaster() ? App.biz.active().map(b => b.id) : [App.biz.current()];
+      const ids = App.biz.inView().map(b => b.id);
       for (const id of ids) {
         const b = App.biz.get(id);
         const k = await kpisFor(id);

@@ -4,7 +4,7 @@
   const TITLES = {
     dashboard: 'Dashboard', library: 'Data Library', finance: 'Financial Analysis', operations: 'Business Operations',
     trading: 'Trading Risk Management', marketing: 'Marketing Strategy', research: 'Research Management',
-    personnel: 'Personnel', businesses: 'Businesses', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
+    personnel: 'Personnel', businesses: 'Businesses & Personal', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';
 
@@ -14,8 +14,8 @@
     syncBiz();
     $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
     const master = App.biz.isMaster();
-    const bizName = master ? 'All businesses' : App.biz.get(App.biz.current()).name;
-    $('#pageTitle').innerHTML = route === 'dashboard' ? App.esc(master ? 'Master Dashboard' : bizName)
+    const bizName = master ? App.biz.masterLabel() : App.biz.get(App.biz.current()).name;
+    $('#pageTitle').innerHTML = route === 'dashboard' ? App.esc(bizName)
       : `${App.esc(TITLES[route] || route)} <span class="crumb">· ${App.esc(bizName)}</span>`;
     $('#sidebar').classList.remove('open');
     if (location.hash.slice(1) !== route) history.replaceState(null, '', '#' + route);
@@ -29,22 +29,74 @@
   App.go = go;
   App.currentRoute = () => current;
 
-  /* Sidebar business switcher + per-business nav */
+  /* Sidebar unit switcher (businesses + personal) + per-unit nav */
+  const initials = n => String(n || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   function syncBiz() {
     const cur = App.biz.current();
-    const sel = $('#bizSelect');
-    const live = App.biz.active();
-    const archived = App.biz.list().filter(b => b.archived);
-    sel.innerHTML = `<option value="all" ${cur === 'all' ? 'selected' : ''}>★ All businesses</option>`
-      + live.map(b => `<option value="${b.id}" ${b.id === cur ? 'selected' : ''}>${App.esc(b.name)}</option>`).join('')
-      + (archived.length ? `<optgroup label="Archived">${archived.map(b => `<option value="${b.id}" ${b.id === cur ? 'selected' : ''}>${App.esc(b.name)}</option>`).join('')}</optgroup>` : '')
-      + `<option value="__new">+ New business…</option>`;
-    const biz = cur === 'all' ? null : App.biz.get(cur);
-    $('#dashLabel').textContent = biz ? 'Dashboard' : 'Master Dashboard';
-    $('#brandSub').textContent = biz ? biz.name : 'All businesses';
-    $('#brandMark').style.background = biz ? biz.color : '';
-    $('#brandMark').textContent = biz ? biz.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'OC';
+    const biz = App.biz.isMaster() ? null : App.biz.get(cur);
+    const kind = App.biz.currentKind();
+    $('#wsAv').style.background = biz ? biz.color : '';
+    $('#wsAv').classList.toggle('master', !biz);
+    $('#wsAv').innerHTML = biz ? App.esc(initials(biz.name)) : App.fx.icon(kind === 'individual' ? 'user' : kind === 'business' ? 'businesses' : 'layers');
+    $('#wsKind').textContent = biz ? `${App.biz.KINDS[App.biz.kindOf(biz)].label}${biz.archived ? ' · archived' : ''}` : 'Roll-up';
+    $('#wsName').textContent = biz ? biz.name : App.biz.masterLabel();
+    $('#dashLabel').textContent = biz ? 'Dashboard' : App.biz.masterLabel();
     $$('#nav a[data-route]').forEach(a => a.classList.toggle('hidden', !App.biz.enabled(a.dataset.route)));
+    // Hide a section label when everything under it is hidden
+    $$('#nav [data-sec-body]').forEach(sec => { const lbl = $(`#nav [data-sec="${sec.dataset.secBody}"]`); lbl.hidden = ![...sec.querySelectorAll('a')].some(a => !a.classList.contains('hidden')); });
+  }
+
+  /* Grouped menu: Business dashboard + businesses, Personal dashboard + personal units, Everything */
+  function openSwitcher() {
+    const btn = $('#wsBtn');
+    if ($('.ws-menu')) return closeSwitcher();
+    const cur = App.biz.current();
+    const row = (id, label, sub, av, color) => `<button role="menuitemradio" aria-checked="${id === cur}" class="ws-item ${id === cur ? 'on' : ''}" data-ws="${id}">
+      <span class="ws-av sm ${color ? '' : 'master'}" ${color ? `style="background:${color}"` : ''}>${av}</span><span class="ws-text"><span class="ws-name">${App.esc(label)}</span>${sub ? `<span class="ws-kind">${App.esc(sub)}</span>` : ''}</span>${id === cur ? '<span class="ws-tick">✓</span>' : ''}</button>`;
+    const group = kind => {
+      const K = App.biz.KINDS[kind], list = App.biz.units(kind);
+      const n = list.length, word = kind === 'individual' ? (n === 1 ? 'unit' : 'units') : (n === 1 ? 'business' : 'businesses');
+      return `<div class="ws-group"><div class="ws-head"><span>${K.plural}</span><button class="ws-add" data-ws-add="${kind}" title="Add ${K.unit}">+ Add</button></div>
+        ${row('all:' + kind, K.master, `${n} ${word} rolled up`, App.fx.icon(kind === 'individual' ? 'user' : 'businesses'))}
+        ${list.map(b => row(b.id, b.name, App.biz.TEMPLATES[b.type]?.label || '', App.esc(initials(b.name)), b.color)).join('') || `<div class="muted tiny ws-empty">No ${kind === 'individual' ? 'personal units' : 'businesses'} yet</div>`}</div>`;
+    };
+    const archived = App.biz.list().filter(b => b.archived);
+    const m = document.createElement('div');
+    m.className = 'ws-menu glass-pop';
+    m.setAttribute('role', 'menu');
+    m.innerHTML = `${group('business')}${group('individual')}
+      <div class="ws-group">${row('all', 'Everything', 'businesses + personal', App.fx.icon('layers'))}</div>
+      ${archived.length ? `<details class="ws-group"><summary class="ws-head"><span>Archived (${archived.length})</span></summary>${archived.map(b => row(b.id, b.name, 'archived', App.esc(initials(b.name)), b.color)).join('')}</details>` : ''}
+      <div class="ws-foot"><button class="btn small ghost" data-ws-manage>${App.fx.icon('settings')} Manage units</button></div>`;
+    document.body.appendChild(m);
+    const r = btn.getBoundingClientRect();
+    m.style.left = Math.max(8, Math.min(r.left, innerWidth - 308)) + 'px';
+    m.style.top = (r.bottom + 6) + 'px';
+    m.style.maxHeight = (innerHeight - r.bottom - 16) + 'px';
+    btn.setAttribute('aria-expanded', 'true');
+    m.addEventListener('click', e => {
+      const it = e.target.closest('[data-ws]'), add = e.target.closest('[data-ws-add]');
+      if (it) { closeSwitcher(); App.biz.setCurrent(it.dataset.ws); go(current === 'search' || current === 'businesses' ? 'dashboard' : current); }
+      else if (add) { closeSwitcher(); App.businessForm(null, id => { App.biz.setCurrent(id); go('dashboard'); }, { kind: add.dataset.wsAdd }); }
+      else if (e.target.closest('[data-ws-manage]')) { closeSwitcher(); go('businesses'); }
+    });
+    (m.querySelector('.ws-item.on') || m.querySelector('.ws-item'))?.focus();
+  }
+  function closeSwitcher() { $('.ws-menu')?.remove(); $('#wsBtn').setAttribute('aria-expanded', 'false'); }
+  App.openSwitcher = openSwitcher;
+
+  /* Collapsible sidebar (icon rail) + collapsible nav sections, remembered */
+  function setRail(on) {
+    document.documentElement.classList.toggle('rail', on);
+    App.settings.set('ui.rail', on);
+    $('#railToggle').setAttribute('aria-label', on ? 'Expand sidebar' : 'Collapse sidebar');
+    $('#railToggle').title = (on ? 'Expand' : 'Collapse') + ' sidebar (Ctrl+\\)';
+  }
+  App.toggleRail = () => setRail(!document.documentElement.classList.contains('rail'));
+  function setSection(sec, open) {
+    const lbl = $(`#nav [data-sec="${sec}"]`), body = $(`#nav [data-sec-body="${sec}"]`);
+    lbl.setAttribute('aria-expanded', open); body.classList.toggle('closed', !open);
+    const st = App.settings.get('ui.navClosed', {}); st[sec] = !open; App.settings.set('ui.navClosed', st);
   }
 
   function init() {
@@ -61,12 +113,17 @@
 
     $('#nav').addEventListener('click', e => { const a = e.target.closest('a[data-route]'); if (a) go(a.dataset.route); });
     document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); go(a.dataset.go); } });
-    $('#bizSelect').onchange = e => {
-      const v = e.target.value;
-      if (v === '__new') { syncBiz(); App.businessForm(null, id => { App.biz.setCurrent(id); go('dashboard'); }); return; }
-      App.biz.setCurrent(v);
-      go(current === 'search' || current === 'businesses' ? 'dashboard' : current);
-    };
+    $('#wsBtn').onclick = e => { e.stopPropagation(); openSwitcher(); };
+    document.addEventListener('mousedown', e => { if ($('.ws-menu') && !e.target.closest('.ws-menu, #wsBtn')) closeSwitcher(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && $('.ws-menu')) { closeSwitcher(); $('#wsBtn').focus(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); App.toggleRail(); }
+    });
+    $('#railToggle').onclick = () => App.toggleRail();
+    setRail(!!App.settings.get('ui.rail', false));
+    const closed = App.settings.get('ui.navClosed', {});
+    $$('#nav [data-sec]').forEach(l => { if (closed[l.dataset.sec]) setSection(l.dataset.sec, false); l.onclick = () => setSection(l.dataset.sec, l.getAttribute('aria-expanded') !== 'true'); });
+    $$('[data-theme-set]').forEach(b => b.onclick = e => App.fx.setTheme(b.dataset.themeSet, { x: e.clientX, y: e.clientY }));
     $('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
 
     $('#quickUpload').onchange = async e => {

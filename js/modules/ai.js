@@ -51,7 +51,7 @@
           <aside class="ai-side">
             <div class="card stack">
               <h3>What the AI can see</h3>
-              <label class="row small"><input type="checkbox" id="cSum" ${P.summary ? 'checked' : ''}> ${App.biz.isMaster() ? 'All businesses' : 'This business'}: KPIs &amp; flags</label>
+              <label class="row small"><input type="checkbox" id="cSum" ${P.summary ? 'checked' : ''}> ${App.biz.isMaster() ? App.esc(App.biz.masterLabel()) + ' (all units)' : 'This business'}: KPIs &amp; flags</label>
               <label class="field">Include a data table
                 <select id="cDs"><option value="">None</option>${datasets.map(d => `<option value="${d.id}" ${d.id === P.dataset ? 'selected' : ''}>${esc(d.name)}${d.category === 'personnel' ? ' (personnel)' : ''}</option>`).join('')}</select>
               </label>
@@ -112,7 +112,7 @@
       function updateCtx() {
         const p = prefs();
         const parts = [];
-        if (p.summary) parts.push(App.biz.isMaster() ? 'all businesses\' KPIs & flags' : 'KPIs & flags');
+        if (p.summary) parts.push(App.biz.isMaster() ? 'all units\' KPIs & flags' : 'KPIs & flags');
         if (p.dataset) parts.push('table: ' + (datasets.find(d => d.id === p.dataset)?.name || ''));
         if (p.notes) parts.push('research notes');
         $('#aiCtx').innerHTML = `${App.fx.icon('lock')} Sends ${parts.length ? parts.map(esc).join(' · ') : 'only your question'} to ${esc(App.ai.PROVIDERS[p.provider].label)} · <kbd>Enter</kbd> send · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line`;

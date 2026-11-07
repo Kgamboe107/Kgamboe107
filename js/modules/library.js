@@ -15,7 +15,7 @@
           </div></div>
           <div class="muted small" style="margin:-6px 0 12px">Upload spreadsheets (CSV, XLSX, XLS, ODS), reports (PDF, DOCX, PPTX), notes (MD, TXT), images and personnel files, or type data in by hand.</div>
           <div class="row" style="margin-bottom:12px">
-            <label class="field">Business<select id="upBiz">${App.ui.options(App.biz.active().map(b => ({ value: b.id, label: b.name })), App.biz.target())}</select></label>
+            <label class="field">Unit<select id="upBiz">${App.ui.options(App.biz.active().map(b => ({ value: b.id, label: b.name })), App.biz.target())}</select></label>
             <label class="field">Category<select id="upCat">${App.ui.options(catOpts, '')}</select></label>
             <label class="field">Source system<select id="upSrc">${App.ui.options(srcOpts, '')}</select></label>
             <label class="field" style="flex:1">Tags (comma separated)<input id="upTags" placeholder="e.g. Q3, Store 12, board deck"></label>

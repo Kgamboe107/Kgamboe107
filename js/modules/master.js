@@ -1,11 +1,11 @@
-/* Master dashboard: consolidated view across every business and venture */
+/* Roll-up dashboards: Business (all businesses), Personal (all personal units), Everything */
 (function (App) {
   const { fmt, esc } = App;
   const nz = v => (v === undefined || v === null || isNaN(v)) ? 0 : v;
 
   App.modules.master = {
     async render(view) {
-      const bizs = App.biz.active();
+      const bizs = App.biz.inView();
       view.innerHTML = App.ui.skeleton(8);
       const allFiles = await App.store.all('files', { raw: true });
 
@@ -26,38 +26,55 @@
       const gross = S(k => k.trading?.gross), upl = S(k => k.trading?.upl), real = S(k => k['trading-perf']?.total);
       const flags = App.sum(rows.map(r => r.flags));
       const has = key => rows.some(r => r.k[key]);
+      const mk = App.biz.masterKind(), personal = mk === 'individual';
+      const nB = rows.filter(r => App.biz.kindOf(r.b) === 'business').length, nP = rows.length - nB;
+      const spendP = S(k => k.purchases?.total);
+      const unitWord = mk ? (personal ? `personal unit${nP === 1 ? '' : 's'}` : `business${nB === 1 ? '' : 'es'}`) : '';
+      const scopeLine = mk ? `${rows.length} ${unitWord}` : `${nB} business${nB === 1 ? '' : 'es'} · ${nP} personal`;
+      const addKind = personal ? 'individual' : 'business';
+      const addLabel = personal ? '+ Add personal unit' : '+ Add business';
+      const groups = mk ? [[mk, rows]] : [['business', rows.filter(r => App.biz.kindOf(r.b) === 'business')], ['individual', rows.filter(r => App.biz.kindOf(r.b) === 'individual')]];
 
       view.innerHTML = `
         <div class="card greet row spread">
-          <div><div class="greet-hi">${App.esc(App.ux.greeting())}</div><div class="muted small">${App.esc(App.ux.today())} · Master dashboard · ${bizs.length} active business${bizs.length > 1 ? 'es' : ''} · ${allFiles.length} files · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div></div>
-          <div class="row no-print"><button class="btn" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn" data-go="businesses">Manage businesses</button><button class="btn primary" id="mNew">+ New business</button></div>
+          <div><div class="greet-hi">${App.esc(App.ux.greeting())}</div><div class="muted small">${App.esc(App.ux.today())} · ${esc(App.biz.masterLabel())} · ${scopeLine} · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div></div>
+          <div class="row no-print"><div class="seg" role="tablist" aria-label="Roll-up view">${[['all:business', 'Business'], ['all:individual', 'Personal'], ['all', 'Everything']].map(([v, l]) => `<button data-view="${v}" class="${App.biz.current() === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+            <button class="btn" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn primary" id="mNew">${addLabel}</button></div>
         </div>
         <div class="grid k4">
-          ${has('finance') ? App.ui.kpi('Total revenue', fmt.compact(rev), 'all businesses') : ''}
+          ${personal ? `
+          ${has('finance') ? App.ui.kpi('Total income', fmt.compact(rev), 'all personal units') : ''}
+          ${has('finance') ? App.ui.kpi('Net after expenses', fmt.compact(net), 'savings rate ' + fmt.pct(rev ? net / rev : NaN), net >= 0 ? 'good' : 'bad') : ''}
+          ${has('purchases') ? App.ui.kpi('Spending', fmt.compact(spendP), 'receipts & purchases') : ''}
+          ${has('trading') ? App.ui.kpi('Investments', fmt.compact(gross), `unrealized ${fmt.money(upl)}`, upl >= 0 ? 'good' : 'bad') : ''}
+          ${has('trading-perf') ? App.ui.kpi('Realized gains', fmt.money(real), '', real >= 0 ? 'good' : 'bad') : ''}
+          ${has('operations') ? App.ui.kpi('Rental / side income', fmt.compact(sales), 'from operations data') : ''}` : `
+          ${has('finance') ? App.ui.kpi('Total revenue', fmt.compact(rev), mk ? 'all businesses' : 'businesses + personal') : ''}
           ${has('finance') ? App.ui.kpi('Total net income', fmt.compact(net), 'margin ' + fmt.pct(rev ? net / rev : NaN), net >= 0 ? 'good' : 'bad') : ''}
           ${has('operations') ? App.ui.kpi('Operating sales', fmt.compact(sales), 'from ops data') : ''}
           ${has('marketing') ? App.ui.kpi('Marketing spend', fmt.compact(spend), mrev ? `blended ROAS ${(mrev / spend).toFixed(2)}×` : '') : ''}
           ${has('personnel') ? App.ui.kpi('Total headcount', fmt.num(head), 'active employees') : ''}
           ${has('trading') ? App.ui.kpi('Trading exposure', fmt.compact(gross), `unrealized ${fmt.money(upl)}`, upl >= 0 ? 'good' : 'bad') : ''}
-          ${has('trading-perf') ? App.ui.kpi('Realized trading P&L', fmt.money(real), '', real >= 0 ? 'good' : 'bad') : ''}
-          ${App.ui.kpi('Open flags', fmt.num(flags), 'across all businesses', flags ? 'warn' : 'good')}
+          ${has('trading-perf') ? App.ui.kpi('Realized trading P&L', fmt.money(real), '', real >= 0 ? 'good' : 'bad') : ''}`}
+          ${App.ui.kpi('Open flags', fmt.num(flags), `across ${scopeLine}`, flags ? 'warn' : 'good')}
         </div>
         ${rows.length > 1 && has('finance') ? `<div class="grid c2">
-          <div class="card"><div class="card-head"><h2>Revenue & net income by business</h2></div><div class="chart-box"><canvas id="mRev"></canvas></div></div>
-          <div class="card"><div class="card-head"><h2>Share of revenue</h2></div><div class="chart-box"><canvas id="mShare"></canvas></div></div></div>` : ''}
-        <h2 style="margin-top:4px">Businesses</h2>
-        <div class="grid c3">${rows.map(r => card(r)).join('')}
-          <button class="card empty" id="mNew2" style="cursor:pointer;border-style:dashed;font:inherit;color:var(--muted)"><div style="font-size:28px">+</div>Add a business or venture</button>
-        </div>
+          <div class="card"><div class="card-head"><h2>${personal ? 'Income & net by unit' : 'Revenue & net income by unit'}</h2></div><div class="chart-box"><canvas id="mRev"></canvas></div></div>
+          <div class="card"><div class="card-head"><h2>${personal ? 'Share of income' : 'Share of revenue'}</h2></div><div class="chart-box"><canvas id="mShare"></canvas></div></div></div>` : ''}
+        ${groups.map(([kind, rs]) => `<div class="row spread" style="margin-top:4px"><h2>${App.biz.KINDS[kind].plural}</h2>${mk ? '' : `<button class="btn small ghost" data-view="all:${kind}">${esc(App.biz.KINDS[kind].master)} →</button>`}</div>
+        <div class="grid c3">${rs.map(r => card(r)).join('')}
+          <button class="card empty add-unit" data-add="${kind}"><div class="add-plus">+</div>${kind === 'individual' ? 'Add a personal unit<div class="muted tiny">household, investment account, rental, side income</div>' : 'Add a business<div class="muted tiny">store, location, company or venture</div>'}</button>
+        </div>`).join('')}
         <div class="card"><div class="card-head"><h2>Needs attention</h2><span class="badge ${flags ? 'warn' : 'good'}">${flags} flags</span></div>
           <div class="stack">${rows.flatMap(r => Object.entries(r.k).filter(([, m]) => m.alerts).map(([mod, m]) =>
             `<a class="alert warn" style="text-decoration:none;color:inherit" data-jump="${r.b.id}" data-route="${mod.startsWith('trading') ? 'trading' : mod}">
-              <span class="biz-dot" style="background:${r.b.color};margin-top:5px"></span><b>${esc(r.b.name)}</b><span>${esc(label(mod))}: ${m.alerts} item${m.alerts > 1 ? 's' : ''} flagged →</span></a>`)).join('') || '<div class="alert good">No flags across any business.</div>'}</div></div>
+              <span class="biz-dot" style="background:${r.b.color};margin-top:5px"></span><b>${esc(r.b.name)}</b><span>${esc(label(mod))}: ${m.alerts} item${m.alerts > 1 ? 's' : ''} flagged →</span></a>`)).join('') || '<div class="alert good">No flags across any unit.</div>'}</div></div>
         <div class="row no-print"><button class="btn" onclick="window.print()">Print / save as PDF</button></div>`;
 
-      const newBiz = () => App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); });
-      view.querySelector('#mNew').onclick = newBiz;
-      view.querySelector('#mNew2').onclick = newBiz;
+      const newUnit = kind => App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }, { kind });
+      view.querySelector('#mNew').onclick = () => newUnit(addKind);
+      view.querySelectorAll('[data-add]').forEach(b => b.onclick = () => newUnit(b.dataset.add));
+      view.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { App.biz.setCurrent(b.dataset.view); App.go('dashboard'); });
       view.querySelectorAll('[data-jump]').forEach(a => a.onclick = e => { e.preventDefault(); App.biz.setCurrent(a.dataset.jump); App.go(a.dataset.route || 'dashboard'); });
 
       if (rows.length > 1 && has('finance')) {
@@ -76,14 +93,16 @@
 
   function card({ b, k, files, last, flags }) {
     const m = [];
-    if (k.finance) { m.push(['Revenue', fmt.compact(k.finance.revenue)]); m.push(['Net margin', fmt.pct(k.finance.margin)]); }
+    const P = App.biz.kindOf(b) === 'individual';
+    if (k.finance) { m.push([P ? 'Income' : 'Revenue', fmt.compact(k.finance.revenue)]); m.push([P ? 'Savings rate' : 'Net margin', fmt.pct(k.finance.margin)]); }
+    if (P && k.purchases?.total) m.push(['Spending', fmt.compact(k.purchases.total)]);
     if (k.operations && !isNaN(k.operations.laborPct)) m.push(['Labor %', fmt.pct(k.operations.laborPct)]);
     if (k.operations && !k.finance) m.push(['Sales', fmt.compact(k.operations.sales)]);
     if (k.trading) m.push(['Exposure', fmt.compact(k.trading.gross)]);
     if (k['trading-perf']) m.push(['Realized P&L', fmt.money(k['trading-perf'].total)]);
     if (k.legal && !isNaN(k.legal.score)) m.push(['Protection', Math.round(k.legal.score * 100) + '%' + (k.legal.high ? ` · ${k.legal.high} high` : '')]);
     if (k.compliance && !isNaN(k.compliance.score)) m.push(['Audit ready', Math.round(k.compliance.score * 100) + '%' + (k.compliance.overdue ? ` · ${k.compliance.overdue} overdue` : '')]);
-    if (k.purchases?.receipts) m.push(['Food cost', fmt.pct(k.purchases.foodPct)]);
+    if (!P && k.purchases?.receipts) m.push(['Food cost', fmt.pct(k.purchases.foodPct)]);
     if (k.marketing) m.push(['Mkt spend', fmt.compact(k.marketing.spend)]);
     if (k.personnel) m.push(['Headcount', fmt.num(k.personnel.headcount)]);
     return `<div class="card biz-card" style="--bc:${b.color}">

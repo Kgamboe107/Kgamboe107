@@ -32,17 +32,24 @@ Every number box on the dashboards and analysis pages is clickable (look for ↗
 
 Every table in the panel sorts and exports to CSV. **Esc** closes the panel and **←** goes back.
 
-## Multiple businesses & the Master dashboard
+## Businesses, personal units & roll-up dashboards
 
-Use the **Viewing** switcher at the top of the sidebar to move between businesses, or pick **+ New business…** to add one. You can also manage them on the **Businesses** page.
+Everything you track lives in a **unit**. There are two kinds, and you can have as many of each as you like:
 
-- **Each business is its own workspace.** It has its own files, notes, column mappings, targets (labor %, ROAS, risk limits…), strategy board, and dashboard.
-- **Templates** (Restaurant, Trading, E-commerce, Services, Real estate, Startup, Custom) choose which modules a business uses. Pages you don't need are hidden, and you can change the selection at any time.
-- **★ All businesses** opens the **Master dashboard**. It shows consolidated totals (revenue, net income, sales, marketing spend, headcount, trading exposure), compares revenue and net income by business, gives each venture a card with its key numbers, and lists every flag across all of them. Click any card or flag to jump straight into that business. Module pages in this view analyze data from all businesses together.
-- **Uploads go to the business you're viewing.** The Data Library has a Business picker for uploads and a Business column for moving files later.
-- **Archive** a venture to hide it from the Master totals, or **delete** it and either move its data to another business or remove it permanently.
+- **Businesses**: stores, locations, companies and ventures (restaurant, retail, services, real estate company, trading firm, startup).
+- **Personal**: your own money (personal finances, an investing or trading account, a rental property, freelance or side income, household and family).
 
-Column names are matched automatically. If an export uses different names, open **Column mapping** on any page and pick the right column. The app remembers your choice.
+Each unit has its own files, column mappings, targets and dashboard. Three roll-up dashboards sit on top:
+
+| Dashboard | Rolls up | Headline numbers |
+|---|---|---|
+| **Business dashboard** | every business | revenue, net income, operating sales, marketing spend, headcount, trading exposure |
+| **Personal dashboard** | every personal unit | income, net after expenses (savings rate), spending, investments, realized gains |
+| **Everything** | both, shown as two sections | totals across all units |
+
+Switch units from the card at the top of the sidebar. It groups Businesses and Personal, each with its roll-up dashboard and a **+ Add** button. **Units** (in the sidebar) is where you add, edit, archive, merge and delete. Adding a unit starts with "Business or personal?", then name and type, then modules. Personal units hide the business-only pages (payroll and sales-tax compliance, business legal documents).
+
+**Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
 ## Reports it reads automatically
 

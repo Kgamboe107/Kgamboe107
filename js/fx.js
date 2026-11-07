@@ -6,6 +6,11 @@
 
   /* ---------- Icons (24px stroke icons) ---------- */
   const P = {
+    sidebar: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/><path d="M15 10l-2 2 2 2"/>',
+    chevrons: '<path d="M8 9l4-4 4 4"/><path d="M8 15l4 4 4-4"/>',
+    chev: '<path d="M6 9l6 6 6-6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    layers: '<path d="M12 3 2 8l10 5 10-5z"/><path d="M2 13l10 5 10-5"/>',
     dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     library: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2h7.5A2.5 2.5 0 0 1 21 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="M12 11v5M9.5 13.5 12 11l2.5 2.5"/>',
     finance: '<path d="M3 3v18h18"/><path d="M7 15l3.5-4 3 2.5L20 7"/><path d="M16 7h4v4"/>',
@@ -138,8 +143,9 @@
     vt.finished.then(() => App.go(App.currentRoute()));
   }
   function updateThemeButton() {
-    const b = $('#themeToggle'); if (!b) return;
     const dark = document.documentElement.dataset.theme === 'dark';
+    document.querySelectorAll('[data-theme-set]').forEach(x => { x.classList.toggle('on', x.dataset.themeSet === (dark ? 'dark' : 'light')); x.setAttribute('aria-checked', x.classList.contains('on')); });
+    const b = $('#themeToggle'); if (!b) return;
     b.innerHTML = `${icon(dark ? 'sun' : 'moon')}<span>${dark ? 'Light mode' : 'Dark mode'}</span>`;
   }
 
@@ -155,12 +161,13 @@
 
   /* ---------- Command palette ---------- */
   const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['purchases', 'Purchases'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
-    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['legal', 'Legal & Risk: documents, incidents'], ['businesses', 'Businesses'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
+    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['legal', 'Legal & Risk: documents, incidents'], ['businesses', 'Units: businesses & personal'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
   function commands(q) {
     const items = [];
     PAGES.filter(([r]) => App.biz.enabled(r)).forEach(([r, l]) => items.push({ g: 'Go to', icon: r, label: l, run: () => App.go(r) }));
-    items.push({ g: 'Businesses', icon: 'star', label: 'Master dashboard — all businesses', run: () => { App.biz.setCurrent('all'); App.go('dashboard'); } });
-    App.biz.active().forEach(b => items.push({ g: 'Businesses', icon: 'businesses', label: `Switch to ${b.name}`, color: b.color, run: () => { App.biz.setCurrent(b.id); App.go('dashboard'); } }));
+    [['all:business', 'Business dashboard: all businesses', 'businesses'], ['all:individual', 'Personal dashboard: all personal units', 'user'], ['all', 'Everything: businesses + personal', 'layers']]
+      .forEach(([id, label, ic]) => items.push({ g: 'Units', icon: ic, label, run: () => { App.biz.setCurrent(id); App.go('dashboard'); } }));
+    App.biz.active().forEach(b => items.push({ g: 'Units', icon: 'businesses', label: `Switch to ${b.name}`, color: b.color, run: () => { App.biz.setCurrent(b.id); App.go('dashboard'); } }));
     items.push(
       { g: 'Actions', icon: 'sparkles', label: 'AI briefing: what needs my attention?', run: () => aiBriefing() },
       ...(App.biz.enabled('purchases') && !App.biz.isMaster() ? [{ g: 'Actions', icon: 'receipt', label: 'New receipt (purchase journal)', run: () => App.go('purchases').then(() => App.purchasesEditor()) }] : []),
@@ -256,7 +263,7 @@
       const k = e.key.toLowerCase();
       if (k === 'd') App.go('dashboard');
       if (k === 'l') App.go('library');
-      if (k === 'm') { App.biz.setCurrent('all'); App.go('dashboard'); }
+      if (k === 'm') { App.biz.setCurrent(App.biz.currentKind() === 'individual' ? 'all:individual' : 'all:business'); App.go('dashboard'); }
     }
   });
 
