@@ -69,6 +69,8 @@
   };
 
   function enabled(mod) {
+    // The calendar covers business and personal together, so it lives in the Everything view
+    if (mod === 'calendar') return current() === 'all';
     // Payroll/sales-tax compliance and business legal documents only apply to businesses
     if ((mod === 'compliance' || mod === 'legal') && currentKind() === 'individual') return false;
     if ((mod === 'wealth' || mod === 'tax') && currentKind() === 'business') return false;

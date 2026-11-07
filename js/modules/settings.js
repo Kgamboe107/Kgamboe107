@@ -76,7 +76,7 @@
       }));
       view.querySelector('#sName').onchange = e => { App.settings.set('userName', e.target.value.trim()); App.ui.toast('Name saved'); };
       view.querySelectorAll('[data-surface]').forEach(b => b.onclick = () => { App.ux.setSurface(b.dataset.surface); view.querySelectorAll('[data-surface]').forEach(x => x.classList.toggle('on', x === b)); });
-      view.querySelector('#sTheme').onclick = () => document.getElementById('themeToggle').click();
+      view.querySelector('#sTheme').onclick = () => App.fx.setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
       view.querySelector('#sClear').onclick = async () => {
         if (!await App.confirm({ title: 'Erase all data on this computer?', body: 'Every business, file, data table, receipt, note and setting is permanently deleted. Download a backup first if you might need it. This cannot be undone.', ok: 'Erase everything', cancel: 'Keep my data', danger: true })) return;
         for (const s of ['files', 'datasets', 'notes', 'purchases']) await App.store.clear(s);

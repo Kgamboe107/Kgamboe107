@@ -45,7 +45,7 @@
         <div class="card greet row spread">
           <div><div class="greet-hi">${App.esc(App.ux.greeting())}</div><div class="muted small">${App.esc(App.ux.today())} · ${esc(App.biz.masterLabel())} · ${scopeLine}${App.period.state().g !== 'all' ? ` · <span class="badge accent">${esc(App.period.range().label)}</span>` : ''} · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div></div>
           <div class="row no-print"><div class="seg" role="tablist" aria-label="Roll-up view">${[['all:business', 'Business'], ['all:individual', 'Personal'], ['all', 'Everything']].map(([v, l]) => `<button data-view="${v}" class="${App.biz.current() === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-            <button class="btn" onclick="App.go('review')">${App.fx.icon('target')} Weekly review</button><button class="btn" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn primary" id="mNew">${addLabel}</button></div>
+            ${App.biz.current() === 'all' ? `<button class="btn" onclick="App.go('calendar')">${App.fx.icon('calendar')} Calendar</button>` : ''}<button class="btn" onclick="App.go('review')">${App.fx.icon('target')} Weekly review</button><button class="btn" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn primary" id="mNew">${addLabel}</button></div>
         </div>
         ${famView ? `<div class="card">${App.modules.wealth.personBar()}</div>` : ''}
         <div class="grid k4">

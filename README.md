@@ -51,6 +51,16 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Calendar (Everything view)
+
+**Calendar** appears in the sidebar under Analysis, and as a button on the dashboard, only when you're in the **Everything** view (business + personal).
+
+- **Every addition is dated and color-coded by section:** uploads (Financials, Operations, Marketing, Trading, Research, Personnel, Reports), receipts (Purchases, totaled per day), notes, SMG scores and store audits (Marketing), and balance updates (Net Worth). Click a legend item to show or hide that section. Filing due dates are off by default.
+- **Pay dates and expenses:** add them one time or on a schedule (weekly, every 2 weeks, twice a month on the 1st and 15th, monthly, quarterly, yearly), with an amount, unit, end date and note.
+- **Found in your data:** charges and deposits that repeat each month in an uploaded bank or expense table (same name, about the same day and amount, 3 or more months) are suggested so you can add them in one click.
+- The side panel shows the month's pay coming in, expenses going out and the difference, plus everything due in the next 30 days. Click a day to see everything on it, or to add a pay date or expense on that date.
+- Filter by Business + personal, Business or Personal. On a phone, days show colored dots instead of labels.
+
 ## Targets & weekly KPI review sheet
 
 **Weekly Review** (sidebar → Reports, or the *Weekly review* button on any dashboard).

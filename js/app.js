@@ -4,7 +4,7 @@
   const TITLES = {
     dashboard: 'Dashboard', library: 'Data Library', finance: 'Financial Analysis', operations: 'Business Operations',
     trading: 'Trading Risk Management', marketing: 'Marketing Strategy', research: 'Research Management',
-    personnel: 'Personnel', businesses: 'Businesses & Personal', wealth: 'Net Worth', tax: 'Taxes & CPA', review: 'Targets & Weekly Review', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
+    personnel: 'Personnel', businesses: 'Businesses & Personal', wealth: 'Net Worth', tax: 'Taxes & CPA', review: 'Targets & Weekly Review', calendar: 'Calendar', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';
   let renderToken = 0;
@@ -113,7 +113,6 @@
     App.fx.hydrateIcons();
     App.fx.updateThemeButton();
     App.fx.watch($('#view'));
-    $('#themeToggle').onclick = e => App.fx.setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', { x: e.clientX, y: e.clientY });
     $('#cmdkKey').textContent = /Mac/.test(navigator.platform) ? '⌘ K' : 'Ctrl K';
     $('#cmdkBtn').onclick = () => App.fx.openPalette();
 
@@ -121,6 +120,7 @@
     document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); go(a.dataset.go); } });
     $('#wsBtn').onclick = e => { e.stopPropagation(); openSwitcher(); };
     App.bus.on('period-changed', () => { App.periodUI.render(); go(current); });
+    App.bus.on('biz-changed', () => syncBiz());
     document.addEventListener('mousedown', e => { if ($('.ws-menu') && !e.target.closest('.ws-menu, #wsBtn')) closeSwitcher(); });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && $('.ws-menu')) { closeSwitcher(); $('#wsBtn').focus(); }
