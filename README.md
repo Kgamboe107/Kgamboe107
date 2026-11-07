@@ -51,6 +51,16 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## iPhone / phone version
+
+Open **https://kgamboe107.github.io/Kgamboe107/** in Safari on your iPhone, tap **Share → Add to Home Screen**, then **Add**. It opens full screen with its own icon, works offline, and keeps its data on the phone (nothing is sent to a server).
+
+- **Phone layout:** a bottom tab bar (Home · Plan · Upload · AI · More), notch-safe and home-indicator-safe spacing, and no zooming into text fields. Exports open the share sheet, so you can save to Files, iCloud Drive, AirDrop or Mail.
+- **Bring your data:** on the computer, Settings → **Export backup**, then AirDrop it or save it to iCloud Drive. On the phone, Settings → **Restore backup**. Each device keeps its own copy, so repeat this to bring the phone up to date.
+- **Works on the phone:** dashboards, Weekly Review and printing, Calendar, Net Worth, Taxes & CPA, receipts, reports and statement imports.
+- **Desktop app only:** AI chat (Ollama and the online AIs go through the app's local relay), live bank sync (Plaid, Square, Stripe), and Google Drive / Outlook import.
+- The site updates automatically from `master` (workflow *Publish phone / web version*). Turn it on once in GitHub: **Settings → Pages → Source: GitHub Actions**.
+
 ## Banking & payments (Cash App, Venmo, PayPal, banks, Square, Stripe)
 
 **Integrations → Banking & payments.** Transactions feed:

@@ -9,9 +9,9 @@ const ROOT = __dirname;
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.csv': 'text/csv',
-  '.md': 'text/markdown', '.woff2': 'font/woff2'
+  '.md': 'text/markdown', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json'
 };
-const ALLOWED = ['index.html', 'css', 'js', 'vendor', 'samples', 'assets', 'build'];
+const ALLOWED = ['index.html', 'css', 'js', 'vendor', 'assets', 'build', 'icons', 'manifest.webmanifest'];
 const MARKER = 'X-Ops-Command-Desk';
 
 /* ---------- AI relay ----------

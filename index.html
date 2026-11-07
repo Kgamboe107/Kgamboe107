@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Ops Desk">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#f4efe8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)">
+  <meta name="format-detection" content="telephone=no">
   <title>Ops Command Desk</title>
   <meta name="color-scheme" content="light dark">
   <link rel="preload" href="vendor/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
@@ -61,7 +70,7 @@
           <button data-theme-set="light" title="Light mode" aria-label="Light mode"><span data-icon="sun"></span><span class="lbl">Light</span></button>
           <button data-theme-set="dark" title="Dark mode" aria-label="Dark mode"><span data-icon="moon"></span><span class="lbl">Dark</span></button>
         </div>
-        <div class="muted tiny lock" title="Your data stays on this computer"><span data-icon="lock"></span><span class="lbl">Data stays on this computer</span></div>
+        <div class="muted tiny lock" title="Your data stays on this device"><span data-icon="lock"></span><span class="lbl">Data stays on this device</span></div>
       </div>
     </aside>
 
@@ -81,6 +90,13 @@
       <section id="view" class="view"></section>
     </main>
   </div>
+  <nav class="tabbar" id="tabbar" aria-label="Quick navigation">
+    <button data-tab="dashboard"><span data-icon="dashboard"></span><span>Home</span></button>
+    <button data-tab="plan"><span data-icon="calendar"></span><span>Plan</span></button>
+    <button data-tab="upload" class="tab-up" aria-label="Upload files"><span data-icon="upload"></span></button>
+    <button data-tab="ai"><span data-icon="sparkles"></span><span>AI</span></button>
+    <button data-tab="more"><span data-icon="menu"></span><span>More</span></button>
+  </nav>
 
   <div id="dropOverlay" class="drop-overlay"><div>Drop files to upload<div class="small" id="dropTarget" style="font-weight:500;opacity:.8;margin-top:6px"></div></div></div>
   <div id="modal" class="modal" hidden><div class="modal-card" id="modalCard"></div></div>

@@ -64,6 +64,7 @@
   /* ---------- Transport (through the local relay in server.js) ---------- */
   async function relay(provider, method, path, body) {
     if (!/^https?:$/.test(location.protocol)) throw new Error('AI needs the app running as the desktop app (or "npm run web"), not opened as a file.');
+    if (App.hosted) throw new Error('AI chat runs through the desktop app. On the phone version, use the AI Assistant on your computer for now.');
     const key = await getKey(provider);
     if (!key && !PROVIDERS[provider].local) throw new Error(`Add your ${PROVIDERS[provider].label} API key in Integrations first.`);
     let r;
@@ -107,6 +108,7 @@
 
   /* ---------- Ollama: detect, download a model, turn on ---------- */
   async function ollamaStatus() {
+    if (App.hosted) return { running: false, error: 'Ollama runs on your computer, not on the phone version.', models: [] };
     try {
       const v = await relay('ollama', 'GET', '/api/version');
       if (v.running === false) return { running: false, error: 'Ollama is not running on this computer.', models: [] };

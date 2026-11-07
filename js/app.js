@@ -13,6 +13,7 @@
     if (!App.modules[route] || route === 'master' || !App.biz.enabled(route)) route = 'dashboard';
     current = route;
     syncBiz();
+    $$('#tabbar [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === route || (b.dataset.tab === 'plan' && (route === 'calendar' || route === 'review'))));
     App.periodUI?.render();
     $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
     const master = App.biz.isMaster();
@@ -132,6 +133,21 @@
     $$('#nav [data-sec]').forEach(l => { if (closed[l.dataset.sec]) setSection(l.dataset.sec, false); l.onclick = () => setSection(l.dataset.sec, l.getAttribute('aria-expanded') !== 'true'); });
     $$('[data-theme-set]').forEach(b => b.onclick = e => App.fx.setTheme(b.dataset.themeSet, { x: e.clientX, y: e.clientY }));
     $('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
+    // Phone tab bar
+    $$('#tabbar [data-tab]').forEach(b => b.onclick = () => {
+      const t = b.dataset.tab;
+      if (t === 'upload') return $('#quickUpload').click();
+      if (t === 'more') return $('#sidebar').classList.toggle('open');
+      $('#sidebar').classList.remove('open');
+      go(t === 'plan' ? (App.biz.enabled('calendar') ? 'calendar' : 'review') : t);
+    });
+    // Phone / web version: work offline and ask the browser to keep this device's data
+    if (App.hosted) {
+      document.documentElement.classList.add('hosted');
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(e => console.warn('Offline support unavailable', e));
+      navigator.storage?.persist?.().catch(() => {});
+    }
+    if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) document.documentElement.classList.add('standalone');
 
     $('#quickUpload').onchange = async e => {
       await App.ingest.ingestMany([...e.target.files]);

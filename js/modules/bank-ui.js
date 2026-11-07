@@ -27,7 +27,8 @@
     const pc = B().plaid.cfg(), items = B().plaid.items(), sq = B().square.cfg(), st = B().stripe.cfg();
     const has = { plaid: !!(await B().secret('plaid.secret')), square: !!(await B().secret('square')), stripe: !!(await B().secret('stripe')) };
     const target = App.biz.target();
-    return `<h2 style="margin-top:0">Banking &amp; payments</h2>
+    const phoneNote = App.hosted ? '<div class="alert warn small">On the phone version, statement import works here. Live Plaid, Square and Stripe syncing runs in the desktop app; sync there, then move a backup to the phone (Settings → Backup).</div>' : '';
+    return `<h2 style="margin-top:0">Banking &amp; payments</h2>${phoneNote}
       <div class="muted small" style="margin-top:-10px">Bring in Cash App, Venmo, PayPal, bank and card activity. Transactions feed <b>Financials</b> (daily cash flow), the <b>Weekly Review</b> and the <b>Calendar</b> (repeating pay and bills). For personal units, balances update <b>Net Worth</b>. Transfers between your own accounts are left out of income and spending.</div>
       <div class="grid c2">
         <div class="card int-card stack bk-import">
@@ -46,7 +47,7 @@
             <label>Secret<input id="plSecret" type="password" placeholder="${has.plaid ? '•••••••• saved. Paste to replace' : 'Sandbox or Production secret'}"></label>
             <label>Environment<select id="plEnv" data-native><option value="sandbox" ${pc.env !== 'production' ? 'selected' : ''}>Sandbox (test banks, free)</option><option value="production" ${pc.env === 'production' ? 'selected' : ''}>Production (your real banks)</option></select></label>
           </div>
-          <div class="row"><button class="btn small" id="plSave">Save keys</button><label class="field bk-inline">for<select id="plUnit" data-native>${unitOpts(target)}</select></label><button class="btn primary" id="plConnect" ${has.plaid && pc.clientId ? '' : 'disabled'}>Connect a bank</button></div>
+          <div class="row"><button class="btn small" id="plSave">Save keys</button><label class="field bk-inline">for<select id="plUnit" data-native>${unitOpts(target)}</select></label><button class="btn primary" id="plConnect" ${has.plaid && pc.clientId && !App.hosted ? '' : 'disabled'}>Connect a bank</button></div>
           ${items.length ? `<div class="stack">${items.map(i => `<div class="bk-item"><div><b>${esc(i.institution)}</b> <span class="muted tiny">${esc(App.biz.get(i.unit)?.name || '')} · ${i.accounts || '?'} accounts · synced ${ago(i.lastSync)}${i.env === 'sandbox' ? ' · sandbox' : ''}</span></div><div class="row"><button class="btn small" data-plsync="${i.id}">Sync now</button><button class="btn small danger" data-plrm="${i.id}">Disconnect</button></div></div>`).join('')}</div>` : ''}
           <details class="small muted"><summary>Setup (one time)</summary><ol>
             <li>Sign up at dashboard.plaid.com (free). Copy the <b>client ID</b> and the <b>Sandbox</b> secret, paste them here and connect a test bank (user <code>user_good</code>, password <code>pass_good</code>).</li>
@@ -58,7 +59,7 @@
             <a class="btn small" href="https://developer.squareup.com/apps" target="_blank" rel="noopener">Get a token</a></div>
           <div class="mapper"><label>Access token<input id="sqKey" type="password" placeholder="${has.square ? '•••••••• saved. Paste to replace' : 'Production access token (EAAA…)'}"></label>
             <label>Put sales in<select id="sqUnit" data-native>${unitOpts(sq.unit || target)}</select></label></div>
-          <div class="row"><button class="btn small" id="sqSave">Save</button><button class="btn primary" id="sqSync" ${has.square ? '' : 'disabled'}>Sync last 90 days</button>${has.square ? '<button class="btn small danger" id="sqRm">Remove token</button>' : ''}</div>
+          <div class="row"><button class="btn small" id="sqSave">Save</button><button class="btn primary" id="sqSync" ${has.square && !App.hosted ? '' : 'disabled'}>Sync last 90 days</button>${has.square ? '<button class="btn small danger" id="sqRm">Remove token</button>' : ''}</div>
           <div class="muted tiny">developer.squareup.com → your app → <b>Credentials</b> → Production access token. Read-only use: only payments are read.</div>
         </div>
         <div class="card int-card stack">
@@ -66,7 +67,7 @@
             <a class="btn small" href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener">Create a key</a></div>
           <div class="mapper"><label>Restricted key<input id="stKey" type="password" placeholder="${has.stripe ? '•••••••• saved. Paste to replace' : 'rk_live_… (read-only)'}"></label>
             <label>Put payments in<select id="stUnit" data-native>${unitOpts(st.unit || target)}</select></label></div>
-          <div class="row"><button class="btn small" id="stSave">Save</button><button class="btn primary" id="stSync" ${has.stripe ? '' : 'disabled'}>Sync last 90 days</button>${has.stripe ? '<button class="btn small danger" id="stRm">Remove key</button>' : ''}</div>
+          <div class="row"><button class="btn small" id="stSave">Save</button><button class="btn primary" id="stSync" ${has.stripe && !App.hosted ? '' : 'disabled'}>Sync last 90 days</button>${has.stripe ? '<button class="btn small danger" id="stRm">Remove key</button>' : ''}</div>
           <div class="muted tiny">Dashboard → Developers → API keys → <b>Create restricted key</b> with <b>Balance</b> and <b>Balance transactions: Read</b>. Payouts to your bank are counted as transfers.</div>
         </div>
       </div>

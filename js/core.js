@@ -139,8 +139,18 @@ window.App = window.App || { modules: {} };
     };
     return [headers.map(q).join(','), ...rows.map(r => headers.map(h => q(r[h])).join(','))].join('\n');
   }
+  /* Running from the web (phone / Safari) rather than the desktop app or its local server */
+  const hosted = !window.desktop && /^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   function download(name, content, type = 'text/csv') {
     const blob = content instanceof Blob ? content : new Blob([content], { type });
+    // iPhone: open the share sheet so the file can go to Files, iCloud Drive, Mail or AirDrop
+    if (isIOS && navigator.canShare) {
+      try {
+        const file = new File([blob], name, { type: blob.type || type });
+        if (navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: name }).catch(() => {}); return; }
+      } catch { /* fall back to a normal download */ }
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
@@ -165,5 +175,5 @@ window.App = window.App || { modules: {} };
     emit(ev, data) { (listeners[ev] || []).forEach(fn => fn(data)); }
   };
 
-  Object.assign(App, { $, $$, esc, uid, num, n0, toDate, dateKey, fmt, findCol, isNumericCol, groupSum, sum, mean, stdev, quantile, toCSV, download, settings, bus });
+  Object.assign(App, { hosted, isIOS, $, $$, esc, uid, num, n0, toDate, dateKey, fmt, findCol, isNumericCol, groupSum, sum, mean, stdev, quantile, toCSV, download, settings, bus });
 })(window.App);

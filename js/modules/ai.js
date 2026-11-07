@@ -23,6 +23,12 @@
 
   App.modules.ai = {
     async render(view, params = {}) {
+      if (App.hosted) {
+        view.innerHTML = App.ui.empty(`<h2 style="margin-top:0">AI Assistant runs on your computer</h2>
+          <p class="muted small" style="max-width:460px;margin:8px auto">AI chat goes through the desktop app (Ollama runs on the computer, and online AIs need the app's secure relay for your keys). Everything else works here on the phone: dashboards, Weekly Review, Calendar, receipts and statement imports.</p>`,
+          `<button class="btn" onclick="App.go('dashboard')">Back to dashboard</button>`);
+        return;
+      }
       const P = prefs();
       if (params.provider) P.provider = params.provider;
       if (params.newThread) activeId = null;
