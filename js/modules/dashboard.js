@@ -99,7 +99,7 @@
       view.innerHTML = `
         <div class="card biz-card greet row spread" style="--bc:${biz.color};flex-direction:row">
           <div><div class="greet-hi">${esc(App.ux.greeting())}</div><div class="muted small">${esc(App.ux.today())} · <b style="color:var(--text)">${esc(biz.name)}</b>${App.period.state().g !== 'all' ? ` · <span class="badge accent">${esc(App.period.range().label)}</span>` : ''} · ${esc(App.biz.TEMPLATES[biz.type]?.label || 'Custom')}${biz.description ? ' · ' + esc(biz.description) : ''}</div></div>
-          <div class="row no-print"><button class="btn small primary" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn small" id="dEdit">Edit unit</button><button class="btn small" id="dMaster">${App.fx.icon(personalUnit ? 'user' : 'businesses')} ${personalUnit ? 'Personal dashboard' : 'Business dashboard'}</button></div>
+          <div class="row no-print"><button class="btn small primary" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn small" onclick="App.go('review')">${App.fx.icon('target')} Weekly review</button><button class="btn small" id="dEdit">Edit unit</button><button class="btn small" id="dMaster">${App.fx.icon(personalUnit ? 'user' : 'businesses')} ${personalUnit ? 'Personal dashboard' : 'Business dashboard'}</button></div>
         </div>
         <div class="grid k4">${tiles.map(([l, v, s, tone, go]) => `<a data-go="${go}" style="text-decoration:none;color:inherit">${App.ui.kpi(l, v, s, tone)}</a>`).join('')}</div>
         ${await goalsCard(datasets)}

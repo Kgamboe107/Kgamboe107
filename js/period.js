@@ -19,8 +19,9 @@
   const cal = () => ({ fyStart: 1, weekStart: 1, ...App.bsettings.get('cal', {}) });
   const setCal = c => App.bsettings.set('cal', { ...cal(), ...c });
 
+  let override = null;
   function state() {
-    const s = { g: 'all', anchor: today(), from: '', to: '', ...App.settings.get('period', {}) };
+    const s = { g: 'all', anchor: today(), from: '', to: '', ...(override || App.settings.get('period', {})) };
     if (!VIEWS[s.g]) s.g = 'all';
     return s;
   }
@@ -119,8 +120,10 @@
     }
     return key;
   }
-  const active = () => ROUTES.includes(App.currentRoute?.() || '') && state().g !== 'all';
+  const active = () => (override || ROUTES.includes(App.currentRoute?.() || '')) && state().g !== 'all';
+  /* Run fn with a temporary period (e.g. one week) without touching the saved picker */
+  async function withState(st, fn) { const prev = override; override = st; try { return await fn(); } finally { override = prev; } }
   const change = (cur, prev) => (prev ? cur / prev - 1 : NaN);
 
-  App.period = { VIEWS, ROUTES, cal, setCal, state, setState, bounds, range, step, within, filter, previous, autoSub, bucket, bucketLabel, labelOf, active, change, today, iso, parse, fyName, MON };
+  App.period = { withState, VIEWS, ROUTES, cal, setCal, state, setState, bounds, range, step, within, filter, previous, autoSub, bucket, bucketLabel, labelOf, active, change, today, iso, parse, fyName, MON };
 })(window.App);

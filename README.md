@@ -51,6 +51,19 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Targets & weekly KPI review sheet
+
+**Weekly Review** (sidebar → Reports, or the *Weekly review* button on any dashboard).
+
+- **Set targets** for each unit. Every target is either "at most" or "at least":
+  - Business units: net sales, labor %, food cost %, prime cost %, sales per labor hour, overtime %, total purchases, net margin, guest satisfaction, store audit score, marketing spend and ROAS, and overdue filings.
+  - Personal units: income, spending, savings rate, net worth, cash and emergency fund, invested assets, debts, and realized trading P&L.
+  - Labor, food, prime cost, sales per labor hour and overtime targets are shared with Operations. Guest and audit targets are shared with Marketing.
+  - Untick a metric to leave it off the sheet.
+- **Review a week:** step back and forth with ‹ ›. Each metric shows its target, this week, last week, the change, the 4-week average, a trend, and On target / Close (within 5%) / Off target. The page also lists wins, misses, this week's alerts, and notes for next week (saved per week).
+- **Print review sheet:** a plain one-page sheet per unit with a notes section and a sign-off line. On the Business or Personal dashboard (or Everything), it prints one page per unit. Use *Microsoft Print to PDF* to save it as a PDF.
+- Balances and scores (net worth, debts, SMG, audits, overdue filings) are marked *(latest)*. They are current values, not weekly totals.
+
 ## Reporting periods (daily, weekly, monthly, quarterly, yearly, fiscal year)
 
 The period picker in the top bar (‹ [Weekly · Wk of Oct 26] ›) sets the period for the dashboards, Financials, Purchases, Operations, Trading and Marketing.

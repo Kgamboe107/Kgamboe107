@@ -7,6 +7,7 @@
   /* ---------- Icons (24px stroke icons) ---------- */
   const P = {
     wallet: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v2"/><rect x="3" y="8" width="18" height="12" rx="2.5"/><path d="M16 13.5h2.5"/>',
+    target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
     calc: '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7h8M8 12h1M11.5 12h1M15 12h1M8 16h1M11.5 16h1M15 16h1"/>',
     sidebar: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/><path d="M15 10l-2 2 2 2"/>',
     chevrons: '<path d="M8 9l4-4 4 4"/><path d="M8 15l4 4 4-4"/>',
