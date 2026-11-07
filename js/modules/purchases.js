@@ -33,7 +33,7 @@
 
   App.modules.purchases = {
     async render(view) {
-      if (!state.period) state.period = 'all';
+      if (!state.period) state.period = 'global';
       const custom = App.bsettings.get('pur.custom', {});
       const [from, to, label] = PU().periodRange(state.period, custom);
       const purchases = await all();
@@ -66,7 +66,7 @@
       App.ui.publish('purchases', { total: business, food, foodPct, sales: sales.sales, period: label, receipts: list.length, alerts: flags.length, flags: flags.map(f => f[1]) });
 
       const vendors = [...new Set(purchases.map(p => p.vendor).filter(Boolean))].sort();
-      const periods = [['all', 'All time'], ['thisweek', 'This week'], ['lastweek', 'Last week'], ['thismonth', 'This month'], ['lastmonth', 'Last month'], ['ytd', 'Year to date'], ['custom', 'Custom range']];
+      const periods = [['global', `App period: ${App.period.range().short}`], ['all', 'All time'], ['thisweek', 'This week'], ['lastweek', 'Last week'], ['thismonth', 'This month'], ['lastmonth', 'Last month'], ['ytd', 'Year to date'], ['custom', 'Custom range']];
       view.innerHTML = `
         <div class="card row spread">
           <div class="row">
@@ -95,7 +95,7 @@
         </div>
         ${flags.length ? `<div class="card"><div class="card-head"><h2>Needs attention</h2><span class="badge warn">${flags.length}</span></div><div class="stack">${flags.map(([c, s]) => `<div class="alert ${c}">${esc(s)}</div>`).join('')}</div></div>` : ''}
         <div class="grid c2">
-          <div class="card"><div class="card-head"><h2>Food cost</h2><span class="muted small">${esc(label)}${state.period !== 'all' ? ` · ${from} → ${to}` : ''}</span></div>
+          <div class="card"><div class="card-head"><h2>Food cost</h2><span class="muted small">${esc(label)}${from !== '0000-01-01' ? ` · ${App.esc(App.period.labelOf('day', from, to))}` : ''}</span></div>
             <div class="mapper">
               <label><span>Food sales for the period${sales.auto ? ' <span class="badge good">auto</span>' : ''}</span><input type="number" step="0.01" id="fcSales" value="${isNaN(sales.sales) ? '' : sales.sales.toFixed(2)}" ${sales.auto ? 'disabled' : ''} placeholder="e.g. 12500"></label>
               <label>Beginning inventory (optional)<input type="number" step="0.01" id="fcBeg" value="${esc(inv.beg ?? '')}" placeholder="$ on hand at start"></label>

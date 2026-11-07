@@ -143,6 +143,7 @@
 
   /* Period helpers */
   function periodRange(key, custom = {}) {
+    if (key === 'global') { const r = App.period.range(); return r.g === 'all' ? ['0000-01-01', '9999-12-31', 'All time'] : [r.from, r.to, r.label]; }
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     const dow = (today.getDay() + 6) % 7; // Monday start

@@ -51,6 +51,17 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Reporting periods (daily, weekly, monthly, quarterly, yearly, fiscal year)
+
+The period picker in the top bar (‹ [Weekly · Wk of Oct 26] ›) sets the period for the dashboards, Financials, Purchases, Operations, Trading and Marketing.
+
+- **Views:** All time · Daily (any date range, with presets: Today, Yesterday, Last 7/14/30/90 days, Month to date, Year to date) · Weekly · Monthly · Quarterly · Yearly · Fiscal year.
+- **Step through periods** with the ‹ › arrows or the `[` and `]` keys. The menu also lists the 8 most recent periods.
+- **Calendar per unit:** set the fiscal-year start month (for example, July gives FY2027 = Jul 2026 – Jun 2027) and whether weeks start Monday or Sunday.
+- **Grouping:** a week or month shows days, a quarter shows weeks, and a year or fiscal year shows months. A date range picks a grouping from its length.
+- **Comparisons:** KPIs show the change against the previous period, for example "▼5.5% vs previous week" or "▼1.6 pts" for labor %.
+- Only rows with a mapped date column are filtered. Rows without a readable date are kept.
+
 ## Family wealth, individual views & Taxes / CPA
 
 **Family members** (Units → Personal → Edit family members): add each person (you, spouse/partner, children, parents) with an optional birth year. Every personal unit and every account belongs to a person or is **joint**. The person bar (Family · Koen · Jamie · …) on the Personal dashboard, Net Worth and Taxes & CPA pages switches between the whole family and **one person's individual view** (their accounts and units plus joint ones).

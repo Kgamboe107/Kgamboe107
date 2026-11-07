@@ -6,7 +6,7 @@
   function periodKey(v) {
     if (v === '' || v === null || v === undefined) return '(blank)';
     const looksDate = v instanceof Date || (typeof v === 'number' && v > 20000 && v < 80000) || /\d{4}-\d{1,2}|\d{1,2}\/\d{1,2}\/\d{2,4}|[a-z]{3,9}\.? \d{4}/i.test(String(v));
-    if (looksDate) { const d = App.toDate(v); if (d) return d.toISOString().slice(0, 7); }
+    if (looksDate) { const d = App.toDate(v); if (d) { const sub = App.period?.range().sub; return sub === 'day' ? App.dateKey(d) : d.toISOString().slice(0, 7); } }
     return String(v);
   }
   App.periodKey = periodKey;

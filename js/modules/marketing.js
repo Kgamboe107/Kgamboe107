@@ -56,7 +56,8 @@
     const [tot] = agg(ds.rows, m, () => 'Total');
     const camps = agg(ds.rows, m, r => String(r[m.camp] || '(none)'));
     const chans = m.chan ? agg(ds.rows, m, r => String(r[m.chan] || '(none)')) : [];
-    const trend = m.date ? agg(ds.rows, m, r => App.periodKey(r[m.date])).sort((a, b) => a.key.localeCompare(b.key)) : [];
+    const msub = App.period.range().sub || App.period.autoSub(m.date ? ds.rows.map(r => App.dateKey(r[m.date])) : []);
+    const trend = m.date ? agg(ds.rows, m, r => App.period.bucket(r[m.date], msub)).sort((a, b) => a.key.localeCompare(b.key)) : [];
 
     const alerts = [];
     camps.forEach(c => {
@@ -99,7 +100,7 @@
     if (trend.length > 1) {
       const dsets = [{ label: 'Spend', data: trend.map(t => t.spend) }];
       if (m.rev) dsets.push({ label: 'Revenue', data: trend.map(t => t.rev), color: '#059669' });
-      App.ui.chart('mkTrend', 'line', { labels: trend.map(t => t.key), datasets: dsets });
+      App.ui.chart('mkTrend', 'line', { labels: trend.map(t => App.period.bucketLabel(t.key, msub)), datasets: dsets });
     }
     const cols = [
       { key: 'key', label: 'Name' },

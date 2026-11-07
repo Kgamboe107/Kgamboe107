@@ -8,7 +8,7 @@
     const r = await App.ui.resolve(key, { categories, fields, includeLive: key === 'purchases' });
     if (!r.ds) return null;
     const ok = fields.filter(f => f.req).every(f => r.map[f.k]);
-    return ok ? { ds: r.ds, m: r.map } : null;
+    return ok ? { ds: App.ui.scoped(r.ds, r.map), m: r.map } : null;
   }
 
   async function roster() {

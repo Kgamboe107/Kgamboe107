@@ -88,24 +88,34 @@
     const sDays = sm.date ? [...new Set(sRows.map(r => App.dateKey(r[sm.date])).filter(Boolean))].sort() : [];
     const weeks = sDays.length > 7 ? (new Date(sDays[sDays.length - 1]) - new Date(sDays[0])) / (7 * 864e5) + 1 / 7 : 0;
     const laborPct = sales && lcost ? lcost / sales : NaN;
+    const pr = App.period.range();
+    const prevS = pr.prev && S.ds?._all && sm.date ? App.period.within(S.ds._all, sm.date, pr.prev.from, pr.prev.to) : null;
+    const prevL = pr.prev && L.ds?._all && lm.date ? App.period.within(L.ds._all, lm.date, pr.prev.from, pr.prev.to) : null;
+    const prevSales = prevS ? App.sum(prevS.map(r => n0(r[sm.sales]))) : NaN;
+    const prevLcost = prevL ? App.sum(prevL.map(laborCost)) : NaN;
+    const prevLaborPct = prevSales && prevLcost ? prevLcost / prevSales : NaN;
+    const vs = (cur, prev, pct) => (isNaN(prev) || !prev ? '' : pct ? `${cur - prev >= 0 ? '▲' : '▼'} ${Math.abs((cur - prev) * 100).toFixed(1)} pts vs ${pr.prev.word}` : `${cur >= prev ? '▲' : '▼'} ${Math.abs((cur / prev - 1) * 100).toFixed(1)}% vs ${pr.prev.word}`);
     const foodPct = sales && cogs ? cogs / sales : NaN;
     const primePct = sales && cogs && lcost ? (cogs + lcost) / sales : NaN;
     const splh = sales && hours ? sales / hours : NaN;
     const otPct = hours && lm.ot ? ot / hours : NaN;
 
-    /* Daily / per-location join */
+    /* Per sub-period (day / week / month) and location */
+    const per = App.period.range();
+    const allKeys = sm.date ? sRows.map(r => App.dateKey(r[sm.date])) : lm.date ? lRows.map(r => App.dateKey(r[lm.date])) : [];
+    const sub = per.sub || App.period.autoSub(allKeys);
     const by = new Map();
     const bucket = (k) => { if (!by.has(k)) by.set(k, { key: k, sales: 0, cogs: 0, hours: 0, lcost: 0, guests: 0 }); return by.get(k); };
     const keyOf = (r, m) => {
       const parts = [];
       if (m.loc && ((lm.loc && sm.loc) || !hasL || !hasS)) parts.push(String(r[m.loc] || ''));
-      if (m.date) parts.push(App.dateKey(r[m.date]));
+      if (m.date) parts.push(App.period.bucket(r[m.date], sub));
       return parts.join(' · ') || 'All';
     };
     sRows.forEach(r => { const b = bucket(keyOf(r, sm)); b.sales += n0(r[sm.sales]); b.cogs += sm.cogs ? n0(r[sm.cogs]) : 0; b.guests += sm.guests ? n0(r[sm.guests]) : 0; });
     lRows.forEach(r => { const b = bucket(keyOf(r, lm)); b.hours += n0(r[lm.hours]); b.lcost += laborCost(r); });
     const rows = [...by.values()].sort((a, b) => a.key.localeCompare(b.key)).map(r => ({
-      ...r, laborPct: r.sales ? r.lcost / r.sales : NaN, foodPct: r.sales && r.cogs ? r.cogs / r.sales : NaN,
+      ...r, label: r.key.split(' · ').map(x => App.period.bucketLabel(x, sub)).join(' · '), laborPct: r.sales ? r.lcost / r.sales : NaN, foodPct: r.sales && r.cogs ? r.cogs / r.sales : NaN,
       splh: r.hours ? r.sales / r.hours : NaN, avgCheck: r.guests ? r.sales / r.guests : NaN
     }));
 
@@ -131,11 +141,11 @@
 
     el.innerHTML = `
       <div class="grid k4">
-        ${hasS ? App.ui.kpi('Net sales', fmt.compact(sales), [weeks ? `avg ${fmt.compact(sales / weeks)}/week over ${Math.round(weeks)} weeks` : '', sDays.length ? `${fmt.date(sDays[0])} – ${fmt.date(sDays[sDays.length - 1])}` : '', guests ? `${fmt.num(guests)} guests · avg ${fmt.money(sales / guests, 2)}` : ''].filter(Boolean).join(' · ')) : ''}
+        ${hasS ? App.ui.kpi('Net sales', fmt.compact(sales), [vs(sales, prevSales), weeks ? `avg ${fmt.compact(sales / weeks)}/week over ${Math.round(weeks)} weeks` : '', sDays.length ? `${fmt.date(sDays[0])} – ${fmt.date(sDays[sDays.length - 1])}` : '', guests ? `${fmt.num(guests)} guests · avg ${fmt.money(sales / guests, 2)}` : ''].filter(Boolean).join(' · ')) : ''}
         ${fcSales ? App.ui.kpi('Sales vs forecast', (sales >= fcSales ? '+' : '') + fmt.compact(sales - fcSales), `${fmt.pct(sales / fcSales - 1)} vs ${fmt.compact(fcSales)} forecast`, sales >= fcSales ? 'good' : 'warn') : ''}
         ${hasL ? App.ui.kpi('Labor hours', fmt.num(hours, 1), lm.ot ? `${fmt.num(ot, 1)} OT hrs (${fmt.pct(otPct)})` : (sched ? `${fmt.num(sched, 1)} scheduled` : '')) : ''}
         ${lcost ? App.ui.kpi('Labor cost', fmt.compact(lcost), lm.cost ? '' : 'estimated from pay rate') : ''}
-        ${App.ui.kpi('Labor %', fmt.pct(laborPct), 'target ' + fmt.pct(t.labor), tone(laborPct, t.labor))}
+        ${App.ui.kpi('Labor %', fmt.pct(laborPct), ['target ' + fmt.pct(t.labor), vs(laborPct, prevLaborPct, true)].filter(Boolean).join(' · '), tone(laborPct, t.labor))}
         ${sm.cogs ? App.ui.kpi('Food cost %', fmt.pct(foodPct), 'target ' + fmt.pct(t.food), tone(foodPct, t.food)) : ''}
         ${isNaN(primePct) ? '' : App.ui.kpi('Prime cost %', fmt.pct(primePct), 'target ' + fmt.pct(t.prime), tone(primePct, t.prime))}
         ${App.ui.kpi('Sales / labor hr', fmt.money(splh, 2), 'target ' + fmt.money(t.splh), tone(splh, t.splh, false))}
@@ -146,9 +156,9 @@
         <div class="card"><div class="card-head"><h2>Sales vs labor</h2></div><div class="chart-box"><canvas id="opsChart"></canvas></div></div>
         ${pos.length ? `<div class="card"><div class="card-head"><h2>Hours by position</h2></div><div class="chart-box"><canvas id="opsPos"></canvas></div></div>` : ''}
       </div>
-      <div class="card"><div class="card-head"><h2>Daily / location detail</h2><button class="btn small" id="opsCsv">Export CSV</button></div><div id="opsTable"></div></div>`;
+      <div class="card"><div class="card-head"><h2>${{ day: 'Daily', week: 'Weekly', month: 'Monthly' }[sub]} detail${per.g !== 'all' ? ` · ${App.esc(per.label)}` : ''}</h2><button class="btn small" id="opsCsv">Export CSV</button></div><div id="opsTable"></div></div>`;
 
-    App.ui.chart('opsChart', 'bar', { labels: rows.map(r => r.key), datasets: [
+    App.ui.chart('opsChart', 'bar', { labels: rows.map(r => r.label), datasets: [
       { label: 'Sales', data: rows.map(r => r.sales) },
       { label: 'Labor cost', data: rows.map(r => r.lcost), color: '#d97706' },
       { label: 'Labor %', data: rows.map(r => +(r.laborPct * 100).toFixed(1)), type: 'line', yAxisID: 'y2', color: '#dc2626' }
@@ -160,7 +170,7 @@
     if (pos.length) App.ui.chart('opsPos', 'bar', { labels: pos.map(p => p.pos), datasets: [{ label: 'Hours', data: pos.map(p => p.hours), multiColor: true }] }, { indexAxis: 'y' });
 
     const cols = [
-      { key: 'key', label: 'Date / Location' },
+      { key: 'key', label: { day: 'Day', week: 'Week', month: 'Month' }[sub] + ((sm.loc || lm.loc) ? ' / Location' : ''), fmt: (v, r) => App.esc(r.label) },
       { key: 'sales', label: 'Sales', num: true, fmt: v => fmt.money(v) },
       { key: 'hours', label: 'Hours', num: true, fmt: v => fmt.num(v, 1) },
       { key: 'lcost', label: 'Labor $', num: true, fmt: v => fmt.money(v) },

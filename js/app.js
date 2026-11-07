@@ -7,11 +7,13 @@
     personnel: 'Personnel', businesses: 'Businesses & Personal', wealth: 'Net Worth', tax: 'Taxes & CPA', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';
+  let renderToken = 0;
 
   async function go(route, params = {}) {
     if (!App.modules[route] || route === 'master' || !App.biz.enabled(route)) route = 'dashboard';
     current = route;
     syncBiz();
+    App.periodUI?.render();
     $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
     const master = App.biz.isMaster();
     const bizName = master ? App.biz.masterLabel() : App.biz.get(App.biz.current()).name;
@@ -22,8 +24,12 @@
     const view = $('#view');
     view.classList.remove('page-enter'); void view.offsetWidth; view.classList.add('page-enter');
     view.innerHTML = '';
+    const token = ++renderToken;
     try { await App.modules[route].render(view, params); }
-    catch (e) { console.error(e); view.innerHTML = App.ui.empty('Something went wrong rendering this page: ' + App.esc(e.message)); }
+    catch (e) {
+      if (token !== renderToken) return; // a newer page render replaced this one
+      console.error(e); view.innerHTML = App.ui.empty('Something went wrong rendering this page: ' + App.esc(e.message));
+    }
     window.scrollTo({ top: 0 });
   }
   App.go = go;
@@ -114,6 +120,7 @@
     $('#nav').addEventListener('click', e => { const a = e.target.closest('a[data-route]'); if (a) go(a.dataset.route); });
     document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); go(a.dataset.go); } });
     $('#wsBtn').onclick = e => { e.stopPropagation(); openSwitcher(); };
+    App.bus.on('period-changed', () => { App.periodUI.render(); go(current); });
     document.addEventListener('mousedown', e => { if ($('.ws-menu') && !e.target.closest('.ws-menu, #wsBtn')) closeSwitcher(); });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && $('.ws-menu')) { closeSwitcher(); $('#wsBtn').focus(); }

@@ -171,14 +171,24 @@
     return { ds, map, datasets: order, isSample, switched: chosen && chosen !== ds };
   }
 
-  async function mapper(el, { title = 'Data source', categories, fields, key, onChange, hint = '' }) {
+  /* The rows of a table inside the reporting period (by its mapped date column). Keeps the full table on _all for comparisons. */
+  function scoped(ds, map) {
+    if (!ds) return ds;
+    const col = map?.date || map?.period || '';
+    if (!col || !App.period?.active()) return ds;
+    return { ...ds, rows: App.period.filter(ds.rows, col), _all: ds.rows, _dateCol: col };
+  }
+
+  async function mapper(el, { title = 'Data source', categories, fields, key, onChange: change, hint = '' }) {
+    const onChange = (ds, map) => change(scoped(ds, map), map);
+    if (!el) return;
     const r = await resolve(key, { categories, fields });
     const datasets = r.datasets;
     if (!r.ds) {
       el.innerHTML = `<div class="card"><div class="card-head"><h2>${esc(title)}</h2></div>
         <div class="muted">${datasets.length ? 'None of your tables have the columns this needs yet.' : 'No data tables yet.'} ${hint} <a data-go="library">Upload a spreadsheet or report</a> or load the sample data in <a data-go="settings">Settings</a>.</div>
         ${datasets.length ? `<label class="field" style="margin-top:10px">Use a table anyway<select data-pick><option value="">Choose a table…</option>${datasets.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label>` : ''}</div>`;
-      el.querySelector('[data-pick]')?.addEventListener('change', e => { if (!e.target.value) return; App.bsettings.set('map.' + key, { ds: e.target.value, map: {}, manual: true, at: Date.now() }); mapper(el, { title, categories, fields, key, onChange, hint }); });
+      el.querySelector('[data-pick]')?.addEventListener('change', e => { if (!e.target.value) return; App.bsettings.set('map.' + key, { ds: e.target.value, map: {}, manual: true, at: Date.now() }); mapper(el, { title, categories, fields, key, onChange: change, hint }); });
       onChange(null, {});
       return;
     }
@@ -223,5 +233,5 @@
     App.bsettings.set('kpis', all);
   }
 
-  App.ui = { toast, modal, kpi, empty, table, chart, options, mapper, resolve, publish, PALETTE, cssVar };
+  App.ui = { toast, modal, kpi, empty, table, chart, options, mapper, resolve, scoped, publish, PALETTE, cssVar };
 })(window.App);
