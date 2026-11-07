@@ -74,12 +74,12 @@
       const f = k.finance || {}, o = k.operations || {}, t = k.trading || {}, tp = k['trading-perf'] || {}, mk = k.marketing || {}, p = k.personnel || {}, gs = k.guest || {};
       const openResearch = notes.filter(n => n.module === 'research' && (n.status || 'Open question') !== 'Archived' && n.status !== 'Findings ready').length;
       const tiles = [
-        lg.score !== undefined && ['Lawsuit protection', isNaN(lg.score) ? '—' : Math.round(lg.score * 100) + '%', lg.high ? `${lg.high} high-risk gap${lg.high > 1 ? 's' : ''}` : `${lg.gaps || 0} gaps`, lg.high ? 'bad' : lg.score >= 0.85 ? 'good' : 'warn', 'legal'],
+        lg.score !== undefined && ['Lawsuit protection', isNaN(lg.score) ? '—' : Math.round(lg.score * 100) + '%', lg.high ? `${lg.high} high-risk gap${lg.high > 1 ? 's' : ''}` : `${lg.gaps || 0} gap${(lg.gaps || 0) === 1 ? '' : 's'}`, lg.high ? 'bad' : lg.score >= 0.85 ? 'good' : 'warn', 'legal'],
         cm.score !== undefined && ['Audit readiness', isNaN(cm.score) ? '—' : Math.round(cm.score * 100) + '%', cm.overdue ? `${cm.overdue} overdue filing${cm.overdue > 1 ? 's' : ''}` : `${cm.dueSoon || 0} due in 30 days`, cm.overdue ? 'bad' : cm.score >= 0.85 ? 'good' : 'warn', 'compliance'],
         pu.receipts && ['Food cost %', fmt.pct(pu.foodPct), `${fmt.money(pu.food)} food · ${pu.receipts} receipts`, isNaN(pu.foodPct) ? '' : pu.foodPct <= (App.bsettings.get('ops.targets', {}).food || 0.3) ? 'good' : 'bad', 'purchases'],
         personalUnit && k.wealth?.accounts && ['Net worth', fmt.compact(k.wealth.net), `${fmt.compact(k.wealth.assets)} assets · ${fmt.compact(k.wealth.debts)} debts`, k.wealth.net >= 0 ? 'good' : 'bad', 'wealth'],
-        f.revenue !== undefined && [personalUnit ? 'Income' : 'Revenue', fmt.compact(f.revenue), `${personalUnit ? 'savings rate' : 'net margin'} ${fmt.pct(f.margin)}`, f.margin >= 0 ? 'good' : 'bad', 'finance'],
-        num(o.laborPct) && ['Labor %', fmt.pct(o.laborPct), `prime cost ${fmt.pct(o.primePct)}`, '', 'operations'],
+        f.revenue !== undefined && [personalUnit ? 'Income' : 'Revenue', fmt.compact(f.revenue), f.margin === 1 ? 'no expenses loaded yet' : `${personalUnit ? 'savings rate' : 'net margin'} ${fmt.pct(f.margin)}`, f.margin === 1 ? '' : f.margin >= 0 ? 'good' : 'bad', 'finance'],
+        num(o.laborPct) && ['Labor %', fmt.pct(o.laborPct), num(o.primePct) ? `prime cost ${fmt.pct(o.primePct)}` : num(pu.foodPct) ? `prime cost ≈ ${fmt.pct(o.laborPct + pu.foodPct)}` : 'add food cost for prime cost', '', 'operations'],
         num(o.splh) && ['Sales / labor hr', fmt.money(o.splh, 2), `sales ${fmt.compact(o.sales)}`, '', 'operations'],
         t.gross !== undefined && ['Gross exposure', fmt.compact(t.gross), `${t.positions} positions · top ${fmt.pct(t.topWeight)}`, '', 'trading'],
         t.upl !== undefined && ['Unrealized P&L', fmt.money(t.upl), '', t.upl >= 0 ? 'good' : 'bad', 'trading'],
