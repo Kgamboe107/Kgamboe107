@@ -51,6 +51,25 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Family wealth, individual views & Taxes / CPA
+
+**Family members** (Units → Personal → Edit family members): add each person (you, spouse/partner, children, parents) with an optional birth year. Every personal unit and every account belongs to a person or is **joint**. The person bar (Family · Koen · Jamie · …) on the Personal dashboard, Net Worth and Taxes & CPA pages switches between the whole family and **one person's individual view** (their accounts and units plus joint ones).
+
+**Net Worth** (sidebar → Analysis):
+- **Accounts:** checking, savings, brokerage, 401(k)/403(b), traditional and Roth IRA, HSA, 529, crypto, home, vehicles and business ownership, plus debts (mortgage, auto, student loan, credit card). Each account has an owner, tax treatment, interest rate and balance history.
+- **Import brokerage positions:** upload a positions export from Schwab, Fidelity, Vanguard, Robinhood, Webull or E*TRADE. Each account in the file becomes an investment account with its holdings, and the app guesses its type and tax treatment (Roth, IRA, 401(k), HSA, 529, taxable). Importing a newer file updates the balances.
+- **Update balances:** type every balance on one screen. Each update adds a point to the month-end net-worth history.
+- The page shows net worth, invested assets, cash, debts, change over time (counting only accounts tracked since the start date), per-person cards, tax buckets (taxable / tax-deferred / Roth / HSA / 529), debts sorted by interest rate, and a holdings table. It flags balances that are more than 45 days old.
+- In the Personal dashboard (or Everything) roll-up, this becomes the **family wealth** view across every personal unit.
+
+**Taxes & CPA** (sidebar → Reports; personal units only):
+- **CPA document checklist** generated from your family and accounts: W-2s, consolidated 1099s per brokerage, 1099-INT, 5498 / 1099-R, HSA 5498-SA / 1099-SA, 1098 mortgage interest, 1098-E, property tax, Schedule C items for side income, Schedule E items for rentals, childcare and more. Tick items off and attach the PDFs.
+- **Contributions vs. IRS limits** per person: 401(k), IRA and HSA, with catch-up amounts from birth year (50+, 60–63, and HSA 55+). 2026 limits are built in, and so are the 2027 HSA limits. The 2027 401(k) and IRA limits stay at 2026 levels until the IRS publishes them.
+- **Realized gains** from imported trade history, **tax-loss harvesting candidates** (taxable positions below cost, with a wash-sale caution), and **estimated tax payment** dates with amounts and a paid status.
+- **CPA packet (Excel):** Summary, Documents, Accounts (year-end and current balances), Contributions, Holdings, Tax-loss candidates, Estimated payments, and Side income & rentals.
+- **Ask AI to review** sends the picture to your AI (Ollama keeps it on your computer).
+- This is an organizer, not tax advice.
+
 ## Reports it reads automatically
 
 Drop files on the window (or click **Upload**) and the app works out what each one is and sends its numbers to the right pages. Every page and dashboard updates immediately, and a summary shows where each file went.

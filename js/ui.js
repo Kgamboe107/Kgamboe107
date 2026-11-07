@@ -38,6 +38,7 @@
   }
 
   function kpi(label, value, sub = '', tone = '', drill) {
+    if (Array.isArray(drill) && drill[0] === '__go') return `<a data-go="${esc(drill[1])}" style="text-decoration:none;color:inherit">${kpi(label, value, sub, tone, false)}</a>`;
     const d = drill === false ? null : (drill || App.drillFor?.(label));
     const attrs = d ? ` data-drill="${esc(d[0])}" data-arg="${esc(d[1] || '')}" tabindex="0" role="button" title="Click for details"` : '';
     const ico = kpiIcon(label, d && d[0]);

@@ -5,7 +5,10 @@
 
   App.modules.master = {
     async render(view) {
-      const bizs = App.biz.inView();
+      let bizs = App.biz.inView();
+      const famView = App.biz.masterKind() === 'individual';
+      const who = famView ? App.wealth.person() : 'all';
+      if (who !== 'all') bizs = bizs.filter(b => (b.owner || 'joint') === who || (b.owner || 'joint') === 'joint');
       view.innerHTML = App.ui.skeleton(8);
       const allFiles = await App.store.all('files', { raw: true });
 
@@ -25,7 +28,7 @@
       const head = S(k => k.personnel?.headcount);
       const gross = S(k => k.trading?.gross), upl = S(k => k.trading?.upl), real = S(k => k['trading-perf']?.total);
       const flags = App.sum(rows.map(r => r.flags));
-      const has = key => rows.some(r => r.k[key]);
+      const has = key => rows.some(r => r.k[key] && Object.keys(r.k[key]).filter(x => x !== 'at').length);
       const mk = App.biz.masterKind(), personal = mk === 'individual';
       const nB = rows.filter(r => App.biz.kindOf(r.b) === 'business').length, nP = rows.length - nB;
       const spendP = S(k => k.purchases?.total);
@@ -33,6 +36,9 @@
       const scopeLine = mk ? `${rows.length} ${unitWord}` : `${nB} business${nB === 1 ? '' : 'es'} · ${nP} personal`;
       const addKind = personal ? 'individual' : 'business';
       const addLabel = personal ? '+ Add personal unit' : '+ Add business';
+      // Family wealth (personal units only)
+      const wl = (mk === 'individual' || !mk) ? await App.wealth.collect({ who }) : [];
+      const ws = App.wealth.summarize(wl);
       const groups = mk ? [[mk, rows]] : [['business', rows.filter(r => App.biz.kindOf(r.b) === 'business')], ['individual', rows.filter(r => App.biz.kindOf(r.b) === 'individual')]];
 
       view.innerHTML = `
@@ -41,12 +47,15 @@
           <div class="row no-print"><div class="seg" role="tablist" aria-label="Roll-up view">${[['all:business', 'Business'], ['all:individual', 'Personal'], ['all', 'Everything']].map(([v, l]) => `<button data-view="${v}" class="${App.biz.current() === v ? 'on' : ''}">${l}</button>`).join('')}</div>
             <button class="btn" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn primary" id="mNew">${addLabel}</button></div>
         </div>
+        ${famView ? `<div class="card">${App.modules.wealth.personBar()}</div>` : ''}
         <div class="grid k4">
+          ${(personal || !mk) && wl.length ? App.ui.kpi(personal ? (who === 'all' ? 'Family net worth' : `${App.wealth.memberName(who)}: net worth`) : 'Personal net worth', fmt.compact(ws.net), `${fmt.compact(ws.assets)} assets · ${fmt.compact(ws.debts)} debts`, ws.net >= 0 ? 'good' : 'bad', ['__go', 'wealth']) : ''}
+          ${personal && wl.length ? App.ui.kpi('Invested', fmt.compact(ws.invested), 'retirement, brokerage, HSA, 529', '', false) : ''}
           ${personal ? `
           ${has('finance') ? App.ui.kpi('Total income', fmt.compact(rev), 'all personal units') : ''}
           ${has('finance') ? App.ui.kpi('Net after expenses', fmt.compact(net), 'savings rate ' + fmt.pct(rev ? net / rev : NaN), net >= 0 ? 'good' : 'bad') : ''}
           ${has('purchases') ? App.ui.kpi('Spending', fmt.compact(spendP), 'receipts & purchases') : ''}
-          ${has('trading') ? App.ui.kpi('Investments', fmt.compact(gross), `unrealized ${fmt.money(upl)}`, upl >= 0 ? 'good' : 'bad') : ''}
+          ${has('trading') && !wl.length ? App.ui.kpi('Investments', fmt.compact(gross), `unrealized ${fmt.money(upl)}`, upl >= 0 ? 'good' : 'bad') : ''}
           ${has('trading-perf') ? App.ui.kpi('Realized gains', fmt.money(real), '', real >= 0 ? 'good' : 'bad') : ''}
           ${has('operations') ? App.ui.kpi('Rental / side income', fmt.compact(sales), 'from operations data') : ''}` : `
           ${has('finance') ? App.ui.kpi('Total revenue', fmt.compact(rev), mk ? 'all businesses' : 'businesses + personal') : ''}
@@ -58,6 +67,11 @@
           ${has('trading-perf') ? App.ui.kpi('Realized trading P&L', fmt.money(real), '', real >= 0 ? 'good' : 'bad') : ''}`}
           ${App.ui.kpi('Open flags', fmt.num(flags), `across ${scopeLine}`, flags ? 'warn' : 'good')}
         </div>
+        ${famView && who === 'all' && App.wealth.members().length > 1 ? `<div class="grid k4">${[...App.wealth.members().map(m => m.id), 'joint'].map(id => {
+          const m = App.wealth.member(id), v = ws.byOwner.get(id) || 0, nUnits = App.biz.units('individual').filter(b => (b.owner || 'joint') === id).length;
+          if (!v && !nUnits) return '';
+          return `<button class="card member-card" data-person="${id}"><span class="pdot lg" style="background:${m?.color || '#64748b'}">${esc((m?.name || 'J')[0])}</span><span><span class="muted tiny">${id === 'joint' ? 'Joint / family' : esc(m.role === 'self' ? 'You' : m.role)}</span><b>${esc(App.wealth.memberName(id))}</b><span class="mc-v">${fmt.compact(v)}</span><span class="muted tiny">${nUnits} unit${nUnits === 1 ? '' : 's'} · individual view →</span></span></button>`;
+        }).join('')}</div>` : ''}
         ${rows.length > 1 && has('finance') ? `<div class="grid c2">
           <div class="card"><div class="card-head"><h2>${personal ? 'Income & net by unit' : 'Revenue & net income by unit'}</h2></div><div class="chart-box"><canvas id="mRev"></canvas></div></div>
           <div class="card"><div class="card-head"><h2>${personal ? 'Share of income' : 'Share of revenue'}</h2></div><div class="chart-box"><canvas id="mShare"></canvas></div></div></div>` : ''}
@@ -75,6 +89,8 @@
       view.querySelector('#mNew').onclick = () => newUnit(addKind);
       view.querySelectorAll('[data-add]').forEach(b => b.onclick = () => newUnit(b.dataset.add));
       view.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { App.biz.setCurrent(b.dataset.view); App.go('dashboard'); });
+      if (famView) App.modules.wealth.wirePersonBar(view, () => App.go('dashboard'));
+      view.querySelectorAll('.member-card[data-person]').forEach(b => b.onclick = () => { App.wealth.setPerson(b.dataset.person); App.go('dashboard'); });
       view.querySelectorAll('[data-jump]').forEach(a => a.onclick = e => { e.preventDefault(); App.biz.setCurrent(a.dataset.jump); App.go(a.dataset.route || 'dashboard'); });
 
       if (rows.length > 1 && has('finance')) {

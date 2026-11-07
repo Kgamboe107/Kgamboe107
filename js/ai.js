@@ -224,6 +224,8 @@ ${context ? '\n--- BUSINESS CONTEXT (from the user\'s own files) ---\n' + contex
     if (lg) L.push(`Legal & risk: lawsuit-protection score ${isNaN(lg.score) ? 'n/a' : Math.round(lg.score * 100) + '%'}, ${lg.high} high-risk gaps, ${lg.openIncidents} open incidents`);
     const cm = k.compliance;
     if (cm) L.push(`Tax & compliance: audit readiness ${isNaN(cm.score) ? 'n/a' : Math.round(cm.score * 100) + '%'}, ${cm.overdue} overdue filings, ${cm.dueSoon} due within 30 days`);
+    const wl = k.wealth;
+    if (wl && wl.accounts) L.push(`Net worth: ${fmt.money(wl.net)} (assets ${fmt.money(wl.assets)}, debts ${fmt.money(wl.debts)}, invested ${fmt.money(wl.invested)}, cash ${fmt.money(wl.liquid)}, ${wl.accounts} accounts)`);
     const pu = k.purchases;
     if (pu) L.push(`Purchases (${pu.period}): business purchases ${fmt.money(pu.total)}, food purchases ${fmt.money(pu.food)}, food cost ${fmt.pct(pu.foodPct)} on sales ${fmt.money(pu.sales)}, ${pu.receipts} receipts`);
     if (p) L.push(`Personnel: active headcount ${p.headcount}, turnover ${fmt.pct(p.turnover)}, avg tenure ${isNaN(p.avgTenure) ? 'n/a' : (+p.avgTenure).toFixed(1) + ' yrs'}`);

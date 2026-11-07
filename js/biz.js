@@ -71,6 +71,7 @@
   function enabled(mod) {
     // Payroll/sales-tax compliance and business legal documents only apply to businesses
     if ((mod === 'compliance' || mod === 'legal') && currentKind() === 'individual') return false;
+    if ((mod === 'wealth' || mod === 'tax') && currentKind() === 'business') return false;
     if (!ALL_MODULES.includes(mod)) return true;
     if (isMaster()) return inView().some(b => b.modules.includes(mod));
     return (get(current())?.modules || ALL_MODULES).includes(mod);
@@ -88,7 +89,8 @@
     const b = {
       id: App.uid(), name: data.name || 'New venture', type: data.type || 'custom', kind: data.kind || TEMPLATES[data.type]?.kind || 'business',
       color: data.color || COLORS[l.length % COLORS.length], modules: data.modules || (TEMPLATES[data.type] || TEMPLATES.custom).modules.slice(),
-      description: data.description || '', started: data.started || '', createdAt: Date.now()
+      description: data.description || '', started: data.started || '', createdAt: Date.now(),
+      ...(data.owner ? { owner: data.owner } : {})
     };
     l.push(b); save(l);
     return b;

@@ -159,6 +159,7 @@
 
   function renderTrades(el, ds, m) {
     if (!ds || !m.sym || !(m.pnl || (m.side && m.qty && m.price))) { el.innerHTML = ds ? App.ui.empty('Map Symbol plus either Realized P&L, or Side + Quantity + Price.') : ''; return; }
+    if (!m.date) { el.innerHTML = App.ui.empty('This table has no trade dates, so it looks like a positions list rather than trade history. Pick your orders / activity export above (or map its Date column). Positions belong on the Positions tab and the Net Worth page.'); App.ui.publish('trading-perf', {}); return; }
     const lim = limits();
     let src = ds.rows.filter(r => r[m.sym] !== '');
     if (m.status) src = src.filter(r => !/cancel|reject|fail|expired|pending|working/i.test(String(r[m.status])));

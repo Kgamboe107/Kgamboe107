@@ -27,6 +27,7 @@
             <label class="field">Color<input type="color" id="bColor" value="${b.color || App.biz.COLORS[App.biz.list().length % App.biz.COLORS.length]}" style="width:60px;padding:2px"></label>
             <label class="field">Started<input type="date" id="bStart" value="${esc(b.started || '')}"></label>
           </div>
+          <label class="field" id="bOwnerWrap" ${k === 'individual' ? '' : 'hidden'}>Belongs to<select id="bOwner" data-native>${App.ui.options([...App.wealth.members().map(m => ({ value: m.id, label: m.name })), { value: 'joint', label: 'Joint / whole family' }], b.owner || (App.wealth.person() !== 'all' ? App.wealth.person() : 'joint'))}</select></label>
           <label class="field">Description<textarea id="bDesc" rows="2" placeholder="What this unit is, goals, partners, store number…">${esc(b.description || '')}</textarea></label>
         </section>
         <section data-step="Pick modules" class="stack form-group">
@@ -58,6 +59,7 @@
         if (!b?.id) applyMods(t);
         card.querySelector('#bName').placeholder = kindNow() === 'individual' ? 'e.g. Household budget, Roth IRA, Elm St rental' : 'e.g. Auburn #11053, Taco Truck #2, Gamboe Consulting';
         card.querySelector('#bSave').textContent = b?.id ? 'Save changes' : `Create ${K()[kindNow()].unit}`;
+        card.querySelector('#bOwnerWrap').hidden = kindNow() !== 'individual';
       });
       typeSel.onchange = e => applyMods(e.target.value);
       if (!b?.id) App.ux.steps(card.querySelector('[data-steps]'), { finish: '#bSave' });
@@ -67,7 +69,8 @@
         const data = {
           name: card.querySelector('#bName').value.trim() || (kind === 'individual' ? 'Personal' : 'New business'), type: typeSel.value, kind,
           color: card.querySelector('#bColor').value, started: card.querySelector('#bStart').value, description: card.querySelector('#bDesc').value.trim(),
-          modules: [...card.querySelectorAll('#bMods input:checked')].map(i => i.value)
+          modules: [...card.querySelectorAll('#bMods input:checked')].map(i => i.value),
+          ...(kind === 'individual' ? { owner: card.querySelector('#bOwner').value } : {})
         };
         let id = b?.id;
         if (id) App.biz.update(id, data); else id = App.biz.create(data).id;
@@ -89,7 +92,8 @@
       for (const f of await App.store.all('files', { raw: true })) { const id = App.biz.idOf(f); counts[id] = (counts[id] || 0) + 1; }
       const ofKind = kind => all.filter(b => App.biz.kindOf(b) === kind);
       const kv = K()[tab];
-      const list = ofKind(tab);
+      const pf = tab === 'individual' ? App.wealth.person() : 'all';
+      const list = ofKind(tab).filter(b => pf === 'all' || (b.owner || 'joint') === pf || (b.owner || 'joint') === 'joint');
       view.innerHTML = `
         <div class="card row spread">
           <div><h2>Businesses &amp; personal</h2><div class="muted small">Every unit keeps its own files, column mappings, targets and dashboard. Businesses roll up into the Business dashboard, personal units into the Personal dashboard.</div></div>
@@ -102,10 +106,11 @@
           <div class="row"><button class="btn primary" data-new="${tab}">${App.fx.icon('plus')} Add ${esc(kv.unit)}</button><button class="btn" data-view="all:${tab}">${App.fx.icon('dashboard')} Open ${esc(kv.master)}</button></div>
           <span class="muted small">${list.length} ${tab === 'individual' ? 'personal unit' : 'business'}${list.length === 1 ? '' : tab === 'individual' ? 's' : 'es'}</span>
         </div>
+        ${tab === 'individual' ? `<div class="card stack" style="gap:10px"><div class="row spread"><div><h2>Family</h2><div class="muted small">Give each person an individual view of every unit, account and tax item. The Personal dashboard shows the whole family's wealth.</div></div><button class="btn small" data-fam>Edit family members</button></div>${App.modules.wealth.personBar()}</div>` : ''}
         <div class="grid c3">${list.map(b => `
           <div class="card biz-card unit-card" style="--bc:${b.color};${b.archived ? 'opacity:.6' : ''}">
             <div class="row spread" style="align-items:flex-start"><div class="row" style="gap:12px;flex-wrap:nowrap;min-width:0"><span class="unit-av" style="background:${b.color}">${esc(initials(b.name))}</span>
-              <div style="min-width:0"><h2 style="margin:0">${esc(b.name)}</h2><div class="muted small">${esc(App.biz.TEMPLATES[b.type]?.label || 'Custom')}${b.started ? ' · since ' + esc(b.started) : ''}${b.archived ? ' · archived' : ''}</div></div></div>
+              <div style="min-width:0"><h2 style="margin:0">${esc(b.name)}</h2><div class="muted small">${esc(App.biz.TEMPLATES[b.type]?.label || 'Custom')}${App.biz.kindOf(b) === 'individual' ? ' · ' + esc(App.wealth.memberName(b.owner || 'joint')) : ''}${b.started ? ' · since ' + esc(b.started) : ''}${b.archived ? ' · archived' : ''}</div></div></div>
               <span class="badge">${counts[b.id] || 0} files</span></div>
             ${b.description ? `<div class="small">${esc(b.description)}</div>` : ''}
             <div class="row">${b.modules.map(m => `<span class="badge">${App.biz.MODULE_LABELS[m]}</span>`).join('')}</div>
@@ -120,6 +125,8 @@
         </div>`;
 
       view.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; App.go('businesses'); });
+      view.querySelector('[data-fam]')?.addEventListener('click', () => App.modules.wealth.membersDialog(() => App.go('businesses')));
+      if (tab === 'individual') App.modules.wealth.wirePersonBar(view, () => App.go('businesses'));
       view.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { App.biz.setCurrent(b.dataset.view); App.go('dashboard'); });
       view.querySelectorAll('[data-new]').forEach(b => b.onclick = () => openForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }, { kind: b.dataset.new }));
       view.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { App.biz.setCurrent(b.dataset.open); App.go('dashboard'); });

@@ -6,6 +6,8 @@
 
   /* ---------- Icons (24px stroke icons) ---------- */
   const P = {
+    wallet: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v2"/><rect x="3" y="8" width="18" height="12" rx="2.5"/><path d="M16 13.5h2.5"/>',
+    calc: '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7h8M8 12h1M11.5 12h1M15 12h1M8 16h1M11.5 16h1M15 16h1"/>',
     sidebar: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/><path d="M15 10l-2 2 2 2"/>',
     chevrons: '<path d="M8 9l4-4 4 4"/><path d="M8 15l4 4 4-4"/>',
     chev: '<path d="M6 9l6 6 6-6"/>',
@@ -161,7 +163,7 @@
 
   /* ---------- Command palette ---------- */
   const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['purchases', 'Purchases'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
-    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['legal', 'Legal & Risk: documents, incidents'], ['businesses', 'Units: businesses & personal'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
+    ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['legal', 'Legal & Risk: documents, incidents'], ['wealth', 'Net worth & family wealth'], ['tax', 'Taxes & CPA: documents, contributions, CPA packet'], ['businesses', 'Units: businesses & personal'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
   function commands(q) {
     const items = [];
     PAGES.filter(([r]) => App.biz.enabled(r)).forEach(([r, l]) => items.push({ g: 'Go to', icon: r, label: l, run: () => App.go(r) }));

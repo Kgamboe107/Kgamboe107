@@ -6,7 +6,7 @@
   /* Re-run each analysis off-screen so the dashboard always reflects current data */
   async function refreshKpis() {
     App.bsettings.set('kpis', {});
-    const runs = [['finance'], ['purchases'], ['compliance'], ['legal'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
+    const runs = [['wealth'], ['finance'], ['purchases'], ['compliance'], ['legal'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
     for (const [mod, params] of runs) {
       if (!App.biz.enabled(mod)) continue;
       try { await App.modules[mod].render(document.createElement('div'), params || {}); } catch (e) { console.warn('KPI refresh', mod, e); }
@@ -77,6 +77,7 @@
         lg.score !== undefined && ['Lawsuit protection', isNaN(lg.score) ? '—' : Math.round(lg.score * 100) + '%', lg.high ? `${lg.high} high-risk gap${lg.high > 1 ? 's' : ''}` : `${lg.gaps || 0} gaps`, lg.high ? 'bad' : lg.score >= 0.85 ? 'good' : 'warn', 'legal'],
         cm.score !== undefined && ['Audit readiness', isNaN(cm.score) ? '—' : Math.round(cm.score * 100) + '%', cm.overdue ? `${cm.overdue} overdue filing${cm.overdue > 1 ? 's' : ''}` : `${cm.dueSoon || 0} due in 30 days`, cm.overdue ? 'bad' : cm.score >= 0.85 ? 'good' : 'warn', 'compliance'],
         pu.receipts && ['Food cost %', fmt.pct(pu.foodPct), `${fmt.money(pu.food)} food · ${pu.receipts} receipts`, isNaN(pu.foodPct) ? '' : pu.foodPct <= (App.bsettings.get('ops.targets', {}).food || 0.3) ? 'good' : 'bad', 'purchases'],
+        personalUnit && k.wealth?.accounts && ['Net worth', fmt.compact(k.wealth.net), `${fmt.compact(k.wealth.assets)} assets · ${fmt.compact(k.wealth.debts)} debts`, k.wealth.net >= 0 ? 'good' : 'bad', 'wealth'],
         f.revenue !== undefined && [personalUnit ? 'Income' : 'Revenue', fmt.compact(f.revenue), `${personalUnit ? 'savings rate' : 'net margin'} ${fmt.pct(f.margin)}`, f.margin >= 0 ? 'good' : 'bad', 'finance'],
         num(o.laborPct) && ['Labor %', fmt.pct(o.laborPct), `prime cost ${fmt.pct(o.primePct)}`, '', 'operations'],
         num(o.splh) && ['Sales / labor hr', fmt.money(o.splh, 2), `sales ${fmt.compact(o.sales)}`, '', 'operations'],
