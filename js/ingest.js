@@ -24,6 +24,7 @@
     outlook: { label: 'Outlook', color: '#0078d4', name: /\.(msg|eml)$/i, headers: [] },
     anara: { label: 'Anara', color: '#6d28d9', name: /anara/i, headers: [] },
     smg: { label: 'SMG', color: '#0b6e4f', name: /^smg[_\- ]|fullscale|full[_ ]scale|trend\d?report/i, headers: [] },
+    bank: { label: 'Bank & payments', color: '#0f766e', name: /^$/, headers: [] },
     gdrive: { label: 'Google Drive', color: '#16a34a', name: /^$/, headers: [] },
     manual: { label: 'Manual upload', color: '#64748b', name: /^$/, headers: [] }
   };
@@ -182,6 +183,7 @@
         else if (/\.docx$/i.test(name)) { ctx.docx = await App.pptx.readDocx(buf); rec.text = ctx.docx.text.slice(0, 300000); }
       } catch (e) { console.warn('Parse failed', name, e); rec.parseError = String(e.message || e); }
     }
+    if (/\.(ofx|qfx|qbo)$/i.test(name)) { try { ctx.ofx = await file.text(); rec.text = ctx.ofx.slice(0, 300000); } catch (e) { rec.parseError = String(e.message || e); } }
     const report = App.reports ? App.reports.translate(ctx) : null;
     const allHeaders = report?.kind === 'labor-variance' ? [] : tables.flatMap(t => t.headers);
     rec.source = opts.source || report?.source || detectSource(name, allHeaders);
@@ -208,7 +210,8 @@
         await App.store.put('datasets', ds);
         rec.datasetIds.push(ds.id);
       }
-      for (const m of report.merge || []) { const r = await mergeRolling(m, rec); warnings.push(...r.warnings); }
+      for (const m of report.merge || []) { const r = await mergeRolling(m, rec); warnings.push(...(report.kind === 'statement' ? r.warnings.map(w => w.replace(/day(s?) (were|was)/, 'transaction$1 $2').replace('These exact days', 'These exact transactions')) : r.warnings)); }
+      if (report.kind === 'statement') await App.banking?.rebuild(rec.businessId, report.statement);
       for (const n of report.notes || []) await App.store.put('notes', { ...n, id: `${n.id}-${rec.businessId}`, fileId: rec.id, businessId: rec.businessId, updated: Date.now() });
       if (report.purchases?.length) {
         for (const p of report.purchases) await App.store.put('purchases', { ...p, id: `${p.id}-${rec.businessId}`, fileId: rec.id, businessId: rec.businessId });

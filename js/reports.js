@@ -389,7 +389,9 @@
     return null;
   }
 
-  const api = { translate, smgFullScale, smgTrend, smgGuide, laborVariance, purchaseJournal, inventoryCount, actualVsTheo, deck, mdY, storeOf };
+  /* Other files can add translators (e.g. bank statements); they run before the generic PDF reader */
+  function register(fn) { ORDER.splice(ORDER.length - 1, 0, fn); }
+  const api = { translate, register, smgFullScale, smgTrend, smgGuide, laborVariance, purchaseJournal, inventoryCount, actualVsTheo, deck, mdY, storeOf };
   root.REPORTS = api;
   if (root.App) root.App.reports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

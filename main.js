@@ -90,9 +90,9 @@ async function createWindow() {
     if (input.key === 'F5' || (mod && !input.shift && input.key.toLowerCase() === 'r')) { wc.reload(); e.preventDefault(); }
   });
 
-  // OAuth popups (Google, Microsoft) open as child windows; other links open in the browser
+  // OAuth popups (Google, Microsoft, Plaid bank sign-in) open as child windows; other links open in the browser
   wc.setWindowOpenHandler(({ url: target }) => {
-    if (/accounts\.google\.com|login\.microsoftonline\.com|login\.live\.com|docs\.google\.com\/picker|localhost|127\.0\.0\.1/.test(target) || target.startsWith('blob:')) {
+    if (/accounts\.google\.com|login\.microsoftonline\.com|login\.live\.com|docs\.google\.com\/picker|(^https:\/\/([\w-]+\.)*plaid\.com\/)|localhost|127\.0\.0\.1/.test(target) || target.startsWith('blob:')) {
       return { action: 'allow' };
     }
     shell.openExternal(target);

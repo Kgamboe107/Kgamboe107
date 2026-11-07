@@ -70,8 +70,10 @@
       const labC = H.find(h => /^(payee|vendor|merchant|description|memo|category|name|expense)$/i.test(h)) || H.find(h => /payee|vendor|merchant|description|category/i.test(h));
       if (!dateC || !amtC || !labC) continue;
       const groups = new Map();
+      const isTx = d.source === 'bank' && H.includes('Txn ID');
       for (const r of d.rows) {
-        const k = dayKey(r[dateC]), a = App.num(r[amtC]), lab = String(r[labC] || '').trim();
+        if (isTx && r.Type === 'Transfer') continue;
+        const k = dayKey(r[dateC]), a = typeof r[amtC] === 'number' ? r[amtC] : App.num(r[amtC]), lab = String(r[labC] || '').trim();
         if (!k || !lab || !Number.isFinite(a) || !a) continue;
         const g = groups.get(lab.toLowerCase()) || { lab, pts: [] };
         g.pts.push({ k, a }); groups.set(lab.toLowerCase(), g);
@@ -83,7 +85,7 @@
         if (days[days.length - 1] - days[0] > 5) continue;
         const med = amts[Math.floor(amts.length / 2)], mean = App.mean(amts), sd = App.stdev ? App.stdev(amts) : 0;
         if (mean && sd / mean > 0.25) continue;
-        const pay = /payroll|salary|paycheck|direct dep|deposit|income|wages|net pay/i.test(g.lab + ' ' + amtC) || g.pts.every(p => p.a > 0) && /credit|deposit/i.test(H.join(' '));
+        const pay = isTx ? g.pts.every(p => p.a > 0) : /payroll|salary|paycheck|direct dep|deposit|income|wages|net pay/i.test(g.lab + ' ' + amtC) || g.pts.every(p => p.a > 0) && /credit|deposit/i.test(H.join(' '));
         const day = days[Math.floor(days.length / 2)];
         const firstK = g.pts.map(p => p.k).sort()[0];
         const start = `${firstK.slice(0, 8)}${String(day).padStart(2, '0')}`;

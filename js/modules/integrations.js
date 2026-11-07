@@ -1,4 +1,4 @@
-/* Integrations: live connectors (Google Drive, Outlook via Microsoft Graph) + guided import for
+/* Integrations: banking & payments (see bank-ui.js), live connectors (Google Drive, Outlook via Microsoft Graph) + guided import for
    Harri, CrunchTime, Webull, Dub, and Anara exports. */
 (function (App) {
   const ADDONS = [
@@ -155,7 +155,9 @@
       const files = await App.store.files();
       const count = s => files.filter(f => f.source === s).length;
       const logo = s => `<div class="logo" style="background:${App.sources[s].color}">${esc(App.sources[s].label.slice(0, 2))}</div>`;
-      view.innerHTML = `
+      const bankHtml = App.bankUI ? await App.bankUI.html() : '';
+      view.innerHTML = `${bankHtml}
+        <h2 style="margin-top:8px">Files &amp; email</h2>
         <div class="grid c2">
           <div class="card int-card stack">
             <div class="row">${logo('gdrive')}<div><h2>Google Drive</h2><div class="muted small">Live connection · pick Sheets, Excel, CSV, PDF, Docs · ${count('gdrive')} imported</div></div></div>
@@ -216,6 +218,7 @@
             <span class="small" style="color:var(--accent);font-weight:600">View on GitHub ↗</span>
           </a>`).join('')}</div>`;
 
+      App.bankUI?.bind(view);
       view.querySelectorAll('[data-aisave]').forEach(b => b.onclick = async () => {
         const k = b.dataset.aisave, v = view.querySelector(`[data-aikey="${k}"]`).value.trim();
         if (!v) return App.ui.toast('Paste a key first');

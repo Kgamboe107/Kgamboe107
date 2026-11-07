@@ -51,6 +51,32 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Banking & payments (Cash App, Venmo, PayPal, banks, Square, Stripe)
+
+**Integrations → Banking & payments.** Transactions feed:
+- **Financials**, as a daily cash-flow table (income, expenses, net);
+- the **Weekly Review** (income, spending, savings rate);
+- the **Calendar**, which suggests pay dates and bills that repeat each month;
+- **Net Worth** for personal units, where account balances are kept up to date.
+
+Transfers between your own accounts are left out of income and spending: card payments, moving money to savings, Cash App cash-outs, Venmo and Stripe payouts.
+
+**Import a statement** (no keys needed): drop CSV, Excel, OFX, QFX or QBO files and pick the unit. Recognized automatically:
+- **Payment apps:** Cash App, Venmo, PayPal.
+- **Banks:** Chase (checking and card), Bank of America, Wells Fargo (including its header-less download), Capital One, Amex, Discover, Citi, Ally and any other bank's CSV.
+- **Quicken / QuickBooks Web Connect** files (OFX/QFX/QBO).
+- **Business payments:** Square and Stripe exports.
+- **Budgeting apps:** Monarch, Mint, YNAB, Rocket Money.
+
+Importing the same month twice doesn't double count. The card has export steps for each app and bank.
+
+**Live connections** use your own keys, which are encrypted by Windows or macOS:
+- **Plaid** connects 12,000+ banks and cards. Use the free Sandbox first, then Production for real accounts. Plaid bills per connected account.
+- **Square** reads Cash App for Business and Square POS sales, refunds and fees from an access token.
+- **Stripe** reads payments, refunds, fees and payouts from a read-only restricted key.
+
+Personal Cash App has no public API, so export its statement CSV monthly.
+
 ## Calendar (Everything view)
 
 **Calendar** appears in the sidebar under Analysis, and as a button on the dashboard, only when you're in the **Everything** view (business + personal).

@@ -22,6 +22,11 @@ const AI_ROUTES = {
   perplexity: { host: 'api.perplexity.ai', paths: { 'POST /v1/agent': true } },
   xai: { host: 'api.x.ai', paths: { 'POST /v1/chat/completions': true, 'GET /v1/models': true } },
   groq: { host: 'api.groq.com', paths: { 'POST /openai/v1/chat/completions': true, 'GET /openai/v1/models': true } },
+  // Banking & payments (your own keys). Plaid takes its keys in the request body.
+  'plaid-sandbox': { host: 'sandbox.plaid.com', auth: 'body', paths: { 'POST /link/token/create': true, 'POST /item/public_token/exchange': true, 'POST /accounts/get': true, 'POST /transactions/sync': true, 'POST /item/remove': true } },
+  plaid: { host: 'production.plaid.com', auth: 'body', paths: { 'POST /link/token/create': true, 'POST /item/public_token/exchange': true, 'POST /accounts/get': true, 'POST /transactions/sync': true, 'POST /item/remove': true } },
+  square: { host: 'connect.squareup.com', headers: { 'Square-Version': '2024-10-17' }, paths: { 'GET /v2/payments': true, 'GET /v2/locations': true } },
+  stripe: { host: 'api.stripe.com', paths: { 'GET /v1/balance_transactions': true, 'GET /v1/balance': true } },
   // Ollama runs on this computer; no key, plain http to the local port only
   ollama: { local: true, host: '127.0.0.1', port: Number(process.env.OLLAMA_PORT) || 11434, paths: { 'GET /api/version': true, 'GET /api/tags': true, 'POST /api/chat': true, 'POST /api/pull': true } }
 };
@@ -40,12 +45,13 @@ function aiRelay(req, res) {
     try { msg = JSON.parse(raw); } catch { return deny(400, 'Bad JSON'); }
     const route = AI_ROUTES[msg.provider];
     const method = msg.method === 'GET' ? 'GET' : 'POST';
-    if (!route || !route.paths[`${method} ${msg.path}`]) return deny(400, 'Endpoint not allowed');
-    if (!route.local && (!msg.key || typeof msg.key !== 'string')) return deny(401, 'Missing API key');
+    const [bare, query = ''] = String(msg.path || '').split('?');
+    if (!route || !route.paths[`${method} ${bare}`] || /[^\w\-.~%&=\[\]:+]/.test(query)) return deny(400, 'Endpoint not allowed');
+    if (!route.local && route.auth !== 'body' && (!msg.key || typeof msg.key !== 'string')) return deny(401, 'Missing API key');
     const body = method === 'POST' ? JSON.stringify(msg.body || {}) : null;
     const up = (route.local ? http : https).request({
       host: route.host, port: route.port, path: msg.path, method, timeout: route.local ? 600000 : 180000,
-      headers: { ...(route.local ? {} : { Authorization: 'Bearer ' + msg.key.trim() }), Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } : {}) }
+      headers: { ...(route.local || route.auth === 'body' ? {} : { Authorization: 'Bearer ' + msg.key.trim() }), ...(route.headers || {}), Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } : {}) }
     }, upRes => {
       res.writeHead(upRes.statusCode || 502, { 'Content-Type': upRes.headers['content-type'] || 'application/json', 'Cache-Control': 'no-store' });
       upRes.pipe(res);
