@@ -38,6 +38,20 @@
 
   /* Sidebar unit switcher (businesses + personal) + per-unit nav */
   const initials = n => String(n || '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  /* Window buttons for the desktop app on Windows / Linux (macOS keeps its native traffic lights) */
+  function initWinCtl() {
+    const box = $('#winCtl');
+    if (!box || box.dataset.ready || !window.desktop?.win || window.desktop.platform === 'darwin') return;
+    box.dataset.ready = '1'; box.hidden = false;
+    $('#wcMin').onclick = () => window.desktop.win('min');
+    $('#wcMax').onclick = () => window.desktop.win('max');
+    $('#wcClose').onclick = () => window.desktop.win('close');
+    window.desktop.onWinState?.(st => {
+      const b = $('#wcMax'), restore = st.maximized || st.fullscreen;
+      b.title = restore ? 'Restore' : 'Maximize'; b.setAttribute('aria-label', b.title);
+      b.innerHTML = restore ? '<svg viewBox="0 0 14 14"><rect x="3" y="5" width="6.5" height="6.5" rx="1.3"/><path d="M5.5 5V4.2c0-.7.5-1.2 1.2-1.2h3.1c.7 0 1.2.5 1.2 1.2v3.1c0 .7-.5 1.2-1.2 1.2H9.5"/></svg>' : '<svg viewBox="0 0 14 14"><rect x="3" y="3" width="8" height="8" rx="1.5"/></svg>';
+    });
+  }
   function syncBiz() {
     const cur = App.biz.current();
     const biz = App.biz.isMaster() ? null : App.biz.get(cur);
@@ -109,7 +123,7 @@
   function init() {
     const theme = App.settings.get('theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.dataset.theme = theme;
-    if (window.desktop) { document.documentElement.classList.add('desktop', window.desktop.platform); window.desktop.setTheme?.(theme); }
+    if (window.desktop) { document.documentElement.classList.add('desktop', window.desktop.platform); window.desktop.setTheme?.(theme); initWinCtl(); }
     App.lock?.boot();
     App.fx.hydrateIcons();
     App.fx.updateThemeButton();

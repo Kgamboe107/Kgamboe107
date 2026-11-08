@@ -1,5 +1,5 @@
 /* Electron desktop shell — with startup diagnostics and self-healing for blank windows */
-const { app, BrowserWindow, shell, ipcMain, nativeTheme, safeStorage } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { start } = require('./server');
@@ -30,8 +30,6 @@ if (state.pending && !state.safeMode) { state.safeMode = true; log('Previous lau
 if (state.safeMode || process.argv.includes('--safe-mode')) app.disableHardwareAcceleration();
 writeState({ ...state, pending: true, startedAt: Date.now() });
 
-const DARK = { color: '#0f131d', symbolColor: '#c3c8d6', height: 60 };
-const LIGHT = { color: '#ffffff', symbolColor: '#374151', height: 60 };
 let win, appUrl;
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
@@ -51,7 +49,6 @@ function errorPage(title, detail) {
 
 async function createWindow() {
   const isMac = process.platform === 'darwin';
-  const dark = nativeTheme.shouldUseDarkColors;
   win = new BrowserWindow({
     width: 1480, height: 940, minWidth: 960, minHeight: 620,
     title: 'Ops Command Desk',
@@ -60,10 +57,13 @@ async function createWindow() {
     icon: path.join(__dirname, 'build', 'icon.png'),
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
     trafficLightPosition: { x: 18, y: 18 },
-    ...(isMac ? {} : { titleBarOverlay: dark ? DARK : LIGHT }),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
   });
   win.removeMenu();
+  // Window buttons are drawn in the page (Windows / Linux); keep their maximize / restore icon in sync
+  const sendState = () => { if (win && !win.isDestroyed()) win.webContents.send('win-state', { maximized: win.isMaximized(), fullscreen: win.isFullScreen() }); };
+  ['maximize', 'unmaximize', 'enter-full-screen', 'leave-full-screen'].forEach(ev => win.on(ev, sendState));
+  win.webContents.on('did-finish-load', sendState);
 
   // Always show the window, even if 'ready-to-show' never fires
   const reveal = () => { if (win && !win.isDestroyed() && !win.isVisible()) win.show(); };
@@ -135,9 +135,12 @@ ipcMain.on('renderer-ready', () => {
 });
 ipcMain.on('renderer-error', (_e, msg) => log('renderer reported:', msg));
 ipcMain.on('open-logs', () => shell.openPath(logDir));
-ipcMain.on('theme', (_e, theme) => {
-  if (!win || process.platform === 'darwin') return;
-  try { win.setTitleBarOverlay(theme === 'dark' ? DARK : LIGHT); } catch { /* older platforms */ }
+ipcMain.on('theme', () => { /* window buttons are part of the page now; nothing to recolor */ });
+ipcMain.on('win-ctl', (e, action) => {
+  const w = BrowserWindow.fromWebContents(e.sender); if (!w) return;
+  if (action === 'min') w.minimize();
+  else if (action === 'max') { if (w.isFullScreen()) w.setFullScreen(false); else if (w.isMaximized()) w.unmaximize(); else w.maximize(); }
+  else if (action === 'close') w.close();
 });
 app.on('child-process-gone', (_e, d) => {
   log('child-process-gone', d);

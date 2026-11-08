@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('desktop', {
   ready: () => ipcRenderer.send('renderer-ready'),
   reportError: msg => ipcRenderer.send('renderer-error', String(msg).slice(0, 2000)),
   openLogs: () => ipcRenderer.send('open-logs'),
+  win: action => ipcRenderer.send('win-ctl', action),
+  onWinState: cb => ipcRenderer.on('win-state', (_e, s) => cb(s)),
   getSecret: name => ipcRenderer.invoke('secret-get', name),
   setSecret: (name, value) => ipcRenderer.invoke('secret-set', name, value)
 });
