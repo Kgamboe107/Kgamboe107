@@ -74,6 +74,7 @@
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(/invalid/i.test(j.error_description || j.msg || '') ? 'Wrong email or password.' : (j.error_description || j.msg || 'Could not sign in. Check your connection.'));
     saveSession(j);
+    S.set('lastEmail', j.user.email);
     KEY = await deriveKey(password, j.user.id);
     await kset('keys', j.user.id, KEY);
     S.set('mode', 'account');
@@ -110,9 +111,12 @@
   const attMeta = p => p.attachment?.blob ? { ...p, attachment: { ...p.attachment, blob: undefined, __blob: { size: p.attachment.blob.size, type: p.attachment.blob.type } } } : p;
   const metaOf = (store, rec) => store === 'files' ? fileMeta(rec) : store === 'purchases' ? attMeta(rec) : rec;
 
+  const isSample = r => r && (r.sample === true || (Array.isArray(r.tags) && r.tags.includes('Sample')));
   async function snapshot() {
     const out = new Map();
+    const sampleFiles = new Set((await App.store.all('files', { raw: true })).filter(isSample).map(f => f.id));
     for (const st of STORES) for (const r of await App.store.all(st, { raw: true })) {
+      if (isSample(r) || (r.fileId && sampleFiles.has(r.fileId))) continue; // demo data stays on the device it was loaded on
       const meta = metaOf(st, r);
       out.set(`${st}/${r.id}`, { store: st, id: r.id, rec: r, json: JSON.stringify(meta) });
     }
@@ -162,6 +166,21 @@
     return rows.length;
   }
 
+  /* ---------- Linked devices ---------- */
+  const deviceId = () => S.get('device') || (S.set('device', (crypto.randomUUID?.() || String(Math.random()).slice(2))), S.get('device'));
+  function deviceName() {
+    if (window.desktop) return window.desktop.platform === 'darwin' ? 'Mac (desktop app)' : window.desktop.platform === 'win32' ? 'Windows laptop (desktop app)' : 'Computer (desktop app)';
+    if (App.isIOS) return /iPad/.test(navigator.userAgent) ? 'iPad' : 'iPhone';
+    if (/Android/i.test(navigator.userAgent)) return 'Android phone';
+    return /Mac/.test(navigator.platform) ? 'Mac browser' : /Win/.test(navigator.platform) ? 'Windows browser' : 'Web browser';
+  }
+  async function beat(force = false) {
+    if (!force && Date.now() - (S.get('beat') || 0) < 10 * 60e3) return;
+    const me = { name: deviceName(), app: window.desktop ? 'desktop app' : App.hosted ? 'phone / web app' : 'browser', seen: Date.now() };
+    await api('/rest/v1/records?on_conflict=user_id,store,id', { method: 'POST', body: [{ store: 'devices', id: deviceId(), deleted: false, data: await sealText(JSON.stringify(me)), blob_path: null }], headers: { Prefer: 'resolution=merge-duplicates,return=minimal' } });
+    S.set('beat', Date.now());
+    S.set('devlist', { ...(S.get('devlist') || {}), [deviceId()]: me });
+  }
   async function idbPut(store, rec) { await App.store.raw(store, 'put', rec); }
   async function idbDel(store, id) { await App.store.raw(store, 'delete', id); }
   async function pull() {
@@ -173,6 +192,7 @@
       for (const r of list) {
         const k = `${r.store}/${r.id}`;
         try {
+          if (r.store === 'devices') { if (!r.deleted) S.set('devlist', { ...(S.get('devlist') || {}), [r.id]: JSON.parse(await openText(r.data)) }); cursor = r.updated_at; continue; }
           if (r.deleted) {
             if (prints[k] !== undefined) { applying = true; if (r.store === 'settings') localStorage.removeItem('ocd.' + r.id); else await idbDel(r.store, r.id); delete prints[k]; changed++; }
           } else {
@@ -213,6 +233,7 @@
     try {
       const got = await pull();
       const sent = await push();
+      await beat();
       lastSync = Date.now(); lastError = ''; S.set('last', lastSync);
       status('ok');
       if (got) { App.bus.emit('data-changed', 'sync'); App.bus.emit('biz-changed'); if (App.currentRoute) App.go(App.currentRoute()); }
@@ -280,7 +301,9 @@
     };
     el.querySelector('#agToUp').onclick = () => showSignUp();
     el.querySelector('#agLocal').onclick = () => { S.set('mode', 'local'); done(); };
-    setTimeout(() => el.querySelector('#agEmail')?.focus(), 50);
+    const pre = new URLSearchParams(location.search).get('email') || S.get('lastEmail');
+    if (pre) { el.querySelector('#agEmail').value = pre; setTimeout(() => el.querySelector('#agPw')?.focus(), 60); }
+    else setTimeout(() => el.querySelector('#agEmail')?.focus(), 50);
   }
   function showSignUp() {
     const el = screen(`${brand}
@@ -375,13 +398,26 @@
       } catch (e) { people = `<div class="alert bad small">${esc(e.message)}</div>`; }
     }
     const last = S.get('last');
+    const devs = Object.entries(S.get('devlist') || {}).sort((a, b) => b[1].seen - a[1].seen);
+    const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 2 ? 'active now' : m < 90 ? m + ' min ago' : m < 2880 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
+    const phoneUrl = `https://kgamboe107.github.io/Kgamboe107/?email=${encodeURIComponent(user()?.email || '')}`;
+    let qr = '';
+    try { if (window.qrcode) { const q = window.qrcode(0, 'M'); q.addData(phoneUrl); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } } catch { qr = ''; }
+    const devicesHtml = `<div class="rv-h">Your linked devices</div>
+      <div class="stack">${devs.map(([id, d]) => `<div class="bk-item"><div><b>${esc(d.name)}</b>${id === deviceId() ? ' <span class="badge accent">this device</span>' : ''}<div class="muted tiny">${esc(d.app || '')} · ${esc(ago(d.seen))}</div></div></div>`).join('') || '<div class="muted small">Only this device so far.</div>'}</div>
+      ${App.hosted ? `<div class="muted small">To link your laptop: open the Ops Command Desk desktop app (or this same address in a browser) and sign in with <b>${esc(user()?.email || '')}</b>.</div>`
+      : `<div class="link-phone"><div class="link-qr">${qr || ''}</div><div class="stack" style="gap:6px"><b>Link your iPhone</b>
+          <ol class="small" style="margin:0;padding-left:18px"><li>Point the iPhone camera at this code and tap the link (or open <a href="${phoneUrl}" target="_blank" rel="noopener">kgamboe107.github.io/Kgamboe107</a> in Safari).</li>
+          <li>Tap <b>Share → Add to Home Screen</b>, open the new icon.</li><li>Sign in with this same email and password. Your data appears in a few seconds.</li></ol></div></div>`}`;
     return `<div class="card stack"><h2>Account &amp; sync</h2>
       <div class="row spread"><div><b>${esc(p.name || user()?.email)}</b><div class="muted small">${esc(user()?.email)}${p.role === 'admin' ? ' · administrator' : ''}</div></div><span class="badge ${lastError ? 'bad' : 'good'}">${lastError ? 'sync paused' : 'syncing on'}</span></div>
       <div class="muted small">Last synced ${last ? esc(new Date(last).toLocaleString()) : 'not yet'}. Changes upload within seconds and other devices pick them up within 30 seconds (or when opened). Data is encrypted on this device before upload.${lastError ? ' <span style="color:var(--bad)">' + esc(lastError) + '</span>' : ''}</div>
       <div class="row"><button class="btn" id="acSync">Sync now</button><button class="btn" id="acOut">Sign out of this device</button></div>
+      ${devicesHtml}
       ${people}</div>`;
   }
   function bindSettings(view) {
+    if (mode() === 'account' && session()) beat(true).catch(() => {});
     view.querySelector('#acSignIn')?.addEventListener('click', () => { S.set('mode', null); ask().then(() => App.go('settings')); });
     view.querySelector('#acSync')?.addEventListener('click', () => syncNow({ quiet: false }).then(() => App.go('settings')));
     view.querySelector('#acOut')?.addEventListener('click', async () => {

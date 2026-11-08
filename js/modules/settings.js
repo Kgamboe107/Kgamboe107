@@ -7,19 +7,19 @@
       const files = await App.store.files();
       view.innerHTML = `
         <div class="grid c2">
+          ${App.cloud ? await App.cloud.settingsCard() : ''}
           <div class="card stack"><h2>Sample data</h2>
             <p class="muted small">Loads realistic example exports and sample Costco, Restaurant Depot and Sysco receipts: Harri timesheet & roster, CrunchTime sales & inventory variance, Webull positions & orders, a Dub portfolio, a P&L, an expense ledger, marketing campaigns, and an Anara research note — so you can explore every module.</p>
             <div class="row"><button class="btn primary" id="sLoad">Load sample data</button><button class="btn" id="sRemove">Remove sample data</button></div>
           </div>
-          ${App.cloud ? await App.cloud.settingsCard() : ''}
           <div class="card stack"><h2>${App.hosted ? 'Phone version' : 'Use it on your iPhone'}</h2>
             ${App.hosted ? `<p class="muted small">${matchMedia('(display-mode: standalone)').matches || navigator.standalone ? 'Installed on this phone. ' : 'To install: in Safari tap <b>Share</b> → <b>Add to Home Screen</b>. '}Your data stays on this phone and keeps working offline.</p>
-              <ol class="small" style="margin:0;padding-left:18px"><li>On your computer: Settings → <b>Export backup</b>, then AirDrop it or save it to iCloud Drive.</li><li>Here: <b>Restore backup</b> below and pick that file in Files.</li></ol>
-              <p class="muted tiny">The phone and computer each keep their own copy; repeat the backup to bring the phone up to date. AI chat, live bank sync (Plaid, Square, Stripe), Google Drive and Outlook run in the desktop app.</p>`
+              <p class="small" style="margin:0">Sign in with the <b>same account</b> as on your laptop and both stay in sync automatically. Without an account, use <b>Export backup</b> on the laptop and <b>Restore backup</b> here.</p>
+              <p class="muted tiny"> AI chat, live bank sync (Plaid, Square, Stripe), Google Drive and Outlook run in the desktop app.</p>`
             : `<ol class="small" style="margin:0;padding-left:18px"><li>On your iPhone, open <b>Safari</b> and go to <a href="https://kgamboe107.github.io/Kgamboe107/" target="_blank" rel="noopener">kgamboe107.github.io/Kgamboe107</a></li>
                 <li>Tap <b>Share</b> → <b>Add to Home Screen</b> → <b>Add</b>. It opens full screen like an app and works offline.</li>
-                <li>To bring your data over: <b>Export backup</b> below, AirDrop it to the phone (or save to iCloud Drive), then on the phone open Settings → <b>Restore backup</b>.</li></ol>
-              <p class="muted tiny">Data never goes to a server: the phone keeps its own copy on the phone. Repeat the backup when you want the phone up to date.</p>`}
+                <li>Sign in on the phone with the <b>same account</b> as here. Your data appears in seconds and stays in sync both ways (use the QR code under Account &amp; sync).</li></ol>
+              <p class="muted tiny">Without an account, move data with a backup instead: <b>Export backup</b> below, AirDrop it to the phone, then on the phone Settings → <b>Restore backup</b>.</p>`}
           </div>
           <div class="card stack"><h2>Backup & restore</h2>
             <p class="muted small">Everything (files, tables, notes) is stored only on this ${App.hosted ? 'device' : 'computer'}. Export a backup file to archive it or move to another machine — store it somewhere secure, it includes personnel files.</p>

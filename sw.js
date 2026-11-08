@@ -20,7 +20,7 @@ self.addEventListener('activate', e => {
   })());
 });
 
-/* Network first for the page (so updates arrive), cache first for versioned assets; never touch other sites */
+/* Network first for everything (so updates show up on the next open); the cache is the offline fallback */
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/api/')) return;
@@ -31,9 +31,7 @@ self.addEventListener('fetch', e => {
       try { const r = await fetch(e.request); c.put('index.html', r.clone()); return r; }
       catch { return (await c.match('index.html')) || (await c.match('./')) || Response.error(); }
     }
-    const hit = await c.match(e.request);
-    if (hit) return hit;
-    try { const r = await fetch(e.request); if (r.ok) c.put(e.request, r.clone()); return r; }
-    catch { return Response.error(); }
+    try { const r = await fetch(e.request, { cache: 'no-cache' }); if (r.ok) c.put(e.request, r.clone()); return r; }
+    catch { return (await c.match(e.request)) || Response.error(); }
   })());
 });

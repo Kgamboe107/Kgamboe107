@@ -70,6 +70,10 @@ The app opens on a **Sign in** page.
 
 **Privacy:** everything is encrypted on the device with AES-256, using a key made from your password, before it's uploaded. The server only stores encrypted data, so not even the administrator can read anyone's records. The trade-off is that a forgotten password can't be recovered.
 
+**Link your laptop and iPhone:** on the laptop, open Settings → Account & sync and scan the QR code with the iPhone camera. It opens the phone app with your email filled in. Add it to the Home Screen and sign in with the same password. **Your linked devices** lists each one and when it last synced. Demo sample data stays on the device where it was loaded.
+
+The phone app now always loads the newest version when it's online (the offline copy is only a fallback) and refreshes itself when an update arrives.
+
 **This device only:** the sign-in page also offers *Use on this device only, without an account*, which works fully offline as before. Sign in later from Settings.
 
 **Backend:** Supabase project *Ops Command Desk* (free plan). It has row-level security on every table and a sign-up function that creates the account as pending.

@@ -144,7 +144,13 @@
     // Phone / web version: work offline and ask the browser to keep this device's data
     if (App.hosted) {
       document.documentElement.classList.add('hosted');
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(e => console.warn('Offline support unavailable', e));
+      if ('serviceWorker' in navigator) {
+        const hadController = !!navigator.serviceWorker.controller;
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update()).catch(e => console.warn('Offline support unavailable', e));
+        // A new version took over: reload once so the phone runs it right away
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+      }
       navigator.storage?.persist?.().catch(() => {});
     }
     if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) document.documentElement.classList.add('standalone');

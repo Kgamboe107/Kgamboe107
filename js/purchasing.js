@@ -168,7 +168,7 @@
       for (const p of ps.sort((a, b) => a.date.localeCompare(b.date))) for (const l of p.lines || []) {
         rows.push({ Date: p.date, Vendor: p.vendor, Item: l.item, Category: CAT[l.cat]?.label || 'Other business', Group: GROUPS[CAT[l.cat]?.group || 'other'], Qty: +l.qty || 0, 'Unit Price': l.qty ? +(l.amount / l.qty).toFixed(2) : +l.amount, Amount: +l.amount || 0, Payment: p.payment || '', Receipt: p.ref || '' });
       }
-      await App.store.put('datasets', { id, fileId: null, name: 'Purchase journal (live)', headers: ['Date', 'Vendor', 'Item', 'Category', 'Group', 'Qty', 'Unit Price', 'Amount', 'Payment', 'Receipt'], rows, category: 'financial', source: 'manual', businessId: bid, createdAt: Date.now(), live: true });
+      await App.store.put('datasets', { id, fileId: null, sample: ps.every(p => p.sample) || undefined, name: 'Purchase journal (live)', headers: ['Date', 'Vendor', 'Item', 'Category', 'Group', 'Qty', 'Unit Price', 'Amount', 'Payment', 'Receipt'], rows, category: 'financial', source: 'manual', businessId: bid, createdAt: Date.now(), live: true });
     }
   }
 

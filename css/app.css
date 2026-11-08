@@ -1364,3 +1364,8 @@ select { max-width: 100%; min-width: 0; }
 .auth-gate { background-color: #f4efe8; backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); }
 :root[data-theme="dark"] .auth-gate { background-color: #0b1020; }
 .alert[hidden] { display: none !important; }
+
+.link-phone { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: center; padding: 14px; border-radius: 16px; background: var(--accent-soft); }
+.link-qr { background: #fff; border-radius: 12px; padding: 6px; line-height: 0; }
+.link-qr svg { width: 100%; height: auto; display: block; }
+@media (max-width: 600px) { .link-phone { grid-template-columns: 1fr; } .link-qr { max-width: 180px; } }
