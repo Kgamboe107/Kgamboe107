@@ -263,9 +263,16 @@
   async function ingestMany(files, opts = {}) {
     const results = [];
     const list = [...files], many = list.length > 1;
+    // On Everything / Business / Personal dashboards, work out (or ask) which unit each file belongs to
+    let route = null;
+    if (!opts.businessId && App.biz?.isMaster() && App.router && !(opts.tags || []).includes('Sample')) {
+      const plan = await App.router.plan(list);
+      if (!plan) return [];
+      route = new Map(plan.map(p => [p.file, p.unit]));
+    }
     for (const [i, f] of list.entries()) {
       if (many || f.size > 2e6 || DOC_EXT.test(f.name)) App.ux?.task(`Reading ${many ? `${i + 1} of ${list.length} · ` : ''}${f.name}`, i / list.length * 100);
-      try { results.push(await ingestFile(f, opts)); }
+      try { results.push(await ingestFile(f, route ? { ...opts, businessId: route.get(f) } : opts)); }
       catch (e) { console.error(e); App.ui.toast(`Could not import ${f.name}: ${e.message}`); }
     }
     if (many || list.some(f => f.size > 2e6 || DOC_EXT.test(f.name))) App.ux?.taskDone(`Imported ${results.length} of ${list.length} file${list.length > 1 ? 's' : ''}`);

@@ -51,6 +51,29 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Business ↔ personal P&L, and uploads on the Combined view
+
+**Link a business to its owner:** in Units, edit a business and choose **Profit goes to (personal unit)** and **You own (%)**. If you pay yourself a salary or draws (already in your bank deposits), untick *Count my share as personal income* so it isn't counted twice.
+- The personal unit's **Financials** page opens with a **Personal P&L**: your share of business profit + personal income − personal expenses = net, plus the savings rate.
+- Personal expenses come from bank statements or a P&L. Receipts are used when there's nothing else.
+- The personal dashboard shows *Business income (your share)* and *Personal net (incl. business)*.
+- The **Everything** view shows a **Combined P&L**:
+  - Business revenue, expenses and net profit.
+  - The share paid to owners' personal P&Ls.
+  - Personal income, expenses and net.
+  - A combined net that counts every dollar once.
+- All of these follow the reporting period.
+
+**Personal units have every page**, the same as businesses: Operations, Marketing, Trading, Personnel, Tax & Compliance and Legal & Risk, plus the personal-only Net Worth, Taxes & CPA and Spending. Any page can be turned off per unit in Units.
+
+**Upload anything on a roll-up view** (Everything, Business or Personal dashboard). Each file is matched to a unit by:
+- a unit name or store number in the file name or contents;
+- the kind of file: CrunchTime, Harri, SMG and purchase journals go to business; Cash App, Venmo, brokerage and budgeting exports go to personal.
+
+When it can't tell (for example a generic bank statement), it asks which section each file belongs to, with the recognized ones already filled in.
+
+**Settings → About this version** shows the version you're running, where it's running (desktop app, phone app or browser), and a *Check for updates* link.
+
 ## Personal spending (receipt photos)
 
 **Spending** is in the sidebar under Analysis for personal units and the Personal dashboard.

@@ -28,6 +28,11 @@
             <label class="field">Started<input type="date" id="bStart" value="${esc(b.started || '')}"></label>
           </div>
           <label class="field" id="bOwnerWrap" ${k === 'individual' ? '' : 'hidden'}>Belongs to<select id="bOwner" data-native>${App.ui.options([...App.wealth.members().map(m => ({ value: m.id, label: m.name })), { value: 'joint', label: 'Joint / whole family' }], b.owner || (App.wealth.person() !== 'all' ? App.wealth.person() : 'joint'))}</select></label>
+          <div class="row" id="bOwnUnitWrap" ${k === 'individual' ? 'hidden' : ''}>
+            <label class="field" style="flex:1">Profit goes to (personal unit)<select id="bOwnUnit" data-native><option value="">Not linked</option>${App.biz.units('individual').map(u => `<option value="${u.id}" ${b.ownerUnit === u.id ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select></label>
+            <label class="field" style="width:110px">You own (%)<input id="bShare" type="number" min="0" max="100" step="1" value="${b.share ?? 100}"></label>
+            <label class="row small" style="align-self:flex-end;gap:6px;color:var(--text)"><input type="checkbox" id="bProfit" ${b.profitToPersonal === false ? '' : 'checked'}> Count my share as personal income</label>
+          </div>
           <label class="field">Description<textarea id="bDesc" rows="2" placeholder="What this unit is, goals, partners, store number…">${esc(b.description || '')}</textarea></label>
         </section>
         <section data-step="Pick modules" class="stack form-group">
@@ -60,6 +65,7 @@
         card.querySelector('#bName').placeholder = kindNow() === 'individual' ? 'e.g. Household budget, Roth IRA, Elm St rental' : 'e.g. Auburn #11053, Taco Truck #2, Gamboe Consulting';
         card.querySelector('#bSave').textContent = b?.id ? 'Save changes' : `Create ${K()[kindNow()].unit}`;
         card.querySelector('#bOwnerWrap').hidden = kindNow() !== 'individual';
+        card.querySelector('#bOwnUnitWrap').hidden = kindNow() === 'individual';
       });
       typeSel.onchange = e => applyMods(e.target.value);
       if (!b?.id) App.ux.steps(card.querySelector('[data-steps]'), { finish: '#bSave' });
@@ -70,7 +76,7 @@
           name: card.querySelector('#bName').value.trim() || (kind === 'individual' ? 'Personal' : 'New business'), type: typeSel.value, kind,
           color: card.querySelector('#bColor').value, started: card.querySelector('#bStart').value, description: card.querySelector('#bDesc').value.trim(),
           modules: [...card.querySelectorAll('#bMods input:checked')].map(i => i.value),
-          ...(kind === 'individual' ? { owner: card.querySelector('#bOwner').value } : {})
+          ...(kind === 'individual' ? { owner: card.querySelector('#bOwner').value } : { ownerUnit: card.querySelector('#bOwnUnit').value || '', share: Math.max(0, Math.min(100, +card.querySelector('#bShare').value || 0)), profitToPersonal: card.querySelector('#bProfit').checked })
         };
         let id = b?.id;
         if (id) App.biz.update(id, data); else id = App.biz.create(data).id;

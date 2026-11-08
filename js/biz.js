@@ -16,15 +16,17 @@
     trading: { kind: 'business', label: 'Trading firm / fund', modules: ['finance', 'trading', 'research'] },
     startup: { kind: 'business', label: 'Startup / new venture', modules: ['finance', 'purchases', 'marketing', 'research'] },
     custom: { kind: 'business', label: 'Custom business', modules: ALL_MODULES.slice() },
-    personal: { kind: 'individual', label: 'Personal finances', modules: ['finance', 'purchases', 'research'] },
-    investing: { kind: 'individual', label: 'Investing & trading account', modules: ['finance', 'trading', 'research'] },
-    rental: { kind: 'individual', label: 'Rental property', modules: ['finance', 'purchases', 'operations', 'research'] },
-    freelance: { kind: 'individual', label: 'Freelance / side income', modules: ['finance', 'purchases', 'marketing', 'research'] },
-    household: { kind: 'individual', label: 'Household & family', modules: ['finance', 'purchases', 'research'] },
-    icustom: { kind: 'individual', label: 'Custom personal unit', modules: ['finance', 'purchases', 'trading', 'research'] }
+    // Personal units get every page too (turn any off in Units); P&L, operations, marketing and staff apply to side businesses, rentals and households
+    personal: { kind: 'individual', label: 'Personal finances', modules: ALL_MODULES.slice() },
+    investing: { kind: 'individual', label: 'Investing & trading account', modules: ALL_MODULES.slice() },
+    rental: { kind: 'individual', label: 'Rental property', modules: ALL_MODULES.slice() },
+    freelance: { kind: 'individual', label: 'Freelance / side income', modules: ALL_MODULES.slice() },
+    household: { kind: 'individual', label: 'Household & family', modules: ALL_MODULES.slice() },
+    icustom: { kind: 'individual', label: 'Custom personal unit', modules: ALL_MODULES.slice() }
   };
   const COLORS = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#ea580c', '#475569'];
 
+  const kindOf = b => (b && (b.kind || TEMPLATES[b.type]?.kind)) || 'business';
   function list() {
     let l = App.settings.get('businesses', null);
     if (!Array.isArray(l) || !l.length) {
@@ -36,13 +38,17 @@
       l.forEach(b => { if (!b.mv3) { b.mv3 = true; if (b.type !== 'trading' && !b.modules.includes('purchases')) b.modules.splice(1, 0, 'purchases'); } });
       App.settings.set('businesses', l);
     }
+    // v1.24: personal units get every page (nothing missing compared with businesses)
+    if (l.some(b => !b.mv4)) {
+      l.forEach(b => { if (!b.mv4) { b.mv4 = true; if (kindOf(b) === 'individual') b.modules = [...new Set([...(b.modules || []), ...ALL_MODULES])]; } });
+      App.settings.set('businesses', l);
+    }
     return l;
   }
   const active = () => list().filter(b => !b.archived);
   const get = id => list().find(b => b.id === id);
   function save(l) { App.settings.set('businesses', l); App.bus.emit('biz-changed'); }
 
-  const kindOf = b => (b && (b.kind || TEMPLATES[b.type]?.kind)) || 'business';
   const MASTERS = ['all', 'all:business', 'all:individual'];
   function current() {
     const c = App.settings.get('activeBiz', 'main');
@@ -73,8 +79,7 @@
     if (mod === 'calendar') return current() === 'all';
     // Personal spending (receipts) is for personal units and the Personal dashboard
     if (mod === 'spending') return currentKind() === 'individual';
-    // Payroll/sales-tax compliance and business legal documents only apply to businesses
-    if ((mod === 'compliance' || mod === 'legal') && currentKind() === 'individual') return false;
+    // Personal units have every business page too (household employees, side LLCs, rentals); only Net Worth / Taxes & CPA / Spending are personal-only
     if ((mod === 'wealth' || mod === 'tax') && currentKind() === 'business') return false;
     if (!ALL_MODULES.includes(mod)) return true;
     if (isMaster()) return inView().some(b => b.modules.includes(mod));
@@ -94,7 +99,8 @@
       id: App.uid(), name: data.name || 'New venture', type: data.type || 'custom', kind: data.kind || TEMPLATES[data.type]?.kind || 'business',
       color: data.color || COLORS[l.length % COLORS.length], modules: data.modules || (TEMPLATES[data.type] || TEMPLATES.custom).modules.slice(),
       description: data.description || '', started: data.started || '', createdAt: Date.now(),
-      ...(data.owner ? { owner: data.owner } : {})
+      ...(data.owner ? { owner: data.owner } : {}),
+      ...(data.ownerUnit ? { ownerUnit: data.ownerUnit, share: data.share ?? 100, profitToPersonal: data.profitToPersonal !== false } : {})
     };
     l.push(b); save(l);
     return b;
@@ -135,6 +141,8 @@
     set(k, v) { App.settings.set(`b.${current()}.${k}`, v); }
   };
 
-  App.biz = { KINDS, kindOf, masterKind, currentKind, units, inView, masterLabel, ALL_MODULES, MODULE_LABELS, TEMPLATES, COLORS, list, active, get, current, isMaster, setCurrent, target, idOf, inScope, enabled, withBiz, create, update, remove, moveData };
+  /* Businesses whose profit belongs to a personal unit */
+  const ownedBy = pid => active().filter(b => kindOf(b) === 'business' && b.ownerUnit === pid);
+  App.biz = { ownedBy, KINDS, kindOf, masterKind, currentKind, units, inView, masterLabel, ALL_MODULES, MODULE_LABELS, TEMPLATES, COLORS, list, active, get, current, isMaster, setCurrent, target, idOf, inScope, enabled, withBiz, create, update, remove, moveData };
   App.bsettings = bsettings;
 })(window.App);

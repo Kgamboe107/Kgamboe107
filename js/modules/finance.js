@@ -29,7 +29,9 @@
 
   App.modules.finance = {
     async render(view) {
-      view.innerHTML = `<div id="fMap"></div><div id="fOut" class="stack" style="gap:16px"></div>
+      // Personal units: compute the P&L link first (it briefly works in each owned business), then draw the page
+      const linkX = view.isConnected && !App.biz.isMaster() && App.biz.currentKind() === 'individual' && App.pnl ? await App.pnl.personal(App.biz.current()) : null;
+      view.innerHTML = `<div id="fLink"></div><div id="fMap"></div><div id="fOut" class="stack" style="gap:16px"></div>
         <div id="lMap"></div><div id="lOut"></div>`;
       await App.ui.mapper(view.querySelector('#fMap'), {
         title: 'P&L data', categories: ['financial'], fields: FIELDS, key: 'finance',
@@ -39,6 +41,8 @@
         title: 'Expense detail (optional)', categories: ['financial'], fields: LEDGER, key: 'finance-ledger',
         onChange: (ds, m) => ledger(view.querySelector('#lOut'), ds, m)
       });
+      // Personal units: business profit you own + personal income − personal expenses
+      if (linkX) { const el = view.querySelector('#fLink'); el.innerHTML = App.pnl.personalCard(linkX, App.biz.get(App.biz.current())?.name || 'this unit'); App.pnl.bindGo(el); }
     }
   };
 

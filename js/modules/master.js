@@ -21,6 +21,8 @@
         rows.push({ b, k, files: files.length, last: Math.max(0, ...files.map(f => f.uploadedAt)), flags });
       }
 
+      // Combined business + personal P&L (Everything view), computed before drawing the page
+      const comb = App.biz.current() === 'all' && App.pnl ? await App.pnl.combined().catch(e => { console.warn('Combined P&L', e); return null; }) : null;
       const S = fn => App.sum(rows.map(r => nz(fn(r.k))));
       const rev = S(k => k.finance?.revenue), net = S(k => k.finance?.net);
       const sales = S(k => k.operations?.sales);
@@ -48,6 +50,7 @@
             ${App.biz.current() === 'all' ? `<button class="btn" onclick="App.go('calendar')">${App.fx.icon('calendar')} Calendar</button>` : ''}<button class="btn" onclick="App.go('review')">${App.fx.icon('target')} Weekly review</button><button class="btn" onclick="App.fx.aiBriefing()">${App.fx.icon('sparkles')} AI briefing</button><button class="btn primary" id="mNew">${addLabel}</button></div>
         </div>
         ${famView ? `<div class="card">${App.modules.wealth.personBar()}</div>` : ''}
+        <div id="mPnl">${comb ? App.pnl.combinedCard(comb) : ''}</div>
         <div class="grid k4">
           ${(personal || !mk) && wl.length ? App.ui.kpi(personal ? (who === 'all' ? 'Family net worth' : `${App.wealth.memberName(who)}: net worth`) : 'Personal net worth', fmt.compact(ws.net), `${fmt.compact(ws.assets)} assets · ${fmt.compact(ws.debts)} debts`, ws.net >= 0 ? 'good' : 'bad', ['__go', 'wealth']) : ''}
           ${personal && wl.length ? App.ui.kpi('Invested', fmt.compact(ws.invested), 'retirement, brokerage, HSA, 529', '', false) : ''}
@@ -88,6 +91,7 @@
       const newUnit = kind => App.businessForm(null, id => { App.biz.setCurrent(id); App.go('dashboard'); }, { kind });
       view.querySelector('#mNew').onclick = () => newUnit(addKind);
       view.querySelectorAll('[data-add]').forEach(b => b.onclick = () => newUnit(b.dataset.add));
+      if (comb) App.pnl.bindGo(view.querySelector('#mPnl'));
       view.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { App.biz.setCurrent(b.dataset.view); App.go('dashboard'); });
       if (famView) App.modules.wealth.wirePersonBar(view, () => App.go('dashboard'));
       view.querySelectorAll('.member-card[data-person]').forEach(b => b.onclick = () => { App.wealth.setPerson(b.dataset.person); App.go('dashboard'); });

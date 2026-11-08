@@ -7,6 +7,10 @@
       const files = await App.store.files();
       view.innerHTML = `
         <div class="grid c2">
+          <div class="card stack about-card"><div class="row spread"><div><h2>About this version</h2>
+              <div class="muted small">Ops Command Desk <b class="about-ver">v${App.esc(App.VERSION || '?')}</b> · ${window.desktop ? `desktop app (${window.desktop.platform === 'win32' ? 'Windows' : window.desktop.platform === 'darwin' ? 'Mac' : 'Linux'})` : App.hosted ? (matchMedia('(display-mode: standalone)').matches || navigator.standalone ? 'phone app' : 'web app') : 'browser'}</div></div>
+              <a class="btn small" href="https://github.com/Kgamboe107/Kgamboe107/releases/latest" target="_blank" rel="noopener">Check for updates</a></div>
+            <div class="muted tiny">${App.hosted ? 'The phone / web app updates itself: close and reopen it to get the newest version.' : 'Compare with the newest version on the releases page; download the installer there to update.'}</div></div>
           ${App.cloud ? await App.cloud.settingsCard() : ''}
           <div class="card stack"><h2>Sample data</h2>
             <p class="muted small">Loads realistic example exports and sample Costco, Restaurant Depot and Sysco receipts: Harri timesheet & roster, CrunchTime sales & inventory variance, Webull positions & orders, a Dub portfolio, a P&L, an expense ledger, marketing campaigns, and an Anara research note — so you can explore every module.</p>
