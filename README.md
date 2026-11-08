@@ -51,6 +51,40 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Work & Pay: your job as a P&L (personal units)
+
+Treat your paycheck as your **sales** and the hours you put in as your **labor**. Open a personal unit, then **Analysis → Work & Pay**.
+
+- **Job & targets**: salary or hourly rate (overtime at 1.5× over 40 h), how often you're paid, a recent pay date (adds your paydays to the Calendar), usual hours, possible bonus, and the **target hourly rate** you want ($30 by default). You can also choose whether commute time counts as labor hours.
+- **Log hours** per shift (start/end times drive the long-day and rest checks), or **Import from Harri**: pick your name and your shifts come in from any Harri timesheet in the app. Re-importing doesn't create duplicates.
+- **Paycheck / Snap paystub**: gross, net and hours are read from the photo or PDF. Each regular paycheck is spread over its pay period, and days with no paycheck are estimated from your salary or rate.
+- **Work cost**: commute, meals, uniforms, childcare, tools, licenses.
+- **Other time**: hours that don't fit a paycheck (quick contract jobs, volunteering, caregiving, school, chores, commute, sleep, rest, PTO). These fill in your **168-hour week**, and whatever is left shows as "Not logged".
+
+**Headline numbers**
+- **Pay per labor hour**: pay ÷ labor hours, compared with your target.
+- **Labor %**: labor hours × target rate ÷ pay. Under 100% means you're paid above your target for your time.
+- **Cost to earn**: work costs ÷ pay.
+- **Life share**: work hours ÷ waking hours.
+- **Example**: $55k a year at 50 h/week works out to about $21.15/h, which is a 142% labor % against a $30 target.
+
+**Burnout checks** (for awareness only, not medical advice)
+- 4-week average of 48 h or more (the EU Working Time Directive limit).
+- 55 h or more (WHO/ILO 2021: +35% stroke risk, +17% risk of dying from heart disease).
+- 3 or more of the last 4 weeks over 48 h.
+- Days over 11 h (Whitehall II).
+- Shifts of 12.5 h or more (≈3× error risk).
+- Under 11 h (or under 8 h) of rest between shifts.
+- 7 or more days in a row without a day off.
+- No PTO in 6 months.
+- A monthly exhaustion/detachment check-in.
+
+**Also updated**
+- The Dashboard tile.
+- Weekly Review targets: work hours ≤ 48, pay per labor hour, labor % ≤ 100%, cost to earn ≤ 5%.
+- The personal P&L counts take-home pay when no bank statements are loaded.
+- Everything syncs across devices.
+
 ## Charitable giving & 1099 work (personal units)
 
 **Giving** (Analysis, personal units):

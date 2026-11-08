@@ -73,6 +73,13 @@
       'Add <b>Expenses</b> (snap the receipt) and <b>Mileage</b>; mileage uses the IRS standard rate for the date.',
       'See net profit (Schedule C), which 1099s to expect, self-employment tax and what to set aside each quarter. Export the Schedule C summary or use the CPA packet.'],
       tip: 'From 2026, clients send a 1099-NEC only once they’ve paid you $2,000+, but all of it is taxable. Set aside the suggested amount every time you’re paid.' },
+    { id: 'work', icon: 'clock', title: 'Track your job: pay per hour, labor % and burnout', steps: [
+      'In a <b>Personal</b> unit, open <b>Work &amp; Pay</b> (Analysis) and tap <b>Job &amp; targets</b>: salary or hourly rate, how often you’re paid, a recent pay date and the hourly rate you want (default $30).',
+      '<b>Log hours</b> for each shift (start and end times power the long-day and rest checks), or <b>Import from Harri</b> by picking your name from a timesheet already in the app.',
+      'Add each <b>Paycheck</b> (snap the paystub; gross, net and hours are read for you). Without paychecks, pay is estimated from your salary or rate.',
+      'Add <b>Work costs</b> (commute, meals, uniforms, childcare) and <b>Other time</b> (contract jobs, volunteering, family, school, sleep) to see your whole 168-hour week.',
+      'Read the headline: <b>pay per labor hour</b> vs your target, <b>labor %</b> (hours × target ÷ pay, under 100% is good), <b>cost to earn</b> and <b>life share</b>. The burnout card flags long weeks, long days, short rest and no days off.'],
+      tip: 'Burnout thresholds: 48 h average weeks (EU limit), 55+ h (WHO/ILO heart and stroke risk), days over 11 h, 12.5 h shifts, under 11 h between shifts, 7+ days in a row. Awareness only, not medical advice.' },
     { id: 'guest', icon: 'marketing', title: 'Record SMG scores and store audits', steps: [
       'Upload SMG Full Scale or Trend exports: they’re routed to the store with the matching store number.',
       'Or open <b>Marketing → Guest scores &amp; audits</b> and enter scores or a store audit by hand (scored against the 7 Principles of Success).',
@@ -132,6 +139,8 @@
       can: ['Money, goods, stock, vehicles, volunteer miles, donor-advised funds', 'Acknowledgment / Form 8283 / appraisal checklist', 'Deduction estimate (standard or itemized, 2026 rules), CSV export, CPA packet'] },
     gigs: { title: '1099 Work (personal units)', what: 'Freelance, contract and gig income by client, with expenses, mileage and tax set-aside.',
       can: ['Payments (paid / invoiced), expenses with receipts, mileage at the IRS rate', 'Clients and which 1099 forms to expect', 'Schedule C profit, self-employment tax, quarterly estimates, Schedule C export'] },
+    work: { title: 'Work & Pay (personal units)', what: 'Your paycheck as your sales and your hours as your labor: pay per hour, labor %, burnout checks and your 168-hour week.',
+      can: ['Log shifts or import them from Harri, paychecks with paystub reading, work costs, other time', 'Pay per labor hour vs target, labor % (hours × target ÷ pay), cost to earn %, life share', 'Burnout flags from WHO/ILO, EU Working Time Directive and peer-reviewed studies; monthly check-in; pay dates added to the Calendar'] },
     wealth: { title: 'Net Worth (personal units)', what: 'Accounts, debts and holdings for your family, with history and tax buckets.',
       can: ['Add accounts, import brokerage positions, update all balances at once', 'Per-person cards and individual views', 'Tax buckets, debts by interest rate, stale-balance warnings'] },
     finance: { title: 'Financials', what: 'P&amp;L trends, margins, budget vs actual and expense mix.',
