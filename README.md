@@ -51,6 +51,16 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Personal spending (receipt photos)
+
+**Spending** is in the sidebar under Analysis for personal units and the Personal dashboard.
+
+- **Snap a receipt:** the iPhone camera opens straight away. **Upload photo or file** takes photos, screenshots and PDF e-receipts, several at once. You can also **Add without a receipt**.
+- **Automatic fill-in:** the store, date, total and tax are read from the receipt on your device (Tesseract OCR, offline, including on the phone). PDFs are read as text. The category is guessed from the store. In the desktop app, **Read with AI** gives line-by-line detail.
+- **Each receipt** records who paid (family member), how they paid (card, cash, Cash App, Venmo, Apple Pay…) and a note. The photo is kept, shrunk to save space.
+- **Month view:** total spent with the change from last month, receipt count and average, budget left, top category, spending by category with budget bars, top stores, and a CSV export.
+- **Everywhere else:** receipts appear on the personal dashboard tile, as the Weekly Review metric *Spending from receipts*, and on the Calendar (Personal spending). They sync to your other devices, photos included.
+
 ## Help & tutorial
 
 - Press the **?** button in the top bar (or **F1**) on any page to open the Help Center at that page's help.

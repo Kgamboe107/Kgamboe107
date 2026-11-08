@@ -24,6 +24,7 @@
     { id: 'roas', kind: 'business', label: 'Marketing ROAS', f: 'x', better: 'up', get: k => num(+k.marketing?.roas) && +k.marketing.roas ? +k.marketing.roas : NaN },
     { id: 'overdue', kind: 'business', label: 'Overdue filings', f: 'int', better: 'down', def: 0, weekly: false, get: k => k.compliance?.overdue },
     { id: 'income', kind: 'individual', label: 'Income', f: 'money', better: 'up', get: k => k.finance?.revenue || NaN },
+    { id: 'receipts', kind: 'individual', label: 'Spending from receipts', f: 'money', better: 'down', get: k => k.spending?.count ? k.spending.total : NaN },
     { id: 'spend', kind: 'individual', label: 'Spending', f: 'money', better: 'down', get: k => num(k.finance?.revenue) && num(k.finance?.net) && k.finance.margin !== 1 ? k.finance.revenue - k.finance.net : NaN },
     { id: 'save', kind: 'individual', label: 'Savings rate', f: 'pct', better: 'up', def: 0.2, get: k => k.finance?.margin === 1 ? NaN : k.finance?.margin },
     { id: 'nw', kind: 'individual', label: 'Net worth', f: 'money', better: 'up', weekly: false, get: k => k.wealth?.accounts ? k.wealth.net : NaN },

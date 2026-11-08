@@ -1,9 +1,9 @@
 /* Local persistence in IndexedDB: files (with original blobs), datasets (parsed tables), notes */
 (function (App) {
   const DB_NAME = 'ops-command-desk';
-  const DB_VER = 2;
+  const DB_VER = 3;
   let dbp = null;
-  const SCOPED = ['files', 'datasets', 'notes', 'purchases'];
+  const SCOPED = ['files', 'datasets', 'notes', 'purchases', 'spending'];
 
   function open() {
     if (dbp) return dbp;
@@ -18,6 +18,7 @@
         }
         if (!db.objectStoreNames.contains('notes')) db.createObjectStore('notes', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('purchases')) db.createObjectStore('purchases', { keyPath: 'id' }); // v2: purchase journal
+        if (!db.objectStoreNames.contains('spending')) db.createObjectStore('spending', { keyPath: 'id' }); // v3: personal receipts
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);

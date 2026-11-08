@@ -11,6 +11,7 @@
     expense: { label: 'Expenses', color: '#dc2626' },
     finance: { label: 'Financials', color: '#2563eb' },
     purchases: { label: 'Purchases', color: '#d97706' },
+    spending: { label: 'Personal spending', color: '#be185d' },
     operations: { label: 'Operations', color: '#0891b2' },
     marketing: { label: 'Marketing', color: '#db2777' },
     trading: { label: 'Trading', color: '#7c3aed' },
@@ -116,6 +117,13 @@
       r.n++; r.total += +p.total || 0; if (p.vendor) r.vendors.add(p.vendor); receipts.set(key, r);
     }
     for (const r of receipts.values()) ev.push({ date: r.date, sec: 'purchases', title: `${r.n} receipt${r.n > 1 ? 's' : ''} · ${fmt.money(r.total)}`, detail: [...r.vendors].join(', '), unit: r.unit, amount: r.total });
+    const spent = new Map();
+    for (const s of await App.store.all('spending').catch(() => [])) {
+      if (!inRange(s.date) || !kindOk(App.biz.idOf(s))) continue;
+      const key = s.date + '|' + App.biz.idOf(s), x = spent.get(key) || { date: s.date, unit: App.biz.idOf(s), n: 0, total: 0, who: new Set() };
+      x.n++; x.total += +s.total || 0; x.who.add(s.merchant); spent.set(key, x);
+    }
+    for (const x of spent.values()) ev.push({ date: x.date, sec: 'spending', title: `${x.n} receipt${x.n > 1 ? 's' : ''} · ${fmt.money(x.total)}`, detail: [...x.who].join(', '), unit: x.unit, amount: x.total });
     for (const n of await App.store.all('notes')) {
       const k = dayKey(new Date(n.createdAt || n.updatedAt || 0));
       if (inRange(k) && kindOk(App.biz.idOf(n))) ev.push({ date: k, sec: n.module === 'marketing' ? 'marketing' : 'research', title: `Note: ${n.title || 'Untitled'}`, unit: App.biz.idOf(n) });

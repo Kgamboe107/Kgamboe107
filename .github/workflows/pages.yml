@@ -24,7 +24,7 @@ jobs:
           mkdir -p _site
           cp -r index.html manifest.webmanifest sw.js css js vendor icons _site/
           # Offline cache list and a cache version that changes every release
-          (cd _site && find css js vendor icons manifest.webmanifest -type f | grep -v LICENSE | sort | python3 -c "import json,sys; print(json.dumps([l.strip() for l in sys.stdin]))" > precache.json)
+          (cd _site && find css js vendor icons manifest.webmanifest -type f | grep -v LICENSE | grep -v vendor/tesseract | sort | python3 -c "import json,sys; print(json.dumps([l.strip() for l in sys.stdin]))" > precache.json)
           sed -i "s/const VERSION = 'dev';/const VERSION = '${GITHUB_SHA::12}';/" _site/sw.js
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5

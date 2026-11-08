@@ -55,6 +55,12 @@
       'Transactions feed Financials (daily cash flow), Weekly Review (income, spending, savings rate) and the Calendar. Personal units update Net Worth balances.',
       'Optional live sync (desktop app): connect banks with <b>Plaid</b>, sales with <b>Square</b> (Cash App for Business) and <b>Stripe</b> using your own keys.'],
       tip: 'Transfers between your own accounts (card payments, moving to savings, cash outs) are left out of income and spending.' },
+    { id: 'spending', icon: 'receipt', title: 'Track personal spending with receipt photos', steps: [
+      'Switch to a <b>Personal</b> unit and open <b>Spending</b> (Analysis).',
+      'Tap <b>Snap a receipt</b>: on the iPhone the camera opens. Or <b>Upload photo or file</b> for screenshots, photos and PDF e-receipts (pick several at once).',
+      'The store, date and total are read from the receipt on your device and filled in. Check them, pick who paid and how, and tap <b>Save receipt</b>.',
+      'See the month’s total, change vs last month, spending by category and top stores. <b>Set budgets</b> per category to get progress bars and over-budget warnings.'],
+      tip: 'Receipts sync to your other devices with the photo. The reader works offline; in the desktop app you can also tap “Read with AI” for line-by-line detail.' },
     { id: 'guest', icon: 'marketing', title: 'Record SMG scores and store audits', steps: [
       'Upload SMG Full Scale or Trend exports: they’re routed to the store with the matching store number.',
       'Or open <b>Marketing → Guest scores &amp; audits</b> and enter scores or a store audit by hand (scored against the 7 Principles of Success).',
@@ -108,6 +114,8 @@
       can: ['Pick the AI (Ollama, Groq, Grok, Perplexity) and the depth', 'Include specific data tables', 'Saved conversation threads'] },
     calendar: { title: 'Calendar (Everything view)', what: 'A month view of everything added, color-coded by section, plus pay dates and when expenses come out.',
       can: ['+ Pay date / + Expense, one-off or repeating', 'Suggestions for repeating bills and paychecks found in bank data', 'Month money in / out, next 30 days, legend filters, Business / Personal filter, click a day for details'] },
+    spending: { title: 'Spending (personal units)', what: 'Personal receipts: snap or upload them and track where your money goes.',
+      can: ['Snap a receipt (camera), upload photos, screenshots or PDFs; store, date and total filled in automatically', 'Month totals vs last month, by category, by store, by person', 'Category budgets with progress bars; export to CSV'] },
     wealth: { title: 'Net Worth (personal units)', what: 'Accounts, debts and holdings for your family, with history and tax buckets.',
       can: ['Add accounts, import brokerage positions, update all balances at once', 'Per-person cards and individual views', 'Tax buckets, debts by interest rate, stale-balance warnings'] },
     finance: { title: 'Financials', what: 'P&amp;L trends, margins, budget vs actual and expense mix.',

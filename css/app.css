@@ -1407,3 +1407,43 @@ select { max-width: 100%; min-width: 0; }
 .tour-card p { margin: 0 0 8px; color: var(--text-2); }
 .tour-offer { position: fixed; right: 20px; bottom: 20px; z-index: 90; width: min(340px, calc(100vw - 24px)); padding: 14px 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; gap: 8px; }
 @media (max-width: 860px) { .tour-offer { right: 12px; bottom: calc(88px + env(safe-area-inset-bottom)); } }
+
+
+/* ---------- Personal spending (receipts) ---------- */
+.sp-hero { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.sp-hero h2 { margin: 0 0 4px; }
+.sp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sp-snap { font-size: 15px; padding-left: 18px; padding-right: 18px; }
+.sp-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 14px; }
+.sp-month { min-width: 120px; text-align: center; }
+.sp-cats { display: flex; flex-direction: column; gap: 10px; }
+.sp-cat i, .sp-brow i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; }
+.sp-track { height: 7px; border-radius: 99px; background: var(--panel-3, rgba(100, 116, 139, .15)); overflow: hidden; margin-top: 4px; }
+.sp-track span { display: block; height: 100%; border-radius: 99px; }
+.sp-list { display: flex; flex-direction: column; }
+.sp-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 9px 4px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.sp-row:hover { background: var(--accent-soft); }
+.sp-thumb { width: 44px; height: 44px; border-radius: 10px; overflow: hidden; display: grid; place-items: center; background: var(--panel-3, rgba(100, 116, 139, .12)); font-size: 18px; }
+.sp-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.sp-main { display: flex; flex-direction: column; min-width: 0; }
+.sp-main b, .sp-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, var(--c) 15%, transparent); color: var(--c); white-space: nowrap; }
+.sp-amt { font-variant-numeric: tabular-nums; }
+.sp-edit { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; margin-top: 10px; }
+.sp-img { display: flex; flex-direction: column; gap: 8px; }
+.sp-img img { width: 100%; max-height: 360px; object-fit: contain; border-radius: 12px; background: #fff; border: 1px solid var(--border); }
+.sp-noimg { height: 140px; border-radius: 12px; display: grid; place-items: center; background: var(--panel-3, rgba(100, 116, 139, .12)); color: var(--muted); }
+.sp-form { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sp-form .field input, .sp-form .field select { width: 100%; }
+.sp-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sp-items { max-height: 180px; overflow: auto; margin-top: 6px; }
+.sp-items div { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; border-bottom: 1px dashed var(--border); }
+.sp-budgets { display: flex; flex-direction: column; gap: 4px; max-height: 58vh; overflow: auto; }
+.sp-brow { display: grid; grid-template-columns: minmax(0, 1fr) 140px; align-items: center; gap: 10px; padding: 5px 2px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+@media (max-width: 700px) {
+  .sp-edit { grid-template-columns: 1fr; }
+  .sp-img img { max-height: 220px; }
+  .sp-actions { width: 100%; } .sp-actions > * { flex: 1 1 100%; justify-content: center; }
+  .sp-snap { min-height: 50px; }
+  .sp-row { grid-template-columns: 40px minmax(0, 1fr) auto; } .sp-tag { display: none; }
+}
