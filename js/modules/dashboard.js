@@ -6,7 +6,7 @@
   /* Re-run each analysis off-screen so the dashboard always reflects current data */
   async function refreshKpis() {
     App.bsettings.set('kpis', {});
-    const runs = [['wealth'], ['spending'], ['finance'], ['purchases'], ['compliance'], ['legal'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
+    const runs = [['wealth'], ['spending'], ['giving'], ['gigs'], ['finance'], ['purchases'], ['compliance'], ['legal'], ['operations'], ['trading', { tab: 'positions' }], ['trading', { tab: 'trades' }], ['marketing'], ['personnel']];
     for (const [mod, params] of runs) {
       if (!App.biz.enabled(mod)) continue;
       try { await App.modules[mod].render(document.createElement('div'), params || {}); } catch (e) { console.warn('KPI refresh', mod, e); }
@@ -51,7 +51,7 @@
       const files = await App.store.files();
       const datasets = await App.store.datasets();
       const notes = await App.store.all('notes');
-      const ownData = (await App.store.all('spending').catch(() => [])).length || (personalUnit && App.wealth?.accounts?.().length);
+      const ownData = (await App.store.all('spending').catch(() => [])).length || (await App.store.all('giving').catch(() => [])).length || (await App.store.all('gigs').catch(() => [])).length || (personalUnit && App.wealth?.accounts?.().length);
       if (!files.length && !ownData) {
         view.innerHTML = `
           <div class="card hero"><div class="hero-grid"></div><div class="badge" style="background:rgba(255,255,255,.14);color:#fff;margin-bottom:12px">${esc(App.biz.TEMPLATES[biz.type]?.label || 'Custom')}</div><h2>${esc(biz.name)}: let's get started</h2>
@@ -83,6 +83,8 @@
         cm.score !== undefined && ['Audit readiness', isNaN(cm.score) ? '—' : Math.round(cm.score * 100) + '%', cm.overdue ? `${cm.overdue} overdue filing${cm.overdue > 1 ? 's' : ''}` : `${cm.dueSoon || 0} due in 30 days`, cm.overdue ? 'bad' : cm.score >= 0.85 ? 'good' : 'warn', 'compliance'],
         pu.receipts && ['Food cost %', fmt.pct(pu.foodPct), `${fmt.money(pu.food)} food · ${pu.receipts} receipts`, isNaN(pu.foodPct) ? '' : pu.foodPct <= (App.bsettings.get('ops.targets', {}).food || 0.3) ? 'good' : 'bad', 'purchases'],
         personalUnit && k.wealth?.accounts && ['Net worth', fmt.compact(k.wealth.net), `${fmt.compact(k.wealth.assets)} assets · ${fmt.compact(k.wealth.debts)} debts`, k.wealth.net >= 0 ? 'good' : 'bad', 'wealth'],
+        personalUnit && k.gigs?.gross > 0 && ['1099 work ' + k.gigs.year, fmt.money(k.gigs.net), `profit · set aside ${fmt.money(k.gigs.setAside)} for taxes${k.gigs.unpaid ? ` · ${fmt.money(k.gigs.unpaid)} unpaid` : ''}`, k.gigs.net >= 0 ? 'good' : 'bad', 'gigs'],
+        personalUnit && k.giving?.count > 0 && ['Giving ' + k.giving.year, fmt.money(k.giving.total), `~${fmt.money(k.giving.deductible)} deductible${k.giving.todo ? ` · ${k.giving.todo} paperwork item${k.giving.todo > 1 ? 's' : ''} to get` : ''}`, k.giving.todo ? 'warn' : 'good', 'giving'],
         personalUnit && k.spending?.count !== undefined && (k.spending.count || k.spending.budget) && ['Spending (receipts)', fmt.money(k.spending.total), `${k.spending.count} receipts · ${k.spending.label}${k.spending.budget ? ` · budget ${fmt.money(k.spending.budget)}` : ''}`, k.spending.budget ? (k.spending.total > k.spending.budget ? 'bad' : 'good') : '', 'spending'],
         f.revenue !== undefined && [personalUnit ? 'Income' : 'Revenue', fmt.compact(f.revenue), f.margin === 1 ? 'no expenses loaded yet' : `${personalUnit ? 'savings rate' : 'net margin'} ${fmt.pct(f.margin)}`, f.margin === 1 ? '' : f.margin >= 0 ? 'good' : 'bad', 'finance'],
         num(o.laborPct) && ['Labor %', fmt.pct(o.laborPct), num(o.primePct) ? `prime cost ${fmt.pct(o.primePct)}` : num(pu.foodPct) ? `prime cost ≈ ${fmt.pct(o.laborPct + pu.foodPct)}` : 'add food cost for prime cost', '', 'operations'],

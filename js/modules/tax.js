@@ -12,7 +12,7 @@
   const nextBiz = d => { const x = new Date(d + 'T12:00'); while (x.getDay() === 0 || x.getDay() === 6) x.setDate(x.getDate() + 1); return x.toISOString().slice(0, 10); };
 
   /* Documents your CPA will ask for, built from members, accounts and personal units */
-  function checklist(list, units) {
+  function checklist(list, units, extra = {}) {
     const items = [];
     const add = (id, owner, label, why, optional = false) => { if (!items.some(i => i.id === id)) items.push({ id, owner, label, why, optional }); };
     for (const m of W().members()) {
@@ -38,7 +38,12 @@
     }
     add('prior', 'joint', `Last year's tax return (federal and state)`, 'Carryovers and a starting point');
     add('est', 'joint', `Estimated tax payments you made for ${year} (dates and amounts)`, 'Credits against what you owe', true);
-    add('charity', 'joint', 'Charitable donation receipts (cash and items)', 'Itemized deductions', true);
+    if (extra.giving?.length) {
+      for (const n of App.giving.needs(extra.giving)) add('give-' + (n.g?.id || n.text.slice(0, 20)), n.g?.person || 'joint', n.text, 'Charitable deduction paperwork');
+      add('charity', 'joint', `Donation records: ${extra.giving.length} gifts logged in Giving (${fmt.money(App.sum(extra.giving.map(App.giving.valueOf)))})`, 'Charitable deduction (CPA packet has the list)', true);
+    } else add('charity', 'joint', 'Charitable donation receipts (cash and items)', 'Itemized deductions', true);
+    for (const p of extra.gigs?.payers || []) add('gig-' + p.name, 'joint', p.due ? `${p.form === 'misc' ? '1099-MISC' : '1099-NEC'} from ${p.name} (paid you ${fmt.money(p.total)})` : `Payment records from ${p.name} (${fmt.money(p.total)}; ${p.expect})`, 'Self-employment income (Schedule C)', !p.due);
+    if (extra.gigs?.gross) add('gig-sum', 'joint', `1099 work summary: income ${fmt.money(extra.gigs.gross)}, expenses & mileage ${fmt.money(extra.gigs.expTotal + extra.gigs.mileDed)}, net ${fmt.money(extra.gigs.net)}`, 'Schedule C and self-employment tax (CPA packet has the detail)');
     add('1095a', 'joint', 'Form 1095-A if you had Marketplace health insurance', 'Premium tax credit', true);
     add('ids', 'joint', 'Photo ID, Social Security numbers and bank info for the refund', 'Needed to file', false);
     for (const c of App.settings.get(key('custom'), [])) add(c.id, c.owner || 'joint', c.label, 'Added by you', false);
@@ -59,7 +64,10 @@
       const contrib = App.settings.get(key('contrib'), {});
       const est = App.settings.get(key('est'), {});
       const L = W().limits(year);
-      const all = checklist(list, units).filter(i => p === 'all' || i.owner === p || i.owner === 'joint');
+      const giv = (await App.giving.all()).filter(g => (g.date || '').startsWith(String(year)));
+      const gigRecs = (await App.gigs.all()).filter(g => (g.date || '').startsWith(String(year)));
+      const gigS = gigRecs.length ? App.gigs.summarize(gigRecs, year) : null;
+      const all = checklist(list, units, { giving: giv, gigs: gigS }).filter(i => p === 'all' || i.owner === p || i.owner === 'joint');
       const got = all.filter(i => docs[i.id]?.done).length;
       // Realized gains from the trade history of personal units (Trading Risk), as last computed
       let realized = 0, realizedUnits = 0;
@@ -145,12 +153,12 @@
       const saveEst = () => { const e = {}; quarters.forEach(qq => { e[qq.q] = { amount: $(`[data-est="${qq.q}"]`).value === '' ? '' : +$(`[data-est="${qq.q}"]`).value, paid: $(`[data-estp="${qq.q}"]`).checked }; }); App.settings.set(key('est'), e); };
       view.querySelectorAll('[data-est],[data-estp]').forEach(i => i.onchange = saveEst);
       $('#tAI').onclick = () => App.go('ai', { newThread: true, send: true, prompt: `Review my ${year} family tax picture like a careful CPA would before filing. Using my accounts, contributions, realized gains and tax-loss candidates, list (1) documents I'm still missing, (2) contribution room I could still use, (3) tax-loss harvesting ideas with wash-sale cautions, and (4) questions to ask my CPA. Be specific with the numbers. Remind me this isn't tax advice.` });
-      $('#tPack').onclick = () => packet({ list, s, all, docs, contrib: App.settings.get(key('contrib'), {}), est: App.settings.get(key('est'), {}), people, roomOf, harvest, realized, realizedUnits, units });
+      $('#tPack').onclick = () => packet({ giv, gigRecs, gigS, list, s, all, docs, contrib: App.settings.get(key('contrib'), {}), est: App.settings.get(key('est'), {}), people, roomOf, harvest, realized, realizedUnits, units });
     }
   };
 
   /* CPA packet: one workbook with every sheet a preparer asks for */
-  function packet({ list, s, all, docs, contrib, est, people, roomOf, harvest, realized, realizedUnits, units }) {
+  function packet({ giv = [], gigRecs = [], gigS = null, list, s, all, docs, contrib, est, people, roomOf, harvest, realized, realizedUnits, units }) {
     const wb = XLSX.utils.book_new();
     const add = (name, rows) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ Note: 'Nothing recorded' }]), name.slice(0, 31));
     const ye = `${year}-12-31`;
@@ -170,6 +178,9 @@
     add('Tax-loss candidates', harvest.map(h => ({ Symbol: h.symbol, Account: h.account, Owner: W().memberName(h.owner), 'Unrealized loss': h.upl, Value: h.value })));
     add('Estimated payments', Object.entries(est).map(([q, e]) => ({ Quarter: q, Amount: e.amount ?? '', Paid: e.paid ? 'Yes' : 'No' })));
     add('Side income & rentals', units.filter(u => u.type === 'freelance' || u.type === 'rental').map(u => { const f = App.settings.get(`b.${u.id}.kpis`, {})?.finance || {}; return { Unit: u.name, Kind: App.biz.TEMPLATES[u.type]?.label, Owner: W().memberName(u.owner), Income: f.revenue ?? '', 'Net income': f.net ?? '' }; }));
+    add('Donations', giv.map(g => ({ Date: g.date, Organization: g.org, EIN: g.ein || '', Type: App.giving.KINDS[g.kind], 'Amount / value': +App.giving.valueOf(g).toFixed(2), Miles: g.miles || '', 'Cost basis': g.basis || '', Items: g.items || '', 'Written acknowledgment': g.ack ? 'yes' : 'no', Appraisal: g.appraisal ? 'yes' : '', Note: g.note || '' })));
+    add('1099 work', gigS ? [{ Line: 'Gross receipts', Amount: +gigS.gross.toFixed(2) }, ...Object.entries(gigS.cats).map(([c, v]) => ({ Line: 'Expense: ' + c, Amount: -(+v.toFixed(2)) })), { Line: `Mileage ${gigS.miles} mi (standard rate)`, Amount: -(+gigS.mileDed.toFixed(2)) }, { Line: 'Net profit', Amount: +gigS.net.toFixed(2) }, { Line: 'Estimated SE tax', Amount: +gigS.se.toFixed(2) },
+      ...gigS.payers.map(p => ({ Line: `Client: ${p.name} (${p.expect})`, Amount: +p.total.toFixed(2) })), ...gigRecs.map(r => ({ Line: `${r.date} ${r.kind}: ${r.payer || ''} ${r.description || ''}`.trim(), Amount: r.kind === 'mileage' ? `${r.miles} mi` : (r.kind === 'expense' ? -r.amount : r.amount) }))] : []);
     const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     App.download(`CPA packet ${year}.xlsx`, new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
     App.ui.toast('CPA packet downloaded');

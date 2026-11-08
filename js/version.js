@@ -1,3 +1,3 @@
 /* App version (kept in step with package.json at every release) */
 window.App = window.App || { modules: {} };
-window.App.VERSION = '1.24.0';
+window.App.VERSION = '1.25.0';

@@ -51,6 +51,34 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Charitable giving & 1099 work (personal units)
+
+**Giving** (Analysis, personal units):
+- **Log gifts** of money, goods, stock, vehicles, volunteer miles (14¢/mile) and donor-advised funds, by charity, date and family member.
+- **Snap a receipt or thank-you letter:** the charity, date, amount and EIN are read automatically, and the acknowledgment box is ticked when the letter says so.
+- **Paperwork checklist:**
+  - a written acknowledgment for any single gift of $250+;
+  - Form 8283 when non-cash gifts total over $500;
+  - a qualified appraisal for non-cash items over $5,000;
+  - Form 1098-C for vehicles over $500.
+- **Deduction estimate** (2026 rules): taking the standard deduction, up to $1,000 ($2,000 married filing jointly) of cash gifts is deductible (not to donor-advised funds). Itemizing, only giving above 0.5% of AGI counts.
+- By-organization totals and a CSV export.
+
+**1099 Work** (Analysis, personal units):
+- **Payments and jobs** by client: paid or invoiced, and which form they'll send (1099-NEC, 1099-K, 1099-MISC).
+- **Work expenses** with receipt photos, in Schedule C categories (meals at 50%).
+- **Mileage** at the IRS standard rate for the date: 72.5¢ for Jan–Jun 2026, 76¢ for Jul–Dec 2026.
+- **Clients and forms:** which 1099s to expect. From 2026, a 1099-NEC/MISC comes at $2,000+ and a 1099-K over $20,000 and 200 payments. All income is taxable either way.
+- **Taxes:** Schedule C net profit, self-employment tax (15.3% of 92.35% of profit; none under $400), the amount to set aside at your federal bracket and state rate, and quarterly estimated payments with due dates.
+- Schedule C CSV export.
+
+**Both pages** feed:
+- **Taxes & CPA:** checklist items for each acknowledgment, Form 8283 and expected 1099, plus *Donations* and *1099 work* sheets in the CPA packet.
+- **The personal P&L:** 1099 profit, and cash gifts.
+- **The personal dashboard** (tiles) and **the Calendar**.
+
+They sync with receipts attached. These are estimates, not tax advice.
+
 ## Business ↔ personal P&L, and uploads on the Combined view
 
 **Link a business to its owner:** in Units, edit a business and choose **Profit goes to (personal unit)** and **You own (%)**. If you pay yourself a salary or draws (already in your bank deposits), untick *Count my share as personal income* so it isn't counted twice.

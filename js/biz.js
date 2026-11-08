@@ -78,7 +78,7 @@
     // The calendar covers business and personal together, so it lives in the Everything view
     if (mod === 'calendar') return current() === 'all';
     // Personal spending (receipts) is for personal units and the Personal dashboard
-    if (mod === 'spending') return currentKind() === 'individual';
+    if (mod === 'spending' || mod === 'giving' || mod === 'gigs') return currentKind() === 'individual';
     // Personal units have every business page too (household employees, side LLCs, rentals); only Net Worth / Taxes & CPA / Spending are personal-only
     if ((mod === 'wealth' || mod === 'tax') && currentKind() === 'business') return false;
     if (!ALL_MODULES.includes(mod)) return true;

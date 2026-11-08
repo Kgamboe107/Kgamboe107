@@ -10,7 +10,8 @@
     key: 'sb_publishable_Pbv3uD6blYU5VWPAzN1Jtw_BdAV3lju',
     admin: 'koen@gamboeconsulting.com'
   };
-  const STORES = ['files', 'datasets', 'notes', 'purchases', 'spending'];
+  const STORES = ['files', 'datasets', 'notes', 'purchases', 'spending', 'giving', 'gigs'];
+  const ATT = ['purchases', 'spending', 'giving', 'gigs']; // stores whose records carry an attachment (receipt photo / PDF)
   // Settings that stay on each device: sign-in, sync state, app lock, API-key markers, window state
   const LOCAL_ONLY = /^(cloud\.|sync\.|lock|secret\.|onboarded$|theme$|surface$|rail$|activeBiz$|ai\.ollama)/;
   const BIG = 700000; // encrypted records larger than this go to file storage instead of the table
@@ -109,7 +110,7 @@
   const savePrints = () => kset('prints', printKey(), prints);
   const fileMeta = f => { const { blob, ...m } = f; return { ...m, __blob: blob ? { size: blob.size, type: blob.type } : null }; };
   const attMeta = p => p.attachment?.blob ? { ...p, attachment: { ...p.attachment, blob: undefined, __blob: { size: p.attachment.blob.size, type: p.attachment.blob.type } } } : p;
-  const metaOf = (store, rec) => store === 'files' ? fileMeta(rec) : store === 'purchases' || store === 'spending' ? attMeta(rec) : rec;
+  const metaOf = (store, rec) => store === 'files' ? fileMeta(rec) : ATT.includes(store) ? attMeta(rec) : rec;
 
   const isSample = r => r && (r.sample === true || (Array.isArray(r.tags) && r.tags.includes('Sample')));
   async function snapshot() {
@@ -152,7 +153,7 @@
       if (payload.length > BIG) { row.blob_path = `${user().id}/rec/${v.store}/${enc(String(v.id))}`; await putObject(row.blob_path, unb64(payload)); payload = null; }
       row.data = payload;
       // File contents (PDFs, images, receipt photos) go to storage, encrypted
-      const blob = v.store === 'files' ? v.rec.blob : v.store === 'purchases' || v.store === 'spending' ? v.rec.attachment?.blob : null;
+      const blob = v.store === 'files' ? v.rec.blob : ATT.includes(v.store) ? v.rec.attachment?.blob : null;
       if (blob) await putObject(`${user().id}/blob/${v.store}/${enc(String(v.id))}`, await seal(new Uint8Array(await blob.arrayBuffer())));
       rows.push({ row, k, h });
     }
@@ -203,7 +204,7 @@
               if (r.store === 'settings') localStorage.setItem('ocd.' + r.id, json);
               else {
                 const rec = JSON.parse(json);
-                const bm = r.store === 'files' ? rec.__blob : r.store === 'purchases' || r.store === 'spending' ? rec.attachment?.__blob : null;
+                const bm = r.store === 'files' ? rec.__blob : ATT.includes(r.store) ? rec.attachment?.__blob : null;
                 if (bm) {
                   const bytes = await open(await getObject(`${user().id}/blob/${r.store}/${enc(String(r.id))}`));
                   const blob = new Blob([bytes], { type: bm.type });

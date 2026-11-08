@@ -35,13 +35,22 @@
     if (own === null) { const p = await unitPnl(pid); own = p ? { revenue: p.revenue, net: p.net, margin: p.noExpenses ? 1 : 0 } : null; }
     else own = await own;
     const rc = await receipts(pid);
+    // 1099 work profit and donations in the same period
+    const per = App.period.range(), inP = d => per.g === 'all' || (d >= per.from && d <= per.to);
+    const gigs = (await App.store.all('gigs', { raw: true }).catch(() => [])).filter(x => App.biz.idOf(x) === pid && inP(x.date));
+    const gigS = gigs.length ? App.gigs.summarize(gigs, +(per.to || App.period.today()).slice(0, 4)) : null;
+    const gifts = (await App.store.all('giving', { raw: true }).catch(() => [])).filter(x => App.biz.idOf(x) === pid && inP(x.date));
+    // Money that actually left your accounts (goods, stock and volunteer miles are deductible but aren't spending)
+    const giving = App.sum(gifts.filter(g => g.kind === 'cash' || g.kind === 'daf').map(App.giving.valueOf));
     const bizIncome = App.sum(biz.filter(x => x.counted && num(x.yours)).map(x => x.yours));
-    const income = own && num(own.revenue) ? own.revenue : 0;
+    const hasOwn = own && num(own.revenue);
+    // Bank deposits already include 1099 payments; only add 1099 profit when there are no statements
+    const income = (hasOwn ? own.revenue : 0) + (!hasOwn && gigS ? gigS.gross : 0);
     const hasOwnExp = own && num(own.net) && own.margin !== 1;
     // Bank/P&L expenses already include what the receipts record; receipts count only when there's nothing else
-    const expenses = hasOwnExp ? own.revenue - own.net : rc.total;
+    const expenses = hasOwnExp ? own.revenue - own.net : rc.total + giving + (gigS ? gigS.expTotal : 0);
     const net = bizIncome + income - expenses;
-    return { biz, bizIncome, income, expenses, expFrom: hasOwnExp ? 'statements / P&L' : rc.count ? 'receipts' : '', receipts: rc, net, totalIn: bizIncome + income, rate: bizIncome + income ? net / (bizIncome + income) : NaN };
+    return { gigS, giving, gifts: gifts.filter(g => g.kind === 'cash' || g.kind === 'daf').length, hasOwn, biz, bizIncome, income, expenses, expFrom: hasOwnExp ? 'statements / P&L' : rc.count ? 'receipts' : '', receipts: rc, net, totalIn: bizIncome + income, rate: bizIncome + income ? net / (bizIncome + income) : NaN };
   }
 
   const line = (label, v, cls = '', sub = '') => `<div class="pl-row ${cls}"><span>${label}${sub ? `<span class="muted tiny"> · ${sub}</span>` : ''}</span><b>${num(v) ? fmt.money(v) : '—'}</b></div>`;
@@ -50,9 +59,11 @@
     return `<div class="card pl-card"><div class="card-head"><h2>Personal P&amp;L${per.g !== 'all' ? ` · ${esc(per.label)}` : ''}</h2><a class="small" href="#businesses" data-go="businesses">Link businesses →</a></div>
       <div class="pl-grid"><div>
         ${line('Your share of business profit', x.bizIncome, 'in', x.biz.length ? `${x.biz.filter(b => b.counted).length} linked business${x.biz.length === 1 ? '' : 'es'}` : 'none linked yet')}
-        ${line('Personal income', x.income, 'in', 'pay, interest, side income')}
+        ${line('Personal income', x.income, 'in', x.gigS && !x.hasOwn ? 'includes 1099 work' : 'pay, interest, side income')}
+        ${x.gigS ? line('of which 1099 work profit', x.gigS.net, 'sub', `set aside ${fmt.money(x.gigS.setAside)} for taxes`) : ''}
         ${line('Total coming in', x.totalIn, 'sum')}
         ${line('Personal expenses', -x.expenses, 'out', x.expFrom || 'add statements or receipts')}
+        ${x.giving ? line('of which charitable giving', -x.giving, 'sub', `${x.gifts} gift${x.gifts === 1 ? '' : 's'}`) : ''}
         ${line('Net (saved)', x.net, 'total ' + (x.net >= 0 ? 'good' : 'bad'), num(x.rate) ? `savings rate ${fmt.pct(x.rate)}` : '')}
       </div>
       <div>${x.biz.length ? `<div class="rv-h">Businesses you own</div>${x.biz.map(r => `<div class="pl-biz"><div><b>${esc(r.b.name)}</b><div class="muted tiny">${Math.round(r.share * 100)}% yours · ${r.p ? `revenue ${fmt.compact(r.p.revenue)} · net ${num(r.p.net) ? fmt.compact(r.p.net) : '—'}${r.p.noExpenses ? ' (no expenses loaded)' : ''}` : 'no P&L data yet'}${r.counted ? '' : ' · not counted as personal income (paid as salary / draws)'}</div></div><b class="${num(r.yours) && r.yours < 0 ? 'down' : ''}">${num(r.yours) ? fmt.money(r.yours) : '—'}</b></div>`).join('')}`

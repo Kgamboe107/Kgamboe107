@@ -12,6 +12,8 @@
     finance: { label: 'Financials', color: '#2563eb' },
     purchases: { label: 'Purchases', color: '#d97706' },
     spending: { label: 'Personal spending', color: '#be185d' },
+    giving: { label: 'Giving', color: '#e11d48' },
+    gigs: { label: '1099 work', color: '#65a30d' },
     operations: { label: 'Operations', color: '#0891b2' },
     marketing: { label: 'Marketing', color: '#db2777' },
     trading: { label: 'Trading', color: '#7c3aed' },
@@ -124,6 +126,8 @@
       x.n++; x.total += +s.total || 0; x.who.add(s.merchant); spent.set(key, x);
     }
     for (const x of spent.values()) ev.push({ date: x.date, sec: 'spending', title: `${x.n} receipt${x.n > 1 ? 's' : ''} · ${fmt.money(x.total)}`, detail: [...x.who].join(', '), unit: x.unit, amount: x.total });
+    for (const g of await App.store.all('giving').catch(() => [])) if (inRange(g.date) && kindOk(App.biz.idOf(g))) ev.push({ date: g.date, sec: 'giving', title: `Gave ${fmt.money(App.giving.valueOf(g))} to ${g.org}`, unit: App.biz.idOf(g), amount: App.giving.valueOf(g) });
+    for (const w of await App.store.all('gigs').catch(() => [])) if (inRange(w.date) && kindOk(App.biz.idOf(w))) ev.push({ date: w.date, sec: 'gigs', title: w.kind === 'income' ? `${w.status === 'invoiced' ? 'Invoiced' : 'Paid'} ${fmt.money(w.amount)} · ${w.payer}` : w.kind === 'expense' ? `Work expense ${fmt.money(w.amount)}${w.payer ? ' · ' + w.payer : ''}` : `${w.miles} work miles`, detail: w.description, unit: App.biz.idOf(w) });
     for (const n of await App.store.all('notes')) {
       const k = dayKey(new Date(n.createdAt || n.updatedAt || 0));
       if (inRange(k) && kindOk(App.biz.idOf(n))) ev.push({ date: k, sec: n.module === 'marketing' ? 'marketing' : 'research', title: `Note: ${n.title || 'Untitled'}`, unit: App.biz.idOf(n) });

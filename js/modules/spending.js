@@ -253,5 +253,5 @@
       view.ondragover = e => e.preventDefault();
     }
   };
-  App.spending = { capture, parseText, all };
+  App.spending = { capture, parseText, all, readFile, shrink, guessCat };
 })(window.App);

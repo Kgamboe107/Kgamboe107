@@ -1467,3 +1467,7 @@ select { max-width: 100%; min-width: 0; }
 
 /* hidden fields and rows stay hidden even when styled as flex */
 .field[hidden], .row[hidden], label[hidden] { display: none !important; }
+
+.gv-check { gap: 8px; align-items: flex-start; color: var(--text); }
+.gv-check input { margin-top: 2px; }
+.pl-row.sub { font-size: 12.5px; color: var(--muted); padding-left: 14px; }
