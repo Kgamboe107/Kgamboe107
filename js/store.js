@@ -51,6 +51,8 @@
       if (name === 'purchases' && scoped.some(p => !p.sample) && scoped.some(p => p.sample)) return scoped.filter(p => !p.sample);
       return scoped;
     },
+    /* Write without notifying the app (used when applying changes from the cloud) */
+    async raw(name, op, v) { await tx(name, 'readwrite', s => s[op](v)); },
     async del(name, id) { await tx(name, 'readwrite', s => s.delete(id)); App.bus.emit('data-changed', name); },
     async clear(name) { await tx(name, 'readwrite', s => s.clear()); App.bus.emit('data-changed', name); },
 

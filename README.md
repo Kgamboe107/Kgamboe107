@@ -51,6 +51,29 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Accounts, admin approval & cloud sync
+
+The app opens on a **Sign in** page.
+
+**Create an account:** enter your name, email and a password of 10 or more characters. New accounts stay **Waiting for approval** until the administrator approves them.
+
+**Admin approval** (the administrator is koen@gamboeconsulting.com):
+1. Sign in and open **Settings → Account & sync**.
+2. Every account is listed with its status. Click **Approve** to get a **6-digit verification code**. It's valid for 7 days and 5 tries.
+3. Give the code to the person (copy or share it). They enter it on their waiting screen and they're in.
+4. **Decline** or **Remove access** at any time. A removed account sees "Access removed".
+
+**Multi-device sync:** sign in with the same account on the computer, the iPhone app and any browser.
+- Changes upload within seconds. Other devices pick them up every 30 seconds and whenever they're opened.
+- Everything syncs: files with their contents, tables, notes, receipts, targets, calendar items and units.
+- Per-device choices stay local: theme, sign-in, the app lock and API keys.
+
+**Privacy:** everything is encrypted on the device with AES-256, using a key made from your password, before it's uploaded. The server only stores encrypted data, so not even the administrator can read anyone's records. The trade-off is that a forgotten password can't be recovered.
+
+**This device only:** the sign-in page also offers *Use on this device only, without an account*, which works fully offline as before. Sign in later from Settings.
+
+**Backend:** Supabase project *Ops Command Desk* (free plan). It has row-level security on every table and a sign-up function that creates the account as pending.
+
 ## iPhone / phone version
 
 Open **https://kgamboe107.github.io/Kgamboe107/** in Safari on your iPhone, tap **Share → Add to Home Screen**, then **Add**. It opens full screen with its own icon, works offline, and keeps its data on the phone (nothing is sent to a server).

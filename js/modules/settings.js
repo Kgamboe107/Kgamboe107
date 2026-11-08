@@ -11,6 +11,7 @@
             <p class="muted small">Loads realistic example exports and sample Costco, Restaurant Depot and Sysco receipts: Harri timesheet & roster, CrunchTime sales & inventory variance, Webull positions & orders, a Dub portfolio, a P&L, an expense ledger, marketing campaigns, and an Anara research note — so you can explore every module.</p>
             <div class="row"><button class="btn primary" id="sLoad">Load sample data</button><button class="btn" id="sRemove">Remove sample data</button></div>
           </div>
+          ${App.cloud ? await App.cloud.settingsCard() : ''}
           <div class="card stack"><h2>${App.hosted ? 'Phone version' : 'Use it on your iPhone'}</h2>
             ${App.hosted ? `<p class="muted small">${matchMedia('(display-mode: standalone)').matches || navigator.standalone ? 'Installed on this phone. ' : 'To install: in Safari tap <b>Share</b> → <b>Add to Home Screen</b>. '}Your data stays on this phone and keeps working offline.</p>
               <ol class="small" style="margin:0;padding-left:18px"><li>On your computer: Settings → <b>Export backup</b>, then AirDrop it or save it to iCloud Drive.</li><li>Here: <b>Restore backup</b> below and pick that file in Files.</li></ol>
@@ -45,6 +46,7 @@
             <div class="row"><button class="btn destructive" id="sClear">Erase all data…</button></div>
           </div>
         </div>`;
+      App.cloud?.bindSettings(view);
       view.querySelector('#sLoad').onclick = async () => { await App.samples.load(); App.go('dashboard'); };
       view.querySelector('#sRemove').onclick = async () => {
         const n = await App.samples.remove();

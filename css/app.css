@@ -1337,3 +1337,30 @@ html, body { overscroll-behavior-y: none; -webkit-text-size-adjust: 100%; }
 .grid > * { min-width: 0; }
 select { max-width: 100%; min-width: 0; }
 .mapper label, .field { min-width: 0; }
+
+
+/* ---------- Opening page: sign in / sign up / approval ---------- */
+.auth-gate { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  background: radial-gradient(60vw 60vw at 10% 0%, var(--orb1, #c7d2fe), transparent 60%), radial-gradient(50vw 50vw at 100% 100%, var(--orb2, #f5d0fe), transparent 60%), var(--bg); overflow: auto; }
+.auth-card { width: min(420px, 100%); padding: 28px; border-radius: 24px; display: flex; flex-direction: column; gap: 12px;
+  background: color-mix(in srgb, var(--panel) 82%, transparent); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border: 1px solid var(--border); box-shadow: 0 30px 80px -30px rgba(15, 23, 42, .45); }
+.auth-card h1 { font-size: 24px; margin: 6px 0 0; letter-spacing: -0.02em; }
+.auth-brand { display: flex; align-items: center; gap: 12px; }
+.auth-name { font-weight: 650; }
+.auth-card .field input { width: 100%; }
+.auth-go { width: 100%; justify-content: center; min-height: 44px; font-size: 15px; }
+.auth-alt { text-align: center; font-size: 13px; color: var(--muted); }
+.auth-foot { text-align: center; border-top: 1px solid var(--border); padding-top: 12px; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+.linkish.muted { color: var(--muted); font-weight: 500; }
+.auth-code { font-size: 26px !important; letter-spacing: .5em; text-align: center; font-variant-numeric: tabular-nums; }
+.auth-show-code { font-size: 40px; font-weight: 700; letter-spacing: .3em; text-align: center; padding: 18px; border-radius: 16px; background: var(--accent-soft); color: var(--accent); margin: 12px 0; font-variant-numeric: tabular-nums; }
+#syncDot[data-state="ok"] svg, #syncDot[data-state="syncing"] svg { color: var(--good); }
+#syncDot[data-state="error"] svg { color: var(--warn); }
+#syncDot[data-state="syncing"] svg { animation: pulseDot 1.2s ease-in-out infinite; }
+@keyframes pulseDot { 50% { opacity: .35; } }
+
+.auth-gate { background-color: #f4efe8; backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); }
+:root[data-theme="dark"] .auth-gate { background-color: #0b1020; }
+.alert[hidden] { display: none !important; }

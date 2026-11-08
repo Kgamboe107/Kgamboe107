@@ -170,7 +170,9 @@
       if (files.length) { await App.ingest.ingestMany(files); go(current); }
     });
 
-    go(location.hash.slice(1) || 'dashboard')
+    // Opening page: sign in / sign up (or this-device-only) before the app opens
+    (App.cloud ? App.cloud.gate() : Promise.resolve())
+      .then(() => go(location.hash.slice(1) || 'dashboard'))
       .catch(e => console.error('Initial render failed', e))
       .finally(() => {
         App.fx.hideSplash(); window.desktop?.ready?.(); App.fx.maybeOnboard();
