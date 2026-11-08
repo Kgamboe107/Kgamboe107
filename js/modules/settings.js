@@ -41,7 +41,7 @@
             <div class="row"><button class="btn" onclick="window.desktop.openLogs()">Open diagnostic logs</button></div>
           </div>` : ''}
           <div class="card stack"><h2>Reset</h2>
-            <p class="muted small">Permanently deletes all files, data tables, notes, and settings on this computer.</p>
+            <p class="muted small">Permanently deletes all files, data tables, notes, and settings on this ${App.hosted ? 'device' : 'computer'}.</p>
             <div class="row"><button class="btn destructive" id="sClear">Erase all data…</button></div>
           </div>
         </div>`;
@@ -87,7 +87,7 @@
       view.querySelectorAll('[data-surface]').forEach(b => b.onclick = () => { App.ux.setSurface(b.dataset.surface); view.querySelectorAll('[data-surface]').forEach(x => x.classList.toggle('on', x === b)); });
       view.querySelector('#sTheme').onclick = () => App.fx.setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
       view.querySelector('#sClear').onclick = async () => {
-        if (!await App.confirm({ title: 'Erase all data on this computer?', body: 'Every business, file, data table, receipt, note and setting is permanently deleted. Download a backup first if you might need it. This cannot be undone.', ok: 'Erase everything', cancel: 'Keep my data', danger: true })) return;
+        if (!await App.confirm({ title: `Erase all data on this ${App.hosted ? 'device' : 'computer'}?`, body: 'Every business, file, data table, receipt, note and setting is permanently deleted. Download a backup first if you might need it. This cannot be undone.', ok: 'Erase everything', cancel: 'Keep my data', danger: true })) return;
         for (const s of ['files', 'datasets', 'notes', 'purchases']) await App.store.clear(s);
         Object.keys(localStorage).filter(k => k.startsWith('ocd.')).forEach(k => localStorage.removeItem(k));
         App.ui.toast('All data deleted'); App.go('dashboard');

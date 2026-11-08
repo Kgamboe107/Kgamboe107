@@ -279,7 +279,7 @@
       if (step === 0) card.innerHTML = `${steps}
         <div class="onb-logo">OC</div>
         <h2 style="font-size:22px">Welcome to Ops Command Desk</h2>
-        <p class="muted">One place for financials, operations, trading risk, marketing, research, and personnel, across every business you run. Your data stays on this computer.</p>
+        <p class="muted">One place for financials, operations, trading risk, marketing, research, and personnel, across every business you run. Your data stays on this ${App.hosted ? 'device' : 'computer'}.</p>
         <div class="row" style="margin-top:18px"><button class="btn primary" data-next>Get started ${icon('arrow')}</button><button class="btn ghost" data-skip>Skip setup</button></div>`;
       if (step === 1) card.innerHTML = `${steps}
         <h2 style="font-size:20px">Name your first business</h2>
