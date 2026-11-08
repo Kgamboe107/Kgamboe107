@@ -183,7 +183,9 @@
       { g: 'Actions', icon: document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon', label: 'Toggle light / dark mode', run: () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark') },
       { g: 'Actions', icon: 'download', label: 'Export backup', run: () => { App.go('settings').then(() => $('#sExport')?.click()); } },
       { g: 'Actions', icon: 'printer', label: 'Print / save page as PDF', run: () => setTimeout(() => print(), 100) },
-      { g: 'Actions', icon: 'keyboard', label: 'Keyboard shortcuts', run: shortcuts }
+      { g: 'Actions', icon: 'keyboard', label: 'Keyboard shortcuts', run: shortcuts },
+      { g: 'Actions', icon: 'info', label: 'Help & tutorial (step-by-step guides)', run: () => App.help?.open('') },
+      { g: 'Actions', icon: 'sparkles', label: 'Take the guided tour', run: () => App.go('dashboard').then(() => setTimeout(() => App.help?.tour(0), 400)) }
     );
     if (!q) return items;
     const ql = q.toLowerCase();
@@ -241,7 +243,7 @@
     const mod = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl';
     App.ui.modal(`<div class="card-head"><h2>Keyboard shortcuts</h2><button class="btn small" data-close>Close</button></div>
       <div class="stack">${[[`${mod} K`, 'Command palette'], [`${mod} U`, 'Upload files'], [`${mod} B`, 'New business'], [`${mod} J`, 'Toggle light / dark'], [`${mod} /`, 'AI Assistant'], [`${mod} E`, 'New receipt'], [`${mod} Shift L`, 'Lock the app'],
-        ['G then D', 'Go to dashboard'], ['G then L', 'Go to Data Library'], ['G then M', 'Master dashboard'], ['?', 'Show this list']]
+        ['G then D', 'Go to dashboard'], ['G then L', 'Go to Data Library'], ['G then M', 'Master dashboard'], ['?', 'Show this list'], ['F1', 'Help for this page']]
         .map(([k, l]) => `<div class="row spread"><span>${l}</span><span class="row" style="gap:4px">${k.split(' ').map(x => x === 'then' ? '<span class="muted small">then</span>' : `<kbd>${x}</kbd>`).join('')}</span></div>`).join('')}</div>`);
   }
 

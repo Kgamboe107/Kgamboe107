@@ -51,6 +51,15 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Help & tutorial
+
+- Press the **?** button in the top bar (or **F1**) on any page to open the Help Center at that page's help.
+- Help & tutorial is also in the sidebar (Tools) and the command palette.
+- **Quick start:** the first 10 minutes, in eight steps.
+- **Step-by-step guides:** uploading reports, logging receipts, labor and food cost, targets and the weekly review sheet, calendar pay dates and bills, bank, Cash App and Venmo statements, SMG scores and audits, net worth, CPA prep, AI, approving accounts, linking your iPhone, and backups and security.
+- **Reference:** what every page is for and what it can do, every button and control, how the systems work, and keyboard shortcuts. Everything is searchable.
+- **Guided tour:** a one-minute spotlight walk-through of the unit switcher, pages, period picker, upload, search, help and sync. It's offered once to new users and can be started again from Help or the command palette.
+
 ## Accounts, admin approval & cloud sync
 
 The app opens on a **Sign in** page.

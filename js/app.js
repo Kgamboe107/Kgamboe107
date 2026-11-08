@@ -4,7 +4,7 @@
   const TITLES = {
     dashboard: 'Dashboard', library: 'Data Library', finance: 'Financial Analysis', operations: 'Business Operations',
     trading: 'Trading Risk Management', marketing: 'Marketing Strategy', research: 'Research Management',
-    personnel: 'Personnel', businesses: 'Businesses & Personal', wealth: 'Net Worth', tax: 'Taxes & CPA', review: 'Targets & Weekly Review', calendar: 'Calendar', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
+    personnel: 'Personnel', businesses: 'Businesses & Personal', wealth: 'Net Worth', tax: 'Taxes & CPA', review: 'Targets & Weekly Review', calendar: 'Calendar', help: 'Help & tutorial', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';
   let renderToken = 0;
@@ -133,6 +133,8 @@
     $$('#nav [data-sec]').forEach(l => { if (closed[l.dataset.sec]) setSection(l.dataset.sec, false); l.onclick = () => setSection(l.dataset.sec, l.getAttribute('aria-expanded') !== 'true'); });
     $$('[data-theme-set]').forEach(b => b.onclick = e => App.fx.setTheme(b.dataset.themeSet, { x: e.clientX, y: e.clientY }));
     $('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
+    $('#helpBtn').onclick = () => App.help.open(current === 'help' ? '' : current);
+    window.addEventListener('keydown', e => { if (e.key === 'F1') { e.preventDefault(); App.help.open(current === 'help' ? '' : current); } });
     // Phone tab bar
     $$('#tabbar [data-tab]').forEach(b => b.onclick = () => {
       const t = b.dataset.tab;
@@ -182,6 +184,18 @@
       .catch(e => console.error('Initial render failed', e))
       .finally(() => {
         App.fx.hideSplash(); window.desktop?.ready?.(); App.fx.maybeOnboard();
+        // One-time offer of the guided tour for people who haven't seen it
+        setTimeout(() => {
+          if (App.settings.get('help.toured', false) || App.settings.get('help.offered', false) || !$('#modal').hidden || document.getElementById('authGate')) return;
+          App.settings.set('help.offered', true);
+          const n = document.createElement('div');
+          n.className = 'tour-offer glass-pop';
+          n.innerHTML = `<b>New here?</b><span class="muted small">Take a 1-minute tour, or press ? any time for help on the page you're on.</span><div class="row"><button class="btn small primary" data-t>Take the tour</button><button class="btn small" data-h>Open help</button><button class="btn small ghost" data-x>Not now</button></div>`;
+          document.body.appendChild(n);
+          n.querySelector('[data-t]').onclick = () => { n.remove(); App.help.tour(0); };
+          n.querySelector('[data-h]').onclick = () => { n.remove(); App.help.open(''); };
+          n.querySelector('[data-x]').onclick = () => n.remove();
+        }, 2500);
         // Turn on Ollama automatically if it's installed and has a model
         App.ai?.ollamaAutodetect?.().then(on => { if (on && current === 'ai') go('ai'); }).catch(() => {});
       });
