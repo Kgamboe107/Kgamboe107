@@ -16,6 +16,7 @@
     $$('#tabbar [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === route || (b.dataset.tab === 'plan' && (route === 'calendar' || route === 'review'))));
     App.periodUI?.render();
     $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
+    App.navGlow?.();
     const master = App.biz.isMaster();
     const bizName = master ? App.biz.masterLabel() : App.biz.get(App.biz.current()).name;
     $('#pageTitle').innerHTML = route === 'dashboard' ? App.esc(bizName)
@@ -62,7 +63,7 @@
     $('#wsKind').textContent = biz ? `${App.biz.KINDS[App.biz.kindOf(biz)].label}${biz.archived ? ' · archived' : ''}` : 'Roll-up';
     $('#wsName').textContent = biz ? biz.name : App.biz.masterLabel();
     $('#dashLabel').textContent = biz ? 'Dashboard' : App.biz.masterLabel();
-    $$('#nav a[data-route]').forEach(a => a.classList.toggle('hidden', !App.biz.enabled(a.dataset.route)));
+    $$('#nav a[data-route]').forEach(a => a.classList.toggle('hidden', !App.biz.enabled(a.dataset.route))); requestAnimationFrame(navGlow);
     // Hide a section label when everything under it is hidden
     $$('#nav [data-sec-body]').forEach(sec => { const lbl = $(`#nav [data-sec="${sec.dataset.secBody}"]`); lbl.hidden = ![...sec.querySelectorAll('a')].some(a => !a.classList.contains('hidden')); });
   }
@@ -107,6 +108,22 @@
   App.openSwitcher = openSwitcher;
 
   /* Collapsible sidebar (icon rail) + collapsible nav sections, remembered */
+  /* Neon "liquid" highlight that glides to the active page in the sidebar */
+  function navGlow() {
+    const nav = $('#nav'); if (!nav) return;
+    let g = nav.querySelector('.nav-glow');
+    if (!g) {
+      g = document.createElement('span'); g.className = 'nav-glow'; g.setAttribute('aria-hidden', 'true'); nav.prepend(g); nav.classList.add('has-glow');
+      if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(navGlow)).observe(nav);
+    }
+    const a = nav.querySelector('a.active');
+    if (!a || !a.offsetParent) { g.style.opacity = '0'; return; }
+    const first = !g.dataset.on; g.dataset.on = '1';
+    if (first) g.style.transition = 'none';
+    g.style.opacity = '1'; g.style.transform = `translateY(${a.offsetTop}px)`; g.style.height = a.offsetHeight + 'px';
+    if (first) requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transition = ''; }));
+  }
+  App.navGlow = navGlow;
   function setRail(on) {
     document.documentElement.classList.toggle('rail', on);
     App.settings.set('ui.rail', on);
@@ -116,7 +133,7 @@
   App.toggleRail = () => setRail(!document.documentElement.classList.contains('rail'));
   function setSection(sec, open) {
     const lbl = $(`#nav [data-sec="${sec}"]`), body = $(`#nav [data-sec-body="${sec}"]`);
-    lbl.setAttribute('aria-expanded', open); body.classList.toggle('closed', !open);
+    lbl.setAttribute('aria-expanded', open); body.classList.toggle('closed', !open); requestAnimationFrame(navGlow);
     const st = App.settings.get('ui.navClosed', {}); st[sec] = !open; App.settings.set('ui.navClosed', st);
   }
 

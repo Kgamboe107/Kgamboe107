@@ -51,6 +51,18 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Sign-in screens & neon sidebar (v1.27)
+
+- **Opening page:** a liquid backdrop of slowly moving color blobs and light streaks behind a frosted-glass card, in light and dark.
+  - "Welcome back" and "Create account" morph into each other: the card resizes smoothly and the fields slide in.
+  - Field icons light up as you type, and there's a show/hide eye on every password.
+  - "Remember my email on this device" and a password-strength bar.
+  - A spinner on the button while it works, and a shake on errors.
+  - The approval screen has six code boxes; paste or type the code.
+- **Sidebar:** a neon highlight glides to the page you open, with a glowing bar and icon, and hover glows.
+  - The collapse button now floats on the sidebar's edge.
+  - Long menus now scroll instead of squeezing the top items together.
+
 ## Work & Pay: your job as a P&L (personal units)
 
 Treat your paycheck as your **sales** and the hours you put in as your **labor**. Open a personal unit, then **Analysis → Work & Pay**.

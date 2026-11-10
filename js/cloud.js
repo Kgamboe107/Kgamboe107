@@ -272,81 +272,147 @@
   /* ---------- Opening page ---------- */
   const esc = s => App.esc(s);
   let gateResolve = null;
-  function screen(html) {
-    let el = document.getElementById('authGate');
-    if (!el) { el = document.createElement('div'); el.id = 'authGate'; el.className = 'auth-gate'; document.body.appendChild(el); }
-    el.innerHTML = `<div class="auth-card glass-pop">${html}</div>`;
-    App.fx?.hydrateIcons?.(el);
+  function screen(html, dir = 0) {
+    let el = document.getElementById('authGate'), fresh = false;
+    if (!el) {
+      fresh = true;
+      el = document.createElement('div'); el.id = 'authGate'; el.className = 'auth-gate';
+      // Liquid backdrop: slow-moving blurred blobs and light streaks behind the glass card
+      el.innerHTML = `<div class="ag-bg" aria-hidden="true"><i class="ag-blob b1"></i><i class="ag-blob b2"></i><i class="ag-blob b3"></i><i class="ag-blob b4"></i>
+        <svg class="ag-streaks" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="agS" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#c4b5fd" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+        <path d="M-100 620 C 200 420, 420 760, 720 520 S 1150 300, 1320 420"/><path d="M-120 700 C 260 520, 520 820, 820 600 S 1180 420, 1320 520"/><path d="M-80 180 C 240 60, 520 300, 820 160 S 1160 40, 1320 120"/></svg></div>
+        <div class="auth-card"><div class="ag-sheen" aria-hidden="true"></div><div class="ag-body"></div></div>`;
+      document.body.appendChild(el);
+    }
+    const card = el.querySelector('.auth-card'), body = el.querySelector('.ag-body');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const h0 = card.getBoundingClientRect().height;
+    body.innerHTML = html;
+    App.fx?.hydrateIcons?.(body);
+    enhance(body);
+    if (!fresh && !reduce && card.animate) {
+      // The card morphs to its new height while the new content slides in
+      const h1 = card.getBoundingClientRect().height;
+      card.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      [...body.children].forEach((c, i) => c.animate([{ opacity: 0, transform: `translateX(${dir * 26}px) translateY(${dir ? 0 : 8}px)`, filter: 'blur(4px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }],
+        { duration: 380, delay: 40 + i * 35, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }));
+    }
     document.getElementById('splash')?.remove();
     return el;
   }
-  const done = () => { document.getElementById('authGate')?.remove(); const r = gateResolve; gateResolve = null; r?.(); };
+  /* Field icons, show/hide password, strength meter, 6-box code */
+  const IC = {
+    mail: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
+    lock: '<svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>',
+    user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    eyeOff: '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a10.6 10.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+    arrow: '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+  };
+  const fld = (id, label, type, ac, icon, extra = '') => `<label class="ag-field"><span class="ag-lbl">${label}</span><span class="ag-in"><span class="ag-ic">${IC[icon]}</span>
+    <input id="${id}" type="${type}" autocomplete="${ac}" placeholder=" " ${extra}>${type === 'password' ? `<button type="button" class="ag-eye" aria-label="Show password" data-eye="${id}">${IC.eye}</button>` : ''}</span></label>`;
+  function enhance(root) {
+    root.querySelectorAll('[data-eye]').forEach(b => b.onclick = () => {
+      const i = root.querySelector('#' + b.dataset.eye), show = i.type === 'password';
+      i.type = show ? 'text' : 'password'; b.innerHTML = show ? IC.eyeOff : IC.eye; b.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); i.focus();
+    });
+    root.querySelectorAll('.ag-in input').forEach(i => { const up = () => i.closest('.ag-in').classList.toggle('filled', !!i.value); i.addEventListener('input', up); up(); });
+    const meter = root.querySelector('.ag-meter');
+    if (meter) {
+      const pw = root.querySelector('#agPw');
+      pw.addEventListener('input', () => {
+        const v = pw.value, s = !v ? 0 : (v.length >= 10) + (v.length >= 14) + (/[A-Z]/.test(v) && /[a-z]/.test(v)) + /\d/.test(v) + /[^A-Za-z0-9]/.test(v);
+        const lvl = !v ? 0 : v.length < 10 ? 1 : s <= 2 ? 2 : s <= 3 ? 3 : 4;
+        meter.dataset.l = lvl; meter.querySelector('span').textContent = ['', 'Too short (10+ characters)', 'Fair', 'Good', 'Strong'][lvl];
+      });
+    }
+    const otp = root.querySelector('.ag-otp');
+    if (otp) {
+      const inp = otp.querySelector('input'), cells = [...otp.querySelectorAll('.ag-cell')];
+      const draw = () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 6); const v = inp.value; cells.forEach((c, i) => { c.textContent = v[i] || ''; c.classList.toggle('on', document.activeElement === inp && i === Math.min(v.length, 5)); c.classList.toggle('done', !!v[i]); }); };
+      ['input', 'focus', 'blur', 'keyup'].forEach(ev => inp.addEventListener(ev, draw)); draw();
+    }
+  }
+  const setBusy = (b, on, label) => { b.disabled = on; b.classList.toggle('loading', on); b.querySelector('.ag-go-t').textContent = label; };
+  const shake = el => el.querySelector('.auth-card')?.animate?.([{ transform: 'translateX(0)' }, { transform: 'translateX(-9px)' }, { transform: 'translateX(8px)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(3px)' }, { transform: 'translateX(0)' }], { duration: 420, easing: 'ease-out' });
+  const goBtn = label => `<button class="btn primary auth-go" type="submit"><span class="ag-spin" aria-hidden="true"></span><span class="ag-go-t">${label}</span>${IC.arrow}</button>`;
+  const done = () => {
+    const el = document.getElementById('authGate'); const r = gateResolve; gateResolve = null;
+    if (el && el.animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) { el.classList.add('leaving'); setTimeout(() => el.remove(), 360); } else el?.remove();
+    r?.();
+  };
   const brand = `<div class="auth-brand"><div class="brand-mark">OC</div><div><div class="auth-name">Ops Command Desk</div><div class="muted small">Operations Manager</div></div></div>`;
 
-  function showSignIn(msg = '') {
+  function showSignIn(msg = '', dir = 0) {
     const el = screen(`${brand}
-      <h1>Sign in</h1><p class="muted small">Use your account to see your data on every device. It updates automatically.</p>
-      <form id="agIn" class="stack" autocomplete="on">
-        <label class="field">Email<input id="agEmail" type="email" autocomplete="username" required></label>
-        <label class="field">Password<input id="agPw" type="password" autocomplete="current-password" required></label>
+      <div class="ag-head"><h1>Welcome <span class="ag-grad">back</span></h1><p class="muted small">Sign in to see your data on every device. It updates automatically.</p></div>
+      <form id="agIn" class="ag-form" autocomplete="on">
+        ${fld('agEmail', 'Email address', 'email', 'username', 'mail', 'required')}
+        ${fld('agPw', 'Password', 'password', 'current-password', 'lock', 'required')}
+        <label class="ag-check"><input type="checkbox" id="agRemember" ${S.get('rememberEmail') === false ? '' : 'checked'}><span class="ag-box"></span>Remember my email on this device</label>
         <div class="alert bad small" id="agErr" ${msg ? '' : 'hidden'}>${esc(msg)}</div>
-        <button class="btn primary auth-go" type="submit">Sign in</button>
+        ${goBtn('Sign in')}
       </form>
       <div class="auth-alt">New here? <button class="linkish" id="agToUp">Create an account</button></div>
-      <div class="auth-foot"><button class="linkish muted small" id="agLocal">Use on this device only, without an account</button></div>`);
-    const err = m => { const e = el.querySelector('#agErr'); e.hidden = !m; e.textContent = m; };
+      <div class="auth-foot"><button class="linkish muted small" id="agLocal">Use on this device only, without an account</button></div>`, dir);
+    const err = m => { const e = el.querySelector('#agErr'); e.hidden = !m; e.textContent = m; if (m) shake(el); };
     el.querySelector('#agIn').onsubmit = async e => {
-      e.preventDefault(); const b = el.querySelector('.auth-go'); b.disabled = true; b.textContent = 'Signing in…'; err('');
-      try { await signIn(el.querySelector('#agEmail').value, el.querySelector('#agPw').value); await afterSignIn(); }
-      catch (x) { err(x.message); b.disabled = false; b.textContent = 'Sign in'; }
+      e.preventDefault(); const b = el.querySelector('.auth-go'); setBusy(b, true, 'Signing in…'); err('');
+      const remember = el.querySelector('#agRemember').checked; S.set('rememberEmail', remember);
+      try { await signIn(el.querySelector('#agEmail').value, el.querySelector('#agPw').value); if (!remember) S.set('lastEmail', ''); await afterSignIn(); }
+      catch (x) { setBusy(b, false, 'Sign in'); err(x.message); }
     };
-    el.querySelector('#agToUp').onclick = () => showSignUp();
+    el.querySelector('#agToUp').onclick = () => showSignUp(1);
     el.querySelector('#agLocal').onclick = () => { S.set('mode', 'local'); done(); };
-    const pre = new URLSearchParams(location.search).get('email') || S.get('lastEmail');
-    if (pre) { el.querySelector('#agEmail').value = pre; setTimeout(() => el.querySelector('#agPw')?.focus(), 60); }
+    const pre = new URLSearchParams(location.search).get('email') || (S.get('rememberEmail') === false ? '' : S.get('lastEmail'));
+    if (pre) { const i = el.querySelector('#agEmail'); i.value = pre; i.dispatchEvent(new Event('input')); setTimeout(() => el.querySelector('#agPw')?.focus(), 60); }
     else setTimeout(() => el.querySelector('#agEmail')?.focus(), 50);
   }
-  function showSignUp() {
+  function showSignUp(dir = 0) {
     const el = screen(`${brand}
-      <h1>Create an account</h1><p class="muted small">After you sign up, the administrator approves your account and gives you a 6-digit verification code.</p>
-      <form id="agUp" class="stack" autocomplete="on">
-        <label class="field">Your name<input id="agName" autocomplete="name" required></label>
-        <label class="field">Email<input id="agEmail" type="email" autocomplete="username" required></label>
-        <label class="field">Password (10+ characters)<input id="agPw" type="password" autocomplete="new-password" minlength="10" required></label>
-        <label class="field">Confirm password<input id="agPw2" type="password" autocomplete="new-password" minlength="10" required></label>
+      <div class="ag-head"><h1>Create <span class="ag-grad">account</span></h1><p class="muted small">After you sign up, the administrator approves your account and gives you a 6-digit verification code.</p></div>
+      <form id="agUp" class="ag-form" autocomplete="on">
+        ${fld('agName', 'Your name', 'text', 'name', 'user', 'required')}
+        ${fld('agEmail', 'Email address', 'email', 'username', 'mail', 'required')}
+        <div class="ag-two">${fld('agPw', 'Password', 'password', 'new-password', 'lock', 'minlength="10" required')}${fld('agPw2', 'Confirm password', 'password', 'new-password', 'lock', 'minlength="10" required')}</div>
+        <div class="ag-meter" data-l="0"><i></i><i></i><i></i><i></i><span>10+ characters</span></div>
         <div class="muted tiny">Your data is encrypted with this password before it leaves your device. There is no way to recover data if you forget it.</div>
         <div class="alert bad small" id="agErr" hidden></div>
-        <button class="btn primary auth-go" type="submit">Create account</button>
+        ${goBtn('Create account')}
       </form>
-      <div class="auth-alt">Have an account? <button class="linkish" id="agToIn">Sign in</button></div>`);
-    const err = m => { const e = el.querySelector('#agErr'); e.hidden = !m; e.textContent = m; };
+      <div class="auth-alt">Have an account? <button class="linkish" id="agToIn">Sign in</button></div>`, dir);
+    const err = m => { const e = el.querySelector('#agErr'); e.hidden = !m; e.textContent = m; if (m) shake(el); };
     el.querySelector('#agUp').onsubmit = async e => {
       e.preventDefault(); err('');
       const pw = el.querySelector('#agPw').value;
       if (pw !== el.querySelector('#agPw2').value) return err('The passwords don’t match.');
-      const b = el.querySelector('.auth-go'); b.disabled = true; b.textContent = 'Creating…';
+      const b = el.querySelector('.auth-go'); setBusy(b, true, 'Creating…');
       try { await signUp(el.querySelector('#agName').value.trim(), el.querySelector('#agEmail').value, pw); await afterSignIn(); }
-      catch (x) { err(x.message); b.disabled = false; b.textContent = 'Create account'; }
+      catch (x) { setBusy(b, false, 'Create account'); err(x.message); }
     };
-    el.querySelector('#agToIn').onclick = () => showSignIn();
+    el.querySelector('#agToIn').onclick = () => showSignIn('', -1);
+    setTimeout(() => el.querySelector('#agName')?.focus(), 50);
   }
   function showPending(p, msg = '') {
     const revoked = p?.status === 'revoked';
     const el = screen(`${brand}
-      <h1>${revoked ? 'Access removed' : 'Waiting for approval'}</h1>
-      <p class="muted small">${revoked ? 'The administrator removed access for this account. Ask them to approve it again, then enter the new code.' : `Your account <b>${esc(user()?.email || '')}</b> was created. Ask the administrator for your 6-digit verification code and enter it here.`}</p>
-      <form id="agCode" class="stack">
-        <label class="field">Verification code<input id="agC" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" class="auth-code" required></label>
+      <div class="ag-head"><div class="ag-badge ${revoked ? 'bad' : ''}">${revoked ? IC.lock : '<span class="ag-pulse"></span>'}${revoked ? 'Access removed' : 'Waiting for approval'}</div>
+      <h1>${revoked ? 'Ask for a new <span class="ag-grad">code</span>' : 'Enter your <span class="ag-grad">code</span>'}</h1>
+      <p class="muted small">${revoked ? 'The administrator removed access for this account. Ask them to approve it again, then enter the new code.' : `Your account <b>${esc(user()?.email || '')}</b> was created. Ask the administrator for your 6-digit verification code and enter it here.`}</p></div>
+      <form id="agCode" class="ag-form">
+        <label class="ag-otp" aria-label="6-digit verification code"><input id="agC" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+          <span class="ag-cells" aria-hidden="true">${'<span class="ag-cell"></span>'.repeat(6)}</span></label>
         <div class="alert bad small" id="agErr" ${msg ? '' : 'hidden'}>${esc(msg)}</div>
-        <button class="btn primary auth-go" type="submit">Verify</button>
+        ${goBtn('Verify')}
       </form>
       <div class="auth-alt"><button class="linkish" id="agOut">Sign out</button></div>`);
+    if (msg) shake(el);
     el.querySelector('#agCode').onsubmit = async e => {
-      e.preventDefault(); const b = el.querySelector('.auth-go'); b.disabled = true; b.textContent = 'Checking…';
+      e.preventDefault(); const b = el.querySelector('.auth-go'); setBusy(b, true, 'Checking…');
       try { const ok = await redeem(el.querySelector('#agC').value.trim()); if (ok) return afterSignIn(); showPending(await profile(), 'That code isn’t right or has expired. Check it with the administrator (5 tries per code).'); }
       catch (x) { showPending(p, x.message); }
     };
-    el.querySelector('#agOut').onclick = async () => { await signOut(); showSignIn(); };
+    el.querySelector('#agOut').onclick = async () => { await signOut(); showSignIn('', -1); };
     setTimeout(() => el.querySelector('#agC')?.focus(), 50);
   }
   async function afterSignIn() {
