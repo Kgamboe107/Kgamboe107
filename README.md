@@ -144,9 +144,14 @@ Notes, meetings and people you add are yours to edit. Everything links with `[[T
 
 The repository should be **private**, and the phone/web version should sit behind a login gate so no one else can even download its files. One-time setup:
 
-1. **Cloudflare:** create a free account. Under **Workers & Pages**, create a Pages project named `ops-command-desk` (choose *Direct upload* and skip the upload).
-2. **Login gate:** in **Zero Trust → Access → Applications**, add a *Self-hosted* app for `ops-command-desk.pages.dev` and `*.ops-command-desk.pages.dev`. Add a policy that allows only your own email (one-time code login). Set the session to 1 month so the phone stays signed in.
-3. **Deploy keys:** create a Cloudflare API token with *Cloudflare Pages: Edit*. In GitHub → **Settings → Secrets and variables → Actions**, add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Every push to `master` then publishes through `.github/workflows/cloudflare.yml`.
+1. **Cloudflare Pages:** in **Workers & Pages**, create a Pages project connected to this GitHub repo (or use direct upload; see step 3). Set:
+   - **Production branch:** `master`
+   - **Build command:** `bash scripts/build-web.sh`
+   - **Build output directory:** `_site`
+
+   The build publishes only the app files and stops if the privacy check finds an email address or a secret.
+2. **Login gate:** in **Zero Trust → Access → Applications**, add a *Self-hosted* app with two hostnames, your Pages address (for example `ops-command-desk.pages.dev`) and `*.ops-command-desk.pages.dev`, so preview builds are covered too. Add an *Allow* policy for your own email only (one-time code login), and set the session to 1 month so the phone stays signed in.
+3. **Only if you didn't connect GitHub in step 1:** create an API token with *Cloudflare Pages: Edit*. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` under GitHub → **Settings → Secrets and variables → Actions**, and `.github/workflows/cloudflare.yml` will publish on every push to `master`.
 4. **Turn off the public site:** in GitHub → **Settings → Pages**, unpublish it. The old GitHub Pages workflow now only runs if you start it by hand.
 5. **Make the repo private:** GitHub → **Settings → General → Danger Zone → Change visibility → Private**.
 6. On the iPhone, open `https://ops-command-desk.pages.dev/unit.html`, sign in with the email code, then **Share → Add to Home Screen**. If you use another address, change `App.WEB_URL` in `js/version.js`.

@@ -2,7 +2,9 @@ name: Publish private web version (Cloudflare)
 
 # Publishes the phone / web version to Cloudflare Pages. Cloudflare Access (set up once in the Cloudflare
 # dashboard) makes the site send nothing until you sign in, so only you can load the app or its code.
-# Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (see README → Private hosting).
+# Only needed if you don't use Cloudflare's own GitHub connection. With the connection, Cloudflare builds the
+# site itself (build command: bash scripts/build-web.sh, output: _site) and this workflow skips publishing.
+# Without it, add repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 
 on:
   push:
@@ -21,17 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Assemble the web app
-        run: |
-          mkdir -p _site
-          cp -r index.html unit.html manifest.webmanifest sw.js css js vendor icons unit _site/
-          (cd _site && find css js vendor icons unit manifest.webmanifest unit.html -type f | grep -v LICENSE | grep -v vendor/tesseract | sort | python3 -c "import json,sys; print(json.dumps([l.strip() for l in sys.stdin]))" > precache.json)
-          sed -i "s/const VERSION = 'dev';/const VERSION = '${GITHUB_SHA::12}';/" _site/sw.js
-          # No search engines, no caching of the login-gated pages by shared proxies
-          printf 'User-agent: *\nDisallow: /\n' > _site/robots.txt
-          printf '/*\n  X-Robots-Tag: noindex, nofollow\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n  Cache-Control: private, no-cache\n' > _site/_headers
-      - name: Privacy check
-        run: bash scripts/privacy-check.sh _site
+      - name: Build the web app (includes the privacy check)
+        run: bash scripts/build-web.sh
       - name: Skip if Cloudflare isn't set up yet
         id: cf
         env:
