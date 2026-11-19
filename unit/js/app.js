@@ -17,15 +17,17 @@
     imports: '<path d="M12 3.5v10M8 9.5l4 4 4-4"/><path d="M3.5 14.5l1.7 4.3a1.5 1.5 0 0 0 1.4 1h10.8a1.5 1.5 0 0 0 1.4-1l1.7-4.3"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.1M12 19.1v2.1M21.2 12h-2.1M4.9 12H2.8M18.5 5.5 17 7M7 17l-1.5 1.5M18.5 18.5 17 17M7 7 5.5 5.5"/><circle cx="12" cy="12" r="6.8"/>',
     refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.2h-4.2"/>',
-    back: '<path d="M14.5 5 8 12l6.5 7"/>'
+    back: '<path d="M14.5 5 8 12l6.5 7"/>',
+    projects: '<rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M8 9.5h8M8 13h5M8 16.5h3"/><circle cx="17.5" cy="16" r="2.2" fill="currentColor" stroke="none"/>',
+    growth: '<path d="M4 18.5 9.5 13l3.5 3.5L20 9.5"/><path d="M15 9.5h5v5"/>'
   };
   UC.icon = (n, cls = '') => ICO[n] ? `<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]}</svg>` : App.fx.icon(n, cls);
   const ROUTES = [
-    ['today', 'Today', 'today'], ['brain', 'Brain', 'brain'], ['units', 'Units', 'units'], ['agents', 'Agents', 'agents'], ['ventures', 'Ventures', 'ventures'],
+    ['today', 'Today', 'today'], ['projects', 'Projects', 'projects'], ['brain', 'Brain', 'brain'], ['units', 'Units', 'units'], ['agents', 'Agents', 'agents'], ['ventures', 'Ventures', 'ventures'],
     ['map', 'Agent Map', 'map'], ['knowledge', 'Knowledge', 'knowledge'], ['imports', 'Imports', 'imports'], ['settings', 'Settings', 'settings']
   ];
-  const MORE = ['ventures', 'map', 'knowledge', 'imports', 'settings'];
-  const TABS = ['today', 'brain', 'units', 'agents', 'more'];
+  const MORE = ['agents', 'ventures', 'map', 'knowledge', 'imports', 'settings'];
+  const TABS = ['today', 'projects', 'brain', 'units', 'more'];
   UC.screens = UC.screens || {};
   let current = 'today', token = 0;
 

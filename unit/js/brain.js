@@ -21,10 +21,10 @@
   const TYPES = {
     unit: ['Business', 'Unit'], month: ['Business', 'Monthly report'], import: ['Imports', 'Import'], purchases: ['Business', 'Purchases'], vendor: ['Vendors', 'Vendor'],
     agent: ['Agents', 'Agent result'], log: ['Journal', 'Agent log'], decision: ['Decisions', 'Decision'], venture: ['Ventures', 'Venture'], knowledge: ['Knowledge', 'Knowledge'],
-    research: ['Research', 'Research note'], personal: ['Personal', 'Personal'], note: ['Notes', 'Note'], meeting: ['Notes', 'Meeting'], person: ['People', 'Person']
+    research: ['Research', 'Research note'], project: ['Projects', 'Project'], prospect: ['Growth', 'Prospect'], objectives: ['Journal', 'Daily objectives'], personal: ['Personal', 'Personal'], note: ['Notes', 'Note'], meeting: ['Notes', 'Meeting'], person: ['People', 'Person']
   };
   UC.BRAIN_TYPES = TYPES;
-  const SECTION_COLORS = { Business: '#6366f1', Imports: '#06b6d4', Vendors: '#14b8a6', Agents: '#f59e0b', Journal: '#94a3b8', Decisions: '#ef4444', Ventures: '#f97316', Knowledge: '#a3a3a3', Research: '#8b5cf6', Personal: '#ec4899', Notes: '#22c55e', People: '#eab308' };
+  const SECTION_COLORS = { Projects: '#E9B949', Growth: '#2F9BFF', Business: '#6366f1', Imports: '#06b6d4', Vendors: '#14b8a6', Agents: '#f59e0b', Journal: '#94a3b8', Decisions: '#ef4444', Ventures: '#f97316', Knowledge: '#a3a3a3', Research: '#8b5cf6', Personal: '#ec4899', Notes: '#22c55e', People: '#eab308' };
   UC.sectionColor = s => SECTION_COLORS[String(s).split('/')[0]] || '#64748b';
 
   /* ---------- in-memory index ---------- */
@@ -213,6 +213,15 @@
       await keep({ id: `decision:${q.id}`, type: 'decision', title: `${q.status === 'approved' ? 'Yes' : 'No'} · ${q.title}`.slice(0, 90), section: P('Decisions', String(new Date(q.decidedAt).getFullYear())), date: App.dateKey(new Date(q.decidedAt)), tags: ['decision', q.status, a?.key].filter(Boolean),
         links: q.out ? [`agent:${q.out}`] : [],
         body: `You **${q.status === 'approved' ? 'approved' : 'declined'}** a draft from ${a ? a.name : 'an agent'}${q.to ? ` for ${q.to}` : ''} on ${fmtDay(App.dateKey(new Date(q.decidedAt)))}${q.demo ? ' (demo data)' : ''}.\n\n## Draft\n${q.detail || ''}`, updated: q.decidedAt });
+    }
+
+    // Projects run by the Coordinator
+    for (const pr of (UC.coord?.list() || [])) {
+      const st = { todo: ' ', running: '~', done: 'x', waiting: 'x', failed: '!', skipped: '-' };
+      await keep({ id: `project:${pr.id}`, type: 'project', title: pr.name || pr.goal.slice(0, 80), section: P('Projects', String(new Date(pr.created).getFullYear())), date: App.dateKey(new Date(pr.created)), tags: ['project', pr.status],
+        links: pr.tasks.filter(t => t.out).map(t => `agent:${t.out}`).concat(pr.forkOf ? [`project:${pr.forkOf}`] : []),
+        body: `**Goal:** ${pr.goal}${pr.approach ? `\n\n**Approach:** ${pr.approach}` : ''}\n\nStatus: ${pr.status}. ${pr.summary || ''}\n\n## Steps\n${pr.tasks.map(t => `- [${st[t.status] || ' '}] ${t.title} (${UC.agent(t.agent)?.name || t.agent})${t.summary ? `: ${t.summary}` : ''}`).join('\n')}${(pr.asks || []).length ? `\n\n## Side questions\n${pr.asks.map(a => `- **${a.q}** ${a.a.slice(0, 300)}`).join('\n')}` : ''}`,
+        updated: pr.updated || pr.created });
     }
 
     // Ventures, knowledge, research notes

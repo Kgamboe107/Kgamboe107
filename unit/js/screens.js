@@ -222,6 +222,7 @@
         <p class="muted tiny">Bigger models write better plans and drafts. qwen3:8b or gemma3 is worth it if this computer has 16 GB of memory.</p>
         <label class="row small" style="margin-top:6px"><input type="checkbox" id="aiAuto" ${ap.on ? 'checked' : ''}> Autopilot: run due agents on their schedule while this app is open</label>
         <label class="row small"><input type="checkbox" id="aiVen" ${ap.ventures ? 'checked' : ''}> Include venture agents when a venture reaches their stage</label>
+        <div class="uc-targets" style="margin-top:8px"><label class="field">Daily AI time budget for projects<span class="uc-in"><input type="number" id="aiBud" min="10" step="10" value="${UC.S.get('coord.budgetMin', 60)}" inputmode="numeric"><i>min</i></span></label></div>
         <div class="row" style="margin-top:8px"><button class="btn" id="aiNow">${App.fx.icon('sparkles')} Run due agents now (${due})</button></div>` : ''}</section>`;
   };
   UC.bindAiSettings = view => {
@@ -231,6 +232,7 @@
     view.querySelector('#aiC')?.addEventListener('change', e => App.settings.set('ai.ollama.ctx', +e.target.value));
     view.querySelector('#aiAuto')?.addEventListener('change', e => { UC.ai.setAuto({ on: e.target.checked }); App.ui.toast(e.target.checked ? 'Autopilot on' : 'Autopilot off'); if (e.target.checked) UC.ai.tick(); });
     view.querySelector('#aiVen')?.addEventListener('change', e => UC.ai.setAuto({ ventures: e.target.checked }));
+    view.querySelector('#aiBud')?.addEventListener('change', e => UC.S.set('coord.budgetMin', Math.max(10, +e.target.value || 60)));
     view.querySelector('#aiNow')?.addEventListener('click', () => { App.ui.toast('Running due agents in the background'); UC.ai.tick(true); });
   };
 
