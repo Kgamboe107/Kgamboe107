@@ -69,8 +69,55 @@ function aiRelay(req, res) {
   });
 }
 
+/* Website reader for Unit Command's Growth section: GET a public web page and return its HTML.
+   Public internet only: private, loopback, link-local and reserved addresses are refused (checked after DNS,
+   on every redirect), at most 3 redirects, 1.5 MB, 15 s. */
+const dns = require('dns').promises;
+const net = require('net');
+function privateIp(ip) {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224 || (a === 198 && (b === 18 || b === 19));
+  }
+  const v = ip.toLowerCase();
+  if (v.startsWith('::ffff:')) return privateIp(v.slice(7));
+  return v === '::1' || v === '::' || v.startsWith('fc') || v.startsWith('fd') || v.startsWith('fe8') || v.startsWith('fe9') || v.startsWith('fea') || v.startsWith('feb') || v.startsWith('ff');
+}
+async function fetchPage(target, hops = 0) {
+  const u = new URL(target);
+  if (!/^https?:$/.test(u.protocol) || u.username || u.password || (u.port && !['80', '443', ''].includes(u.port))) throw new Error('Only plain public web pages can be read.');
+  const addrs = await dns.lookup(u.hostname, { all: true });
+  if (!addrs.length || addrs.some(a => privateIp(a.address))) throw new Error('That address is not on the public internet.');
+  return new Promise((resolve, reject) => {
+    const req = (u.protocol === 'https:' ? https : http).get(u, { timeout: 15000, lookup: (h, o, cb) => cb(null, addrs[0].address, addrs[0].family),
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; UnitCommand/1.0; +site-reader)', Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'en' } }, r => {
+      if (r.statusCode >= 300 && r.statusCode < 400 && r.headers.location) {
+        r.resume(); if (hops >= 3) return reject(new Error('Too many redirects.'));
+        return resolve(fetchPage(new URL(r.headers.location, u).href, hops + 1));
+      }
+      const type = String(r.headers['content-type'] || '');
+      if (!/text\/html|application\/xhtml/i.test(type)) { r.resume(); return reject(new Error('Not a web page (' + (type || 'unknown type') + ').')); }
+      let size = 0; const chunks = [];
+      r.on('data', c => { size += c.length; if (size > 1.5e6) { req.destroy(); return; } chunks.push(c); });
+      r.on('end', () => resolve({ url: u.href, status: r.statusCode, lastModified: r.headers['last-modified'] || '', html: Buffer.concat(chunks).toString('utf8').slice(0, 1.5e6) }));
+      r.on('error', reject);
+    });
+    req.on('timeout', () => req.destroy(new Error('The site took too long to answer.')));
+    req.on('error', reject);
+  });
+}
+async function fetchRelay(req, res) {
+  const send = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
+  if (req.method !== 'GET' || req.headers['x-ocd-client'] !== '1' || !LOOPBACK.test(req.headers.host || '')) return send(403, { error: 'Forbidden' });
+  const origin = req.headers.origin; if (origin && !LOOPBACK.test(origin.replace(/^https?:\/\//, ''))) return send(403, { error: 'Forbidden origin' });
+  const target = new URL(req.url, 'http://x').searchParams.get('url') || '';
+  try { send(200, await fetchPage(/^https?:\/\//i.test(target) ? target : 'https://' + target)); }
+  catch (e) { send(200, { error: e.message }); }
+}
+
 function handler(req, res) {
   if (req.url.split('?')[0] === '/api/ai') return aiRelay(req, res);
+  if (req.url.split('?')[0] === '/api/fetch') return fetchRelay(req, res);
   let rel;
   try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '') || 'index.html'; }
   catch { res.writeHead(400); return res.end('Bad request'); }

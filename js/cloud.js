@@ -9,7 +9,7 @@
     url: 'https://tatfzakpmpmgaijhwcob.supabase.co',
     key: 'sb_publishable_Pbv3uD6blYU5VWPAzN1Jtw_BdAV3lju'
   };
-  const STORES = ['files', 'datasets', 'notes', 'purchases', 'spending', 'giving', 'gigs', 'work', 'agentout', 'brain', 'facts']; // 'brainvec' stays on each device
+  const STORES = ['files', 'datasets', 'notes', 'purchases', 'spending', 'giving', 'gigs', 'work', 'agentout', 'brain', 'facts', 'prospects']; // 'brainvec' stays on each device
   const ATT = ['purchases', 'spending', 'giving', 'gigs', 'work']; // stores whose records carry an attachment (receipt photo / PDF)
   // Settings that stay on each device: sign-in, sync state, app lock, API-key markers, window state
   const LOCAL_ONLY = /^(cloud\.|sync\.|lock|secret\.|onboarded$|theme$|surface$|rail$|activeBiz$|ai\.ollama)/;

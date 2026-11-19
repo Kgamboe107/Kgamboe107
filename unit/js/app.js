@@ -23,10 +23,10 @@
   };
   UC.icon = (n, cls = '') => ICO[n] ? `<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]}</svg>` : App.fx.icon(n, cls);
   const ROUTES = [
-    ['today', 'Today', 'today'], ['projects', 'Projects', 'projects'], ['brain', 'Brain', 'brain'], ['units', 'Units', 'units'], ['agents', 'Agents', 'agents'], ['ventures', 'Ventures', 'ventures'],
+    ['today', 'Today', 'today'], ['projects', 'Projects', 'projects'], ['growth', 'Growth', 'growth'], ['brain', 'Brain', 'brain'], ['units', 'Units', 'units'], ['agents', 'Agents', 'agents'], ['ventures', 'Ventures', 'ventures'],
     ['map', 'Agent Map', 'map'], ['knowledge', 'Knowledge', 'knowledge'], ['imports', 'Imports', 'imports'], ['settings', 'Settings', 'settings']
   ];
-  const MORE = ['agents', 'ventures', 'map', 'knowledge', 'imports', 'settings'];
+  const MORE = ['growth', 'agents', 'ventures', 'map', 'knowledge', 'imports', 'settings'];
   const TABS = ['today', 'projects', 'brain', 'units', 'more'];
   UC.screens = UC.screens || {};
   let current = 'today', token = 0;

@@ -215,6 +215,14 @@
         body: `You **${q.status === 'approved' ? 'approved' : 'declined'}** a draft from ${a ? a.name : 'an agent'}${q.to ? ` for ${q.to}` : ''} on ${fmtDay(App.dateKey(new Date(q.decidedAt)))}${q.demo ? ' (demo data)' : ''}.\n\n## Draft\n${q.detail || ''}`, updated: q.decidedAt });
     }
 
+    // Growth: every prospect you've written to or heard from
+    for (const pr of (await App.store.all('prospects', { raw: true }).catch(() => [])).filter(x => x.draft || (x.thread || []).length || ['meeting', 'won', 'lost'].includes(x.status))) {
+      const camp = (UC.growth?.campaigns() || []).find(c => c.id === pr.campaign);
+      await keep({ id: `prospect:${pr.id}`, type: 'prospect', title: pr.name, section: P('Growth', clean(camp?.name || 'Outreach')), date: App.dateKey(new Date(pr.created)), tags: ['prospect', pr.status, ...(pr.category ? [pr.category] : [])],
+        body: `**${pr.name}**${pr.category ? `, ${pr.category}` : ''}${pr.address ? `, ${pr.address}` : ''}. Status: ${pr.status}.${pr.email ? ` Email: ${pr.email}.` : ''}${pr.website ? ` Website: ${pr.website}.` : ''}\n\n${pr.site?.facts?.length ? `## From their website\n${pr.site.facts.map(f => `- ${f}`).join('\n')}\n\n` : ''}${pr.draft ? `## Email\n**${pr.draft.subject}**\n\n${pr.draft.body}\n\n` : ''}${(pr.thread || []).length ? `## Conversation\n${pr.thread.map(m => `- ${m.from === 'me' ? 'Us' : pr.name} (${App.dateKey(new Date(m.t))}): ${m.text.slice(0, 600)}`).join('\n')}` : ''}`,
+        updated: pr.updated || pr.created });
+    }
+
     // Projects run by the Coordinator
     for (const pr of (UC.coord?.list() || [])) {
       const st = { todo: ' ', running: '~', done: 'x', waiting: 'x', failed: '!', skipped: '-' };
