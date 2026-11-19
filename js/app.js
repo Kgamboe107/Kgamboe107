@@ -3,7 +3,7 @@
   const { $, $$ } = App;
   const TITLES = {
     dashboard: 'Dashboard', library: 'Data Library', finance: 'Financial Analysis', operations: 'Business Operations',
-    trading: 'Trading Risk Management', marketing: 'Marketing Strategy', research: 'Research Management',
+    trading: 'Trading Risk Management', command: 'Command Map', marketing: 'Marketing Strategy', research: 'Research Management',
     personnel: 'Personnel', businesses: 'Businesses & Personal', wealth: 'Net Worth', tax: 'Taxes & CPA', review: 'Targets & Weekly Review', calendar: 'Calendar', help: 'Help & tutorial', spending: 'Personal Spending', giving: 'Charitable Giving', gigs: '1099 Work', work: 'Work & Pay', ai: 'AI Assistant', purchases: 'Purchase Journal', compliance: 'Tax & Compliance Reports', legal: 'Legal & Risk', sheet: 'Edit Table', explorer: 'Data Explorer', integrations: 'Integrations', settings: 'Settings', search: 'Search'
   };
   let current = 'dashboard';

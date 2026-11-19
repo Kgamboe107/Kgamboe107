@@ -51,6 +51,24 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Command Map: your business and its agents on one screen (v1.28)
+
+Open **Command Map** in the sidebar (or **Map** in the phone's bottom bar). It shows how the business runs with AI agents, and nothing leaves without your sign-off.
+
+| Section | What it shows |
+|---|---|
+| **01 Inputs** | Everything the business already uses (Gmail, Calendar, Drive, QuickBooks, bank feeds, spreadsheets, the website form, phone), with how many jobs read from each. |
+| **Map: Departments** | Inputs → departments and their jobs → the connected systems the agents work in. Each job is marked *Agent runs it*, *Agent drafts, you finish* or *You do it*. **Tap a department, job, input or system to trace it**: everything connected lights up, wires animate between the columns, and a panel shows what it reads, where it works, its workflow and anything waiting on you. |
+| **02 Scoreboard** | Waiting on you (and how long the oldest has waited), hours a week handed off, jobs on agents, approval rate over 30 days, actions today and flags, workflows written. |
+| **03 Needs your yes** | Every draft (an email, reminder, proposal or post) waits here. **Yes, send it**, **Edit first** or **No**. Each decision goes into the log. The sidebar and the phone tab show how many are waiting. |
+| **04 Agent log** | A timeline for this morning, today or everything, colored by department, with flags and waiting items marked. Narrows to what you're tracing. |
+| **05 Documented workflows** | Trigger, steps and whether sign-off is needed, plus which jobs use each workflow. Write one straight from a job that doesn't have one yet. |
+| **06 Connected** | Where the agents work, with status (On, Setting up, Off) and last sync. |
+
+- **It starts with a starter map.** Edit departments, jobs (who does it, hours a week, inputs, systems, workflow), inputs, systems and workflows to match your business.
+- **Map menu:** export or import the map as JSON, print or save as PDF, clear the log, or start over. Import also takes a file with just `{"approvals":[...],"log":[...]}`, so an agent running elsewhere can drop in new drafts and log lines.
+- Each business has its own map. It's saved on the device and syncs between your computer and phone when you're signed in.
+
 ## Sign-in screens & neon sidebar (v1.27)
 
 - **Opening page:** a liquid backdrop of slowly moving color blobs and light streaks behind a frosted-glass card, in light and dark.
