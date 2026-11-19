@@ -20,7 +20,7 @@
             ${App.hosted ? `<p class="muted small">${matchMedia('(display-mode: standalone)').matches || navigator.standalone ? 'Installed on this phone. ' : 'To install: in Safari tap <b>Share</b> → <b>Add to Home Screen</b>. '}Your data stays on this phone and keeps working offline.</p>
               <p class="small" style="margin:0">Sign in with the <b>same account</b> as on your laptop and both stay in sync automatically. Without an account, use <b>Export backup</b> on the laptop and <b>Restore backup</b> here.</p>
               <p class="muted tiny"> AI chat, live bank sync (Plaid, Square, Stripe), Google Drive and Outlook run in the desktop app.</p>`
-            : `<ol class="small" style="margin:0;padding-left:18px"><li>On your iPhone, open <b>Safari</b> and go to <a href="https://kgamboe107.github.io/Kgamboe107/" target="_blank" rel="noopener">kgamboe107.github.io/Kgamboe107</a></li>
+            : `<ol class="small" style="margin:0;padding-left:18px"><li>On your iPhone, open <b>Safari</b> and go to <a href="${App.WEB_URL}" target="_blank" rel="noopener">${App.esc(App.WEB_URL.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a></li>
                 <li>Tap <b>Share</b> → <b>Add to Home Screen</b> → <b>Add</b>. It opens full screen like an app and works offline.</li>
                 <li>Sign in on the phone with the <b>same account</b> as here. Your data appears in seconds and stays in sync both ways (use the QR code under Account &amp; sync).</li></ol>
               <p class="muted tiny">Without an account, move data with a backup instead: <b>Export backup</b> below, AirDrop it to the phone, then on the phone Settings → <b>Restore backup</b>.</p>`}

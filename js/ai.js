@@ -106,6 +106,30 @@
   }
   const grokModels = () => models('xai');
 
+  /* Raw Ollama chat for agents: your own system prompt, optional JSON output. Returns { text, model, ms } */
+  async function ollamaChat({ messages, model, format, ctx, temperature = 0.3 }) {
+    let m = model || App.settings.get(modelKey('ollama'), '');
+    const list = await models('ollama');
+    if (!list.length) throw new Error('Ollama is running but has no AI model yet. Download one in Settings.');
+    if (!list.includes(m)) { m = list[0]; App.settings.set(modelKey('ollama'), m); }
+    const t0 = Date.now();
+    const d = await relay('ollama', 'POST', '/api/chat', { model: m, stream: false, messages, ...(format ? { format } : {}),
+      options: { num_ctx: ctx || +App.settings.get('ai.ollama.ctx', 12288) || 12288, temperature } });
+    const text = String(d.message?.content || '').replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+    return { text, model: d.model || m, ms: Date.now() - t0 };
+  }
+
+  /* Embeddings for the Brain's search-by-meaning. Returns an array of vectors (one per input). */
+  async function ollamaEmbed(inputs, model = 'nomic-embed-text') {
+    try { const d = await relay('ollama', 'POST', '/api/embed', { model, input: inputs }); return d.embeddings || []; }
+    catch (e) {
+      if (!/404|not found|endpoint/i.test(e.message)) throw e;
+      const out = []; for (const t of inputs) { const d = await relay('ollama', 'POST', '/api/embeddings', { model, prompt: t }); out.push(d.embedding || []); } return out; // older Ollama
+    }
+  }
+  /* Every installed model, including embedding models */
+  async function ollamaAllModels() { const d = await relay('ollama', 'GET', '/api/tags'); return (d.models || []).map(m => m.name || m.model).filter(Boolean); }
+
   /* ---------- Ollama: detect, download a model, turn on ---------- */
   async function ollamaStatus() {
     if (App.hosted) return { running: false, error: 'Ollama runs on your computer, not on the phone version.', models: [] };
@@ -361,5 +385,5 @@ Rules: one entry per purchased line, with the name as printed. "amount" is the l
     };
   }
 
-  App.ai = { models, modelKey, CHAT, OLLAMA_MODELS, ollamaStatus, ollamaPull, ollamaAutodetect, scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
+  App.ai = { ollamaChat, ollamaEmbed, ollamaAllModels, models, modelKey, CHAT, OLLAMA_MODELS, ollamaStatus, ollamaPull, ollamaAutodetect, scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
 })(window.App);

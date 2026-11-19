@@ -7,6 +7,7 @@
   /* ---------- Icons (24px stroke icons) ---------- */
   const P = {
     wallet: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v2"/><rect x="3" y="8" width="18" height="12" rx="2.5"/><path d="M16 13.5h2.5"/>',
+    command: '<path d="M9 4 3 6.5V20l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>',
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M14 14h2M8 17h2"/>',
     target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
@@ -163,7 +164,7 @@
   }
 
   /* ---------- Command palette ---------- */
-  const PAGES = [['dashboard', 'Dashboard'], ['library', 'Data Library'], ['finance', 'Financials'], ['purchases', 'Purchases'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
+  const PAGES = [['dashboard', 'Dashboard'], ['command', 'Command Map: departments, agents, needs your yes'], ['library', 'Data Library'], ['finance', 'Financials'], ['purchases', 'Purchases'], ['operations', 'Operations'], ['trading', 'Trading Risk'],
     ['marketing', 'Marketing'], ['research', 'Research'], ['personnel', 'Personnel'], ['compliance', 'Reports: Tax & Compliance'], ['legal', 'Legal & Risk: documents, incidents'], ['wealth', 'Net worth & family wealth'], ['tax', 'Taxes & CPA: documents, contributions, CPA packet'], ['businesses', 'Units: businesses & personal'], ['explorer', 'Data Explorer'], ['integrations', 'Integrations'], ['settings', 'Settings']];
   function commands(q) {
     const items = [];

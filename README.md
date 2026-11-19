@@ -51,6 +51,172 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Unit Command: 136 agents for creating, running and multiplying businesses (Phase 1)
+
+**Unit Command** is a second app built on the desk's shared core. It has its own icon and look, and uses the same sign-in, encrypted sync, units and importers. Open it from **Unit Command** in the desk's sidebar, or go straight to `unit.html` (on the phone: your private web address + `unit.html`, then Share → Add to Home Screen; see *Private hosting*). In Chrome or Edge on a computer, use **Install app** in the address bar. The name lives in `unit/js/brand.js` so it's easy to change.
+
+| Screen | What it does |
+|---|---|
+| **Today** | The Morning page (yesterday's sales vs. forecast, labor %, week to date, overtime, what needs a look, each venture's next step), the Scoreboard, **Needs your yes** in three lanes (You, Your team, Clients), and today's agent log. |
+| **Units** | A multi-unit roll-up in the CrunchTime and Rosnet style: sales, vs. forecast, labor %, SPLH, overtime, hours vs. schedule, food vs. theoretical and 7-day trend, for the latest day, week to date, last 7 days or last 4 weeks. Tap a unit for its chart and days. |
+| **Ventures** | Every business you're creating: Idea → Plan → Funding → Build-out → Opening → Operating, with a checklist and due dates at each stage. **Add as a unit** when it opens. |
+| **Agent Map** | Hub and spokes: 10 departments around Knowledge, which every agent reads. Filled dots are live, hollow dots are designed, and recently run agents pulse. |
+| **Agents** | All 136 agents with trigger, inputs, output, sign-off and a workflow file each. Search, filter, run, turn agents on or off, or export every workflow as markdown. |
+| **Imports** | CrunchTime, Harri and POS exports (Square, Clover, Toast or any daily CSV) into a chosen unit. |
+| **Settings** | Targets the agents flag against, demo units, the Full / Lite plan preview, account and sync. |
+
+**Departments:** Venture Studio 16, Multi-Unit Development 12, Sales & Revenue 16, Production & Operations 18, People 14, Supply & Purchasing 12, Finance & Back Office 16, Marketing & Customer 14, Compliance & Risk 8, Intelligence 6, Knowledge 4.
+
+**How the agents run (v0.2):** all 136 agents work.
+- **12 rules agents** run on your imported data with no AI: Daily Flash, Forecast Miss, Sales Trend, Labor %, Overtime Watch, SPLH, Schedule vs. Actual, Actual vs. Theoretical, Prime Cost, Unit Benchmarking, Venture Checklist Watch and the Morning Page. They run the first time you open the app each day.
+- **124 AI agents** think with **Ollama** on your computer. It's free, runs offline, and your data never leaves the machine. Each AI agent reads:
+  - your Knowledge docs (SOPs, brand voice, price book, terms), always first
+  - its department playbook and its workflow file
+  - the data it's allowed to read: unit sales and labor, ventures, purchases and food-cost reports
+  - anything you paste or attach (text, CSV, Excel, PDF)
+
+  Each run returns a log line, flags, a full deliverable (plans, tables, drafts) and what it was missing. Anything that would go to someone lands in **Needs your yes** first.
+  - **36 run on autopilot** while the desktop app is open: daily, weekly, monthly or quarterly, plus venture agents when a venture reaches their stage. These are the agents that only need data the app already has.
+  - **88 run on demand.** They work from email, calendar, web, accounting, HR or reviews, which aren't connected yet, so you open the agent, paste what it should work on, and tap **Run with AI**.
+  - Results are saved and sync to the phone. The phone can't run Ollama, so it shows the results; the computer does the thinking.
+
+**Set up the AI (once, on the computer):** open Unit Command from the desktop app (sidebar → Unit Command) → **Settings → AI agents**. Install Ollama, download a model, then turn on **Autopilot**. Llama 3.2 (3B) is quick on any machine. For better business plans, leases and drafts, use **Qwen 3 (8B)** or **Gemma 3** if the computer has 16 GB of memory. **Knowledge** (sidebar) is where you write the four docs every agent reads; any Knowledge agent can draft one from what you paste.
+
+**Not yet:** live connections to email, calendar, POS, accounting and HR; server-side agents that run while the computer is off; and accounts and billing for the Lite version.
+
+## Unit Command design (0.4): iOS with glass
+
+Unit Command is designed to Apple's Human Interface Guidelines, with the Glassy Dashboard's dark glass look.
+
+- **Type and spacing:** the system San Francisco font with Apple's text sizes. Large titles collapse into a glass bar as you scroll. Numbers line up in columns, rounded figures are used for money, everything sits on an 8-point grid, and every tap target is at least 44 points.
+- **Layers:** glass (blur plus a thin highlight edge) only on the controls that float above content: the top bar, the floating tab bar, sheets and toasts. Content sits on solid "material" panels and grouped inset lists, as in the Settings app.
+- **Color:** gold marks the one main action on each screen (Approve, Ask, Save). Electric blue is for links, focus, live status and "AI thinking". Green, orange and red appear only for status. Dark glass is the default; **Settings → Appearance** has Dark, Light and Automatic.
+- **iOS patterns:**
+  - a 5-item tab bar (Today, Brain, Units, Agents, More)
+  - a "More" sheet for everything else
+  - bottom sheets with a grab handle on the phone
+  - iOS switches and segmented controls, and round check circles for checklists
+  - swipe right to approve and left to decline in Needs your yes
+  - spring animations that respect Reduce Motion
+- **UX laws:**
+  - **Jakob's Law:** it behaves like the iOS apps you already use.
+  - **Fitts's Law:** a large, full-width Approve button.
+  - **Hick's Law:** 5 tabs, with detail only when you ask for it.
+  - **Miller's Law:** Today shows one hero number, three key figures, three flags, then what's waiting for you.
+- **Accessibility:** contrast checked in both modes. Reduce Transparency swaps glass for solid panels, and Increase Contrast strengthens secondary text.
+
+## Brain: Unit Command's second brain (0.3)
+
+**Brain** (second in Unit Command's menu) remembers everything, sorted into sections, and gets more useful the longer you use it.
+
+**What it captures on its own:**
+- every unit's daily numbers, kept permanently as *facts* even if the file is deleted
+- a monthly report per unit with the same month last year beside it
+- every import, and purchases by month
+- one note per vendor, with price changes
+- every agent result
+- every yes or no you give, with the draft
+- ventures with their checklists
+- your Knowledge docs and the desk's research notes
+- personal spending, giving, 1099 work and pay by month (under **Personal**)
+
+Notes, meetings and people you add are yours to edit. Everything links with `[[Title]]`, like Obsidian.
+
+| Tab | What it does |
+|---|---|
+| **Ask** | Ask in plain words, for example "How did Store 1042 do last November vs. this November?" Answers come from your memories and the year-over-year numbers, with sources you can open. On the phone it searches by words; on the computer it also searches by meaning. |
+| **Sections** | The folder tree (Business, Agents, Decisions, Imports, Vendors, Ventures, Knowledge, Research, Personal, Notes, People, Journal) with filters. |
+| **Graph** | An Obsidian-style graph of memories and their links. Drag, zoom, and tap a dot to open it. |
+| **Year over year** | Latest day, week to date, last 4 weeks, month, quarter and year to date vs. last year, per unit or all units. The change only compares days that exist in both years, so a partial history can't inflate it. The chart shows average sales per day by month for each year. |
+| **Setup** | Search by meaning (downloads Ollama's `nomic-embed-text`, about 270 MB, once), the Obsidian vault, and a full rebuild or export. |
+
+**Agents compound:** before every run, an agent gets its own last results, your decisions on its drafts (so it stops repeating what you declined), related memories and last year's numbers.
+
+**Obsidian, two-way:** in Brain → Setup, choose a vault folder (desktop app, or Chrome/Edge on a computer).
+- Every memory becomes a `.md` file in its section folder, with `[[links]]`, so Obsidian's graph matches.
+- Notes you write in Obsidian come into the Brain.
+- Lines you add under **My notes** on any memory are kept, even when the memory rebuilds itself.
+- If both sides changed, both versions are kept. Deleting a file in Obsidian never deletes anything in the Brain.
+
+**Storage and privacy:** memories and facts sync through your account, encrypted on the device before upload. The search-by-meaning index stays on each device.
+
+### Color system and the Blueprint (0.8)
+
+**Color (Settings → Color)** follows the 60/30/10 rule: 60% base, 30% support, 10% accent. There are three palettes:
+- **Black · White · Gold** (default): gold marks what to tap or look at first; blue is for links and AI; red only for alerts.
+- **Black · White · Red:** red is the accent and alerts turn orange so they stay distinct.
+- **Navy · White · Gold:** a deep navy base.
+
+Secondary buttons stay neutral, so the accent always means "this matters".
+
+**Blueprint** treats human thought and structure as a management science: a master skill tree in four phases, drawn on graph paper. Every framework works somewhere in the app:
+1. **Foundations:** time and priorities (Today's three), capture (Brain), retention (Review cards), continuous learning (Notebooks).
+2. **Core mechanics:** each unit's *normal range*. The Sales Trend agent flags any day more than two standard deviations from that unit's usual for the same weekday. Agents are told that correlation is not causation. The accounting equation; forecast accuracy.
+3. **Human experience:**
+   - Coaching styles from the four schools of psychology.
+   - A **communication check** on every draft in Needs your yes: a clear receiver and ask, no shouting, no jargon, a readable length.
+   - The three ethical scales (outcome, duty, character), now an **ethics check** in every decision brief.
+4. **Applied systems:** Plan · Organize · Lead · Control mapped to the departments; the 4 Ps; security (confidentiality, integrity, availability); legal risk.
+
+Tap any box to see what it says about your business right now.
+
+### Deals, Decisions and Legal (0.7)
+
+**Growth → Deals** finds acquisition and expansion opportunities people miss because they don't know they exist. Create a search (kind of business, area, budget, your experience). It looks four ways:
+- **Owners open to selling:** independent businesses from OpenStreetMap, with chains left out. Reading their websites (desktop app) looks for years in business, family ownership, retirement or sale mentions, and sites nobody has updated in years.
+- **Businesses for sale:** paste a listing link or the listing text, or import a broker's list. Asking price, cash flow, revenue, the multiple, seller financing and the reason for selling are pulled out and scored against your budget. Search links open the big marketplaces for your kind of business and area.
+- **Franchise brands with open territory:** brands that are common within the wider region but have no locations in your area, with each brand's website from Wikidata. Reading the brand site pulls the franchise fee, investment range and royalty. Links open the public state franchise disclosure (FDD) databases (California, Wisconsin, Minnesota).
+- **Market gaps:** people per business for each area you list. Uses OpenStreetMap counts and population; add a free Census API key for official County Business Patterns and population counts.
+
+First contacts (to an owner, a broker or a franchise development team) are drafted, wait in Needs your yes, and open in your own mail app with your address and an opt-out line. The pipeline runs Lead → Researching → Contacted → Talking → Under NDA → LOI → Due diligence → Closed or Passed. Any deal can become a Venture. Every deal is saved in the Brain under Deals.
+
+**Decisions (Before you decide).** Big decisions go through seven questions: define the problem; what you know vs. what you're assuming; the option you're overlooking (often a pilot); what you're giving up; what happens beyond the first result; how easy it is to reverse; and what evidence would change your mind. The AI can draft the brief from your data, and you edit it. Hard-to-reverse decisions need every question answered. Moving a deal to LOI, Closed or Passed opens a brief, and Projects, Ventures and any approval ("Think it through") can have one too. On the review date it comes back in Today's three: continue, adjust or stop. Every brief is saved in the Brain under Decisions.
+
+**Legal** uses the same engine and data as the Ops Command Desk's Legal & Risk, for every unit on one screen: protection score, high-risk gaps to fix first, documents (draft, edit, save versions, download, print), signatures, incident reports and business details. **Deal legal** gives each deal a checklist (NDA, liens, lease assignment, license transfer, bulk-sale clearance, quality of earnings, non-compete; for franchises the FDD 14-day rule and Items 7, 12, 19, 20, 21) plus drafts of a mutual NDA and a non-binding letter of intent. High-risk gaps show up in Today's three. Not legal advice: have a licensed attorney review documents.
+
+### Brain upgrade (0.6): Today's three, Planet, Notebooks, Review
+
+- **Today's three.** Each morning the Today screen picks three objectives from what actually needs you: approvals waiting in Needs your yes, the next step of a running or blocked project, the top flag, approved outreach to send, overdue venture steps, and cards due for review. Tick them off. Each day's list is saved in the Brain under Journal/year/month.
+- **Planet** (Brain → Planet). A map of the whole Brain. You sit at the center with today's three circling you in gold; each section is a planet and its memories are moons. Tap a planet to fly in, tap a moon to open the memory, drag to move, pinch or scroll to zoom. Motion stops when Reduce Motion is on.
+- **Notebooks** (Brain → Notebooks). Pick the memories that matter for one question (a lease, a hiring round, a unit's bad month) and ask questions answered only from those sources, with numbered citations you can tap. One tap writes a Briefing, FAQ, Study guide or Timeline from them. This needs the local AI (Ollama).
+- **Review** (Brain → Review). Spaced-repetition flashcards so you and your managers remember the details: rules from your SOPs and other Knowledge docs, your targets, monthly numbers, and drafts you declined. Grade each card Again, Hard, Good or Easy. Cards you know come back less often and misses come back in 10 minutes. With the AI on, it can also make cards from any memory. On a computer, Space shows the answer and keys 1 to 4 grade it.
+
+## Private hosting (only you can see the code)
+
+The repository should be **private**, and the phone/web version should sit behind a login gate so no one else can even download its files. One-time setup:
+
+1. **Cloudflare Pages:** in **Workers & Pages**, create a Pages project connected to this GitHub repo (or use direct upload; see step 3). Set:
+   - **Production branch:** `master`
+   - **Build command:** `bash scripts/build-web.sh`
+   - **Build output directory:** `_site`
+
+   The build publishes only the app files and stops if the privacy check finds an email address or a secret.
+2. **Login gate:** in **Zero Trust → Access → Applications**, add a *Self-hosted* app with two hostnames, your Pages address (for example `ops-command-desk.pages.dev`) and `*.ops-command-desk.pages.dev`, so preview builds are covered too. Add an *Allow* policy for your own email only (one-time code login), and set the session to 1 month so the phone stays signed in.
+3. **Only if you didn't connect GitHub in step 1:** create an API token with *Cloudflare Pages: Edit*. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` under GitHub → **Settings → Secrets and variables → Actions**, and `.github/workflows/cloudflare.yml` will publish on every push to `master`.
+4. **Turn off the public site:** in GitHub → **Settings → Pages**, unpublish it. The old GitHub Pages workflow now only runs if you start it by hand.
+5. **Make the repo private:** GitHub → **Settings → General → Danger Zone → Change visibility → Private**.
+6. On the iPhone, open `https://ops-command-desk.pages.dev/unit.html`, sign in with the email code, then **Share → Add to Home Screen**. If you use another address, change `App.WEB_URL` in `js/version.js`.
+
+**Privacy check:** every publish runs `scripts/privacy-check.sh`. It refuses to publish if an email address, private key or API secret appears in the app's files. Your email is no longer in the code; the admin is decided by your account's role on the server. Older commits still contain it, which is fine once the repo is private (history was left untouched on purpose: rewriting it is destructive). The desktop installers only go to Releases, which are private with the repo.
+
+## Command Map: your business and its agents on one screen (v1.28)
+
+Open **Command Map** in the sidebar (or **Map** in the phone's bottom bar). It shows how the business runs with AI agents, and nothing leaves without your sign-off.
+
+| Section | What it shows |
+|---|---|
+| **01 Inputs** | Everything the business already uses (Gmail, Calendar, Drive, QuickBooks, bank feeds, spreadsheets, the website form, phone), with how many jobs read from each. |
+| **Map: Departments** | Inputs → departments and their jobs → the connected systems the agents work in. Each job is marked *Agent runs it*, *Agent drafts, you finish* or *You do it*. **Tap a department, job, input or system to trace it**: everything connected lights up, wires animate between the columns, and a panel shows what it reads, where it works, its workflow and anything waiting on you. |
+| **02 Scoreboard** | Waiting on you (and how long the oldest has waited), hours a week handed off, jobs on agents, approval rate over 30 days, actions today and flags, workflows written. |
+| **03 Needs your yes** | Every draft (an email, reminder, proposal or post) waits here. **Yes, send it**, **Edit first** or **No**. Each decision goes into the log. The sidebar and the phone tab show how many are waiting. |
+| **04 Agent log** | A timeline for this morning, today or everything, colored by department, with flags and waiting items marked. Narrows to what you're tracing. |
+| **05 Documented workflows** | Trigger, steps and whether sign-off is needed, plus which jobs use each workflow. Write one straight from a job that doesn't have one yet. |
+| **06 Connected** | Where the agents work, with status (On, Setting up, Off) and last sync. |
+
+- **It starts with a starter map.** Edit departments, jobs (who does it, hours a week, inputs, systems, workflow), inputs, systems and workflows to match your business.
+- **Map menu:** export or import the map as JSON, print or save as PDF, clear the log, or start over. Import also takes a file with just `{"approvals":[...],"log":[...]}`, so an agent running elsewhere can drop in new drafts and log lines.
+- Each business has its own map. It's saved on the device and syncs between your computer and phone when you're signed in.
+
 ## Sign-in screens & neon sidebar (v1.27)
 
 - **Opening page:** a liquid backdrop of slowly moving color blobs and light streaks behind a frosted-glass card, in light and dark.
@@ -173,7 +339,7 @@ The app opens on a **Sign in** page.
 
 **Create an account:** enter your name, email and a password of 10 or more characters. New accounts stay **Waiting for approval** until the administrator approves them.
 
-**Admin approval** (the administrator is koen@gamboeconsulting.com):
+**Admin approval** (by the administrator account):
 1. Sign in and open **Settings → Account & sync**.
 2. Every account is listed with its status. Click **Approve** to get a **6-digit verification code**. It's valid for 7 days and 5 tries.
 3. Give the code to the person (copy or share it). They enter it on their waiting screen and they're in.
@@ -196,7 +362,7 @@ The phone app now always loads the newest version when it's online (the offline 
 
 ## iPhone / phone version
 
-Open **https://kgamboe107.github.io/Kgamboe107/** in Safari on your iPhone, tap **Share → Add to Home Screen**, then **Add**. It opens full screen with its own icon, works offline, and keeps its data on the phone (nothing is sent to a server).
+Open your private web address (see *Private hosting*) in Safari on your iPhone, tap **Share → Add to Home Screen**, then **Add**. It opens full screen with its own icon, works offline, and keeps its data on the phone (nothing is sent to a server).
 
 - **Phone layout:** a bottom tab bar (Home · Plan · Upload · AI · More), notch-safe and home-indicator-safe spacing, and no zooming into text fields. Exports open the share sheet, so you can save to Files, iCloud Drive, AirDrop or Mail.
 - **Bring your data:** on the computer, Settings → **Export backup**, then AirDrop it or save it to iCloud Drive. On the phone, Settings → **Restore backup**. Each device keeps its own copy, so repeat this to bring the phone up to date.

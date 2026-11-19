@@ -9,5 +9,14 @@ contextBridge.exposeInMainWorld('desktop', {
   win: action => ipcRenderer.send('win-ctl', action),
   onWinState: cb => ipcRenderer.on('win-state', (_e, s) => cb(s)),
   getSecret: name => ipcRenderer.invoke('secret-get', name),
-  setSecret: (name, value) => ipcRenderer.invoke('secret-set', name, value)
+  setSecret: (name, value) => ipcRenderer.invoke('secret-set', name, value),
+  // Obsidian vault: only .md files inside the one folder you pick
+  vault: {
+    pick: () => ipcRenderer.invoke('vault-pick'),
+    info: () => ipcRenderer.invoke('vault-info'),
+    list: () => ipcRenderer.invoke('vault-list'),
+    read: rel => ipcRenderer.invoke('vault-read', rel),
+    write: (rel, text) => ipcRenderer.invoke('vault-write', rel, text),
+    forget: () => ipcRenderer.invoke('vault-forget')
+  }
 });
