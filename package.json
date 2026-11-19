@@ -25,7 +25,7 @@
     "productName": "Ops Command Desk",
     "copyright": "© Gamboe Consulting",
     "directories": { "buildResources": "build", "output": "dist" },
-    "files": ["main.js", "preload.js", "server.js", "index.html", "css/**", "js/**", "vendor/**", "icons/**", "manifest.webmanifest", "build/icon.png"],
+    "files": ["main.js", "preload.js", "server.js", "index.html", "unit.html", "unit/**", "css/**", "js/**", "vendor/**", "icons/**", "manifest.webmanifest", "build/icon.png"],
     "artifactName": "Ops-Command-Desk-${version}-${os}-${arch}.${ext}",
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],

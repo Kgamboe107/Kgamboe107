@@ -51,6 +51,24 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Sidebar:** collapse it to an icon rail with the button next to the logo (or Ctrl+\\). Click a section name (Analysis, Reports, Tools) to fold it away. The app remembers both settings.
 
+## Unit Command: 136 agents for creating, running and multiplying businesses (Phase 1)
+
+**Unit Command** is a second app built on the desk's shared core. It has its own icon and look, and uses the same sign-in, encrypted sync, units and importers. Open it from **Unit Command** in the desk's sidebar, or go straight to `unit.html` (on the phone: https://kgamboe107.github.io/Kgamboe107/unit.html, then Share → Add to Home Screen). In Chrome or Edge on a computer, use **Install app** in the address bar. The name lives in `unit/js/brand.js` so it's easy to change.
+
+| Screen | What it does |
+|---|---|
+| **Today** | The Morning page (yesterday's sales vs. forecast, labor %, week to date, overtime, what needs a look, each venture's next step), the Scoreboard, **Needs your yes** in three lanes (You, Your team, Clients), and today's agent log. |
+| **Units** | A multi-unit roll-up in the CrunchTime and Rosnet style: sales, vs. forecast, labor %, SPLH, overtime, hours vs. schedule, food vs. theoretical and 7-day trend, for the latest day, week to date, last 7 days or last 4 weeks. Tap a unit for its chart and days. |
+| **Ventures** | Every business you're creating: Idea → Plan → Funding → Build-out → Opening → Operating, with a checklist and due dates at each stage. **Add as a unit** when it opens. |
+| **Agent Map** | Hub and spokes: 10 departments around Knowledge, which every agent reads. Filled dots are live, hollow dots are designed, and recently run agents pulse. |
+| **Agents** | All 136 agents with trigger, inputs, output, sign-off and a workflow file each. Search, filter, run, turn agents on or off, or export every workflow as markdown. |
+| **Imports** | CrunchTime, Harri and POS exports (Square, Clover, Toast or any daily CSV) into a chosen unit. |
+| **Settings** | Targets the agents flag against, demo units, the Full / Lite plan preview, account and sync. |
+
+**Departments:** Venture Studio 16, Multi-Unit Development 12, Sales & Revenue 16, Production & Operations 18, People 14, Supply & Purchasing 12, Finance & Back Office 16, Marketing & Customer 14, Compliance & Risk 8, Intelligence 6, Knowledge 4.
+
+**What's live in Phase 1:** 12 agents run on your imported data: Daily Flash, Forecast Miss, Sales Trend, Labor % Watch, Overtime Watch (drafts a heads-up for the manager), Sales per Labor Hour, Schedule vs. Actual, Actual vs. Theoretical, Prime Cost, Unit Benchmarking, Venture Checklist Watch and the Morning Page. The other 124 are designed and produce clearly marked sample output until an AI is connected. Until a unit has sales data, demo units are shown (generated in memory, never saved). Live POS connections, server-side scheduled agents, AI and billing come in later phases.
+
 ## Command Map: your business and its agents on one screen (v1.28)
 
 Open **Command Map** in the sidebar (or **Map** in the phone's bottom bar). It shows how the business runs with AI agents, and nothing leaves without your sign-off.

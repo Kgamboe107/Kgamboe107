@@ -11,7 +11,7 @@ const TYPES = {
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.csv': 'text/csv',
   '.md': 'text/markdown', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json'
 };
-const ALLOWED = ['index.html', 'css', 'js', 'vendor', 'assets', 'build', 'icons', 'manifest.webmanifest'];
+const ALLOWED = ['index.html', 'unit.html', 'unit', 'sw.js', 'css', 'js', 'vendor', 'assets', 'build', 'icons', 'manifest.webmanifest'];
 const MARKER = 'X-Ops-Command-Desk';
 
 /* ---------- AI relay ----------
