@@ -235,3 +235,20 @@ html.desktop .uc-top, html.desktop .uc-brand { -webkit-app-region: drag; }
 html.desktop .uc-top > button, html.desktop .uc-topact { -webkit-app-region: no-drag; }
 html.desktop:not(.darwin) .uc-topact { margin-right: 120px; }
 html.desktop.darwin .uc-brand { padding-top: 26px; }
+
+/* AI */
+.uc-topact { display: flex; align-items: center; gap: 8px; }
+.uc-aichip { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--muted); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); cursor: pointer; white-space: nowrap; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
+.uc-aichip:empty { display: none; }
+.uc-aichip i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.uc-aichip i.on { background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+.uc-aichip .task-spin { width: 12px; height: 12px; }
+.uc-st.auto { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.uc-md ul { margin: 4px 0; padding-left: 20px; }
+.uc-md .uc-tablewrap { margin: 8px 0; }
+@media (max-width: 520px) { .uc-top .uc-aichip { display: none; } }
+@media (max-width: 860px) {
+  .uc-filters .seg { display: flex; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+  .uc-filters .seg button { white-space: nowrap; flex: none; }
+  .uc-filters select { flex: 1 1 100%; }
+}

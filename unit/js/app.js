@@ -6,7 +6,7 @@
   const money = v => App.fmt.money(v);
   const ROUTES = [
     ['today', 'Today', 'dashboard'], ['units', 'Units', 'businesses'], ['ventures', 'Ventures', 'sparkles'],
-    ['map', 'Agent Map', 'command'], ['agents', 'Agents', 'layers'], ['imports', 'Imports', 'upload'], ['settings', 'Settings', 'settings']
+    ['map', 'Agent Map', 'command'], ['agents', 'Agents', 'layers'], ['knowledge', 'Knowledge', 'research'], ['imports', 'Imports', 'upload'], ['settings', 'Settings', 'settings']
   ];
   const TABS = ['today', 'units', 'map', 'agents', 'more'];
   UC.screens = UC.screens || {};
@@ -20,12 +20,12 @@
     if (UC.plan() === 'lite' && route === 'ventures') route = 'today';
     current = route;
     $$('#ucNav [data-go]').forEach(a => a.classList.toggle('on', a.dataset.go === route));
-    $$('#ucTabs [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === route || (b.dataset.tab === 'more' && ['ventures', 'imports', 'settings'].includes(route))));
+    $$('#ucTabs [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === route || (b.dataset.tab === 'more' && ['ventures', 'knowledge', 'imports', 'settings'].includes(route))));
     $('#ucTitle').textContent = ROUTES.find(r => r[0] === route)[1];
     if (location.hash.slice(1) !== route) history.replaceState(null, '', '#' + route);
     const view = $('#ucView'); view.innerHTML = ''; view.classList.remove('uc-enter'); void view.offsetWidth; view.classList.add('uc-enter');
     const t = ++token;
-    try { await UC.screens[route](view, params); App.fx.hydrateIcons(view); }
+    try { await UC.screens[route](view, params); App.fx.hydrateIcons(view); aiChip(); }
     catch (e) { if (t !== token) return; console.error(e); view.innerHTML = `<div class="card empty">Something went wrong on this screen: ${esc(e.message)}</div>`; }
     if (!params.keepScroll) window.scrollTo({ top: 0 });
     badge();
@@ -40,6 +40,14 @@
     $$('[data-badge-asks]').forEach(el => { el.hidden = !n; el.textContent = n; });
   }
   UC.badge = badge;
+  /* AI status chip (top bar + Today) */
+  async function aiChip() {
+    const s = await UC.ai.status(), p = UC.ai.progress();
+    const html = p.busy || p.running.length ? `<span class="task-spin"></span> ${p.running.length ? esc(UC.agent(p.running[0])?.name || 'Agent') : 'AI'} thinking${p.left ? ` · ${p.left} queued` : ''}`
+      : s.running ? `<i class="on"></i> AI ready · ${esc(UC.ai.model())}${UC.ai.auto().on ? ' · autopilot' : ''}` : App.hosted ? '<i></i> AI runs on your computer' : '<i></i> AI off · set up Ollama';
+    document.querySelectorAll('[data-aichip]').forEach(el => { el.innerHTML = html; el.onclick = () => go('settings'); });
+  }
+  UC.aiChip = aiChip;
 
   /* Shared bits */
   UC.demoBar = d => d.demo ? `<div class="uc-demo small"><b>Demo units.</b> You're seeing four made-up units so you can try everything. Bring in your own CrunchTime, Harri or POS exports in <a data-go="imports">Imports</a>, or turn demo units off in <a data-go="settings">Settings</a>.</div>` : '';
@@ -88,6 +96,7 @@
     await E().morningRun();
     const ctx = await E().context();
     const st = E().state(), m = st.morning;
+    const outs = await UC.ai.outputs();
     const end = ctx.end;
     const wk = UC.data.stats(ctx.units.flatMap(u => UC.data.wtd(u, end)));
     const today = App.dateKey(new Date());
@@ -119,13 +128,15 @@
               ${UC.tile('Waiting on you', pend, pend ? 'see Needs your yes' : 'all clear', pend ? 'warn' : 'good')}
               ${UC.tile('Agent runs today', todays.length, `${flags.length} flagged`, flags.length ? 'warn' : '', 'agents')}
               ${UC.plan() === 'lite' ? '' : UC.tile('Ventures in progress', vs.filter(v => v.stage !== 'operating').length, vs.length ? `${vs.filter(v => v.stage === 'build' || v.stage === 'open').length} in build-out or opening` : 'add one in Ventures', '', 'ventures')}
-              ${UC.tile('Agents live', `${live}/${total}`, 'the rest are designed and waiting for AI', '', 'agents')}
+              ${UC.tile('Agents', total, `${live} rules · ${total - live} AI`, '', 'agents')}
             </div></section>
           <section class="card"><div class="row spread"><div class="uc-sh"><span class="uc-num">04</span><h2>Agent log</h2><span class="muted tiny">today</span></div>
             <div class="seg">${[['all', 'All'], ['flag', 'Flags'], ['waiting', 'Waiting']].map(([k, l]) => `<button data-lk="${k}" class="${logKind === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
             <ol class="uc-log">${todays.filter(e => logKind === 'all' || e.kind === logKind).sort((a, b) => b.t - a.t).slice(0, 40).map(UC.logItem).join('') || '<li class="uc-empty">Nothing logged today yet.</li>'}</ol></section>
         </div>
-        <div class="uc-col"><section class="card uc-yes" id="ucYes"><div class="uc-sh"><span class="uc-num">03</span><div><h2>Needs your yes</h2><div class="muted tiny">nothing leaves without a human sign-off</div></div></div>${asksHtml(st)}</section></div>
+        <div class="uc-col"><section class="card uc-yes" id="ucYes"><div class="uc-sh"><span class="uc-num">03</span><div><h2>Needs your yes</h2><div class="muted tiny">nothing leaves without a human sign-off</div></div></div>${asksHtml(st)}</section>
+          <section class="card"><div class="row spread"><div class="uc-sh"><span class="uc-num">AI</span><div><h2>Latest AI work</h2><div class="muted tiny">tap one to read it</div></div></div><span class="uc-aichip" data-aichip></span></div>
+            <div class="uc-alist">${outs.slice(0, 6).map(o => { const ag = UC.agent(o.agent), dd = UC.dept(o.dept); return ag ? `<button class="uc-arow" data-agent="${o.agent}" style="--dc:${dd.color}"><span class="uc-dot" style="background:${dd.color}"></span><span><b>${esc(ag.name)}</b><span class="muted tiny">${esc(o.summary.slice(0, 140))}</span></span><span class="muted tiny">${UC.ago(o.t)}</span></button>` : ''; }).join('') || `<div class="uc-empty">No AI results yet. ${App.hosted ? 'Agents run on your computer; results show up here.' : 'Open any agent and tap <b>Run with AI</b>, or turn on autopilot in <a data-go="settings">Settings</a>.'}</div>`}</div></section></div>
       </div>`;
     const rerender = () => go('today', { keepScroll: true });
     bindAsks(view, rerender);
@@ -209,6 +220,7 @@
     $$('#ucTabs [data-tab]').forEach(b => b.onclick = () => b.dataset.tab === 'more' ? $('#ucSide').classList.toggle('open') : go(b.dataset.tab));
     $('#ucMenu').onclick = () => $('#ucSide').classList.toggle('open');
     $('#ucTheme').onclick = e => App.fx.setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', { x: e.clientX, y: e.clientY });
+    App.bus.on('uc-ai', aiChip);
     window.addEventListener('hashchange', () => { const r = location.hash.slice(1); if (r && r !== current) go(r); });
     App.bus.on('data-changed', () => { if (['units', 'today', 'imports'].includes(current)) go(current, { keepScroll: true }); });
   }
@@ -227,6 +239,7 @@
     if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) document.documentElement.classList.add('standalone');
     (App.cloud ? App.cloud.gate() : Promise.resolve())
       .then(() => go(location.hash.slice(1) || 'today'))
+      .then(() => { UC.ai.status().then(aiChip); UC.ai.startAutopilot(); })
       .finally(() => { document.getElementById('ucSplash')?.remove(); });
   }
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();

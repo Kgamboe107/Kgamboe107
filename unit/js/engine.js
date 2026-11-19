@@ -134,7 +134,7 @@
   function record(st, a, res, ctx) {
     const now = Date.now();
     st.runs[a.id] = now;
-    const e = { id: App.uid(), t: now, date: App.dateKey(new Date()), agent: a.id, dept: a.dept, text: res.text, kind: res.kind, sample: !!res.sample, demo: !!ctx?.demo, units: res.units || [] };
+    const e = { id: App.uid(), t: now, date: App.dateKey(new Date()), agent: a.id, dept: a.dept, text: res.text, kind: res.kind, sample: !!res.sample, demo: !!ctx?.demo, units: res.units || [], ...(res.out ? { out: res.out } : {}), ...(res.ai ? { ai: true } : {}) };
     st.log.push(e);
     for (const q of res.asks || []) {
       // Don't stack duplicates of the same open request
@@ -143,25 +143,29 @@
     }
     return e;
   }
-  function sample(a) {
-    const r = { text: `Sample run: ${a.output.toLowerCase()} would be produced here. (${a.name} is designed; it runs for real once an AI is connected.)`, kind: a.signoff ? 'waiting' : 'done', sample: true };
-    if (a.signoff) r.asks = [{ lane: 'you', title: `${a.output} (sample)`, detail: `This is where ${a.name} will put its draft for you to approve: ${a.does}` }];
-    return r;
-  }
+  /* Run agents. Rule agents compute on your data; AI agents go to Ollama (UC.ai) one at a time. */
   async function run(ids, opts = {}) {
     const ctx = opts.ctx || await context();
-    const st = state();
     const out = [];
-    for (const id of ids) {
-      const a = UC.agent(id); if (!a || st.off[a.id]) continue;
-      let res;
-      try { res = a.rule && RULES[a.rule] ? RULES[a.rule](ctx, st) : sample(a); }
-      catch (e) { console.error(e); res = { text: `${a.name} hit an error: ${e.message}`, kind: 'flag' }; }
-      out.push(record(st, a, res, ctx));
+    const rules = ids.map(id => UC.agent(id)).filter(a => a && a.rule && RULES[a.rule] && !state().off[a.id]);
+    if (rules.length) {
+      const st = state();
+      for (const a of rules) {
+        let res;
+        try { res = RULES[a.rule](ctx, st); } catch (e) { console.error(e); res = { text: `${a.name} hit an error: ${e.message}`, kind: 'flag' }; }
+        out.push(record(st, a, res, ctx));
+      }
+      save(st);
     }
-    save(st);
+    for (const a of ids.map(id => UC.agent(id)).filter(a => a && !a.rule && !state().off[a.id])) {
+      try { await UC.ai.run(a, { ...opts, ctx }); out.push(state().log[state().log.length - 1]); }
+      catch (e) { if (opts.throw) throw e; push(a.id, { text: `${a.name} couldn’t run: ${e.message}`, kind: 'flag' }, ctx); }
+    }
     return out;
   }
+  /* Add one result to the log / Needs your yes (used by the AI runner) */
+  function push(id, res, ctx) { const st = state(), a = UC.agent(id); const e = record(st, a, res, ctx); save(st); return e; }
+  function markStage(key) { const st = state(); st.stageRuns = { ...(st.stageRuns || {}), [key]: Date.now() }; save(st); }
   const liveIds = () => UC.AGENTS.filter(a => a.rule && UC.enabledAgent(a)).map(a => a.id);
   /* Every morning (first open of the day): run the live agents, Morning page last */
   async function morningRun(force = false) {
@@ -183,5 +187,5 @@
   function setOff(id, off) { const st = state(); if (off) st.off[id] = true; else delete st.off[id]; save(st); }
   function clear(what) { const st = state(); if (what === 'log') st.log = []; if (what === 'asks') st.asks = st.asks.filter(a => a.status === 'pending' && !a.sample); if (what === 'all') { S.set('state', {}); App.bus.emit('uc-changed'); return; } save(st); }
 
-  UC.engine = { state, run, morningRun, decide, setOff, clear, context, liveIds, RULES, STAGES, ventures, saveVentures, blankChecklist, fmtDay, signPct, pct };
+  UC.engine = { state, run, push, markStage, morningRun, decide, setOff, clear, context, liveIds, RULES, STAGES, ventures, saveVentures, blankChecklist, fmtDay, signPct, pct };
 })(window.UC);

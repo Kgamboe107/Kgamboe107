@@ -173,7 +173,7 @@
       `**Department:** ${d.name}  \n**Runs:** ${a.trigger}  \n**Reads:** ${a.reads.map(r => INPUTS[r] || r).join(', ')}  \n**Produces:** ${a.output}  \n**Sign-off:** ${a.signoff ? 'Yes. Nothing leaves until you approve it.' : 'No. It only reports and flags.'}\n\n` +
       `## What it does\n${a.does}\n\n## Steps\n1. Read the Knowledge agents first (SOPs, brand voice, price book, terms).\n2. Pull ${a.reads.map(r => (INPUTS[r] || r).toLowerCase()).join(' and ')}.\n3. ${a.does}\n4. Write the result: ${a.output.toLowerCase()}.\n` +
       (a.signoff ? `5. Put it in **Needs your yes**. Send nothing until it’s approved.\n6. Log what happened.\n` : `5. Flag anything over your targets and log the run.\n`) +
-      `\n**Status:** ${a.rule ? 'Live. Runs on your imported data today.' : 'Designed. Shows sample output until an AI is connected.'}\n`;
+      `\n**Status:** ${a.rule ? 'Rules agent. Runs on your imported data, no AI needed.' : UC.canAuto && UC.canAuto(a) ? 'AI agent (Ollama). Runs on its own on schedule while the desktop app is open, or when you tap Run.' : 'AI agent (Ollama). Runs when you give it something to work on.'}\n`;
   }
 
   UC.INPUTS = INPUTS; UC.DEPTS = DEPTS; UC.AGENTS = AGENTS; UC.workflow = workflow;

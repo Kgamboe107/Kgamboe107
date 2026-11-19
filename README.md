@@ -67,7 +67,22 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Departments:** Venture Studio 16, Multi-Unit Development 12, Sales & Revenue 16, Production & Operations 18, People 14, Supply & Purchasing 12, Finance & Back Office 16, Marketing & Customer 14, Compliance & Risk 8, Intelligence 6, Knowledge 4.
 
-**What's live in Phase 1:** 12 agents run on your imported data: Daily Flash, Forecast Miss, Sales Trend, Labor % Watch, Overtime Watch (drafts a heads-up for the manager), Sales per Labor Hour, Schedule vs. Actual, Actual vs. Theoretical, Prime Cost, Unit Benchmarking, Venture Checklist Watch and the Morning Page. The other 124 are designed and produce clearly marked sample output until an AI is connected. Until a unit has sales data, demo units are shown (generated in memory, never saved). Live POS connections, server-side scheduled agents, AI and billing come in later phases.
+**How the agents run (v0.2):** all 136 agents work.
+- **12 rules agents** run on your imported data with no AI: Daily Flash, Forecast Miss, Sales Trend, Labor %, Overtime Watch, SPLH, Schedule vs. Actual, Actual vs. Theoretical, Prime Cost, Unit Benchmarking, Venture Checklist Watch and the Morning Page. They run the first time you open the app each day.
+- **124 AI agents** think with **Ollama** on your computer. It's free, runs offline, and your data never leaves the machine. Each AI agent reads:
+  - your Knowledge docs (SOPs, brand voice, price book, terms), always first
+  - its department playbook and its workflow file
+  - the data it's allowed to read: unit sales and labor, ventures, purchases and food-cost reports
+  - anything you paste or attach (text, CSV, Excel, PDF)
+
+  Each run returns a log line, flags, a full deliverable (plans, tables, drafts) and what it was missing. Anything that would go to someone lands in **Needs your yes** first.
+  - **36 run on autopilot** while the desktop app is open: daily, weekly, monthly or quarterly, plus venture agents when a venture reaches their stage. These are the agents that only need data the app already has.
+  - **88 run on demand.** They work from email, calendar, web, accounting, HR or reviews, which aren't connected yet, so you open the agent, paste what it should work on, and tap **Run with AI**.
+  - Results are saved and sync to the phone. The phone can't run Ollama, so it shows the results; the computer does the thinking.
+
+**Set up the AI (once, on the computer):** open Unit Command from the desktop app (sidebar → Unit Command) → **Settings → AI agents**. Install Ollama, download a model, then turn on **Autopilot**. Llama 3.2 (3B) is quick on any machine. For better business plans, leases and drafts, use **Qwen 3 (8B)** or **Gemma 3** if the computer has 16 GB of memory. **Knowledge** (sidebar) is where you write the four docs every agent reads; any Knowledge agent can draft one from what you paste.
+
+**Not yet:** live connections to email, calendar, POS, accounting and HR; server-side agents that run while the computer is off; and accounts and billing for the Lite version.
 
 ## Command Map: your business and its agents on one screen (v1.28)
 
