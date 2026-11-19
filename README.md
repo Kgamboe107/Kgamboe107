@@ -140,6 +140,13 @@ Notes, meetings and people you add are yours to edit. Everything links with `[[T
 
 **Storage and privacy:** memories and facts sync through your account, encrypted on the device before upload. The search-by-meaning index stays on each device.
 
+### Brain upgrade (0.6): Today's three, Planet, Notebooks, Review
+
+- **Today's three.** Each morning the Today screen picks three objectives from what actually needs you: approvals waiting in Needs your yes, the next step of a running or blocked project, the top flag, approved outreach to send, overdue venture steps, and cards due for review. Tick them off. Each day's list is saved in the Brain under Journal/year/month.
+- **Planet** (Brain → Planet). A map of the whole Brain. You sit at the center with today's three circling you in gold; each section is a planet and its memories are moons. Tap a planet to fly in, tap a moon to open the memory, drag to move, pinch or scroll to zoom. Motion stops when Reduce Motion is on.
+- **Notebooks** (Brain → Notebooks). Pick the memories that matter for one question (a lease, a hiring round, a unit's bad month) and ask questions answered only from those sources, with numbered citations you can tap. One tap writes a Briefing, FAQ, Study guide or Timeline from them. This needs the local AI (Ollama).
+- **Review** (Brain → Review). Spaced-repetition flashcards so you and your managers remember the details: rules from your SOPs and other Knowledge docs, your targets, monthly numbers, and drafts you declined. Grade each card Again, Hard, Good or Easy. Cards you know come back less often and misses come back in 10 minutes. With the AI on, it can also make cards from any memory. On a computer, Space shows the answer and keys 1 to 4 grade it.
+
 ## Private hosting (only you can see the code)
 
 The repository should be **private**, and the phone/web version should sit behind a login gate so no one else can even download its files. One-time setup:

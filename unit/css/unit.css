@@ -577,3 +577,21 @@ html.uc .seg button { white-space: nowrap; }
 .uc-msg { margin-top: 8px; padding: 10px 12px; border-radius: 16px; background: var(--fill-3); max-width: 88%; font-size: 14px; }
 .uc-msg.me { margin-left: auto; background: var(--blue-soft); }
 @media (max-width: 860px) { .uc-steps { grid-template-columns: repeat(2, 1fr); } .uc-kv { grid-template-columns: 82px minmax(0, 1fr); } }
+
+/* ---------- Brain upgrade: Today's three, Planet, Notebooks, Review ---------- */
+.uc-obj { margin-bottom: 16px; }
+.uc-objrow { grid-template-columns: auto 1fr auto; align-items: center; }
+.uc-objrow.done b { color: var(--label-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.uc-planet { height: min(68vh, 620px); touch-action: none; cursor: grab; background: radial-gradient(ellipse at center, rgba(47,155,255,.07), transparent 70%); }
+.uc-plobj { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.uc-plobj span { font-size: 13px; padding: 6px 12px; border-radius: 999px; background: var(--fill-2, rgba(120,120,128,.16)); color: var(--label); }
+.uc-plobj span.done { color: var(--label-3); text-decoration: line-through; }
+.uc-review { min-height: 300px; display: flex; flex-direction: column; gap: 14px; }
+.uc-rq { font-size: 24px; line-height: 1.3; font-weight: 600; letter-spacing: -.01em; padding: 18px 0 6px; }
+.uc-ra { font-size: 19px; line-height: 1.4; padding: 14px 16px; border-radius: 14px; background: rgba(233,185,73,.12); color: var(--label); border: .5px solid rgba(233,185,73,.35); }
+.uc-grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: auto; }
+.uc-grades .btn { min-height: 52px; flex-direction: column; gap: 0; }
+.uc-grades small { font-size: 11px; color: var(--label-2); font-weight: 500; }
+.uc-show { margin-top: auto; min-height: 52px; }
+@media (max-width: 520px) { .uc-rq { font-size: 21px; } .uc-planet { height: 60vh; } }
+.uc-objrow::after { display: none !important; }

@@ -232,6 +232,12 @@
         updated: pr.updated || pr.created });
     }
 
+    // Daily objectives (Journal): one note per day, kept forever
+    for (const o of (UC.S.get('objectivesLog', []))) {
+      await keep({ id: `objectives:${o.date}`, type: 'objectives', title: `Today’s three · ${o.date}`, section: P('Journal', o.date.slice(0, 4), o.date.slice(5, 7)), date: o.date, tags: ['objectives'],
+        body: o.items.map(i => `- [${i.done ? 'x' : ' '}] ${i.text}`).join('\n'), updated: o.t || Date.now() });
+    }
+
     // Ventures, knowledge, research notes
     for (const v of UC.engine.ventures()) {
       const S = UC.engine.STAGES;

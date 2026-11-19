@@ -177,7 +177,8 @@
     const delta = day.forecast ? `<span class="uc-delta ${day.vsFc >= 0.005 ? 'up' : day.vsFc <= -0.005 ? 'down' : 'flat'}">${day.vsFc >= 0 ? '↑' : '↓'} ${Math.abs(day.vsFc * 100).toFixed(1)}% vs forecast</span>` : '';
     const lp = day.laborPct * 100;
     const row = (agent, title, sub, right = '') => `<button class="uc-arow" ${agent ? `data-agent="${esc(agent)}"` : ''}><span class="uc-dot" style="background:${UC.dept((agent || '').split('/')[0])?.color || 'var(--label-3)'}"></span><span><b>${esc(title)}</b><span class="muted tiny">${esc(sub)}</span></span>${right}</button>`;
-    view.innerHTML = `${UC.demoBar(ctx)}
+    const objHtml = UC.objectivesCard ? await UC.objectivesCard() : '';
+    view.innerHTML = `${UC.demoBar(ctx)}${objHtml}
       <div class="uc-grid2 uc-today">
         <div class="uc-col">
           <section class="card uc-hero o1">
@@ -207,6 +208,7 @@
       </div>`;
     const rerender = () => go('today', { keepScroll: true });
     bindAsks(view, rerender);
+    UC.bindObjectives?.(view, rerender);
     view.querySelector('#ucRerun').onclick = async e => { const b = e.currentTarget; b.disabled = true; b.innerHTML = '<span class="task-spin"></span>'; await E().morningRun(true); App.ui.toast('Morning agents ran'); rerender(); };
     view.querySelectorAll('[data-lk]').forEach(b => b.onclick = e => { e.preventDefault(); logKind = b.dataset.lk; rerender().then(() => { const d = document.querySelector('.uc-disclose:last-of-type'); if (d) d.open = true; }); });
   };
