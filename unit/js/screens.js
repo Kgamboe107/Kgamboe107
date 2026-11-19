@@ -12,7 +12,7 @@
     const vs = E().ventures(), S = E().STAGES;
     const prog = v => { const all = S.flatMap(s => v.check[s.id] || []); return all.length ? all.filter(i => i.done).length / all.length : 0; };
     const today = App.dateKey(new Date());
-    view.innerHTML = `<section class="card"><div class="row spread"><div class="uc-sh"><span class="uc-num">VS</span><div><h2>Ventures</h2><div class="muted tiny">every business you’re creating, from idea to operating unit</div></div></div>
+    view.innerHTML = `<section class="card"><div class="row spread"><div class="uc-sh"><span class="uc-num">VS</span><div><h2 class="uc-dup">Ventures</h2><div class="muted small">every business you’re creating, from idea to operating unit</div></div></div>
         <button class="btn primary" id="vNew">${App.fx.icon('plus')} New venture</button></div>
       ${vs.some(v => v.sample) ? '<div class="uc-demo small" style="margin-top:12px">These three are examples to show how it works. Open one and delete it, or add your own.</div>' : ''}
       <div class="uc-board">${S.map(s => { const col = vs.filter(v => v.stage === s.id); return `<div class="uc-stage"><div class="uc-stage-h"><b>${s.name}</b><span class="muted tiny">${col.length}</span></div>
@@ -87,7 +87,7 @@
       });
       svg += `<circle cx="${x}" cy="${y}" r="21" class="uc-dnode" stroke="${d.color}"/><text x="${x}" y="${y + 4}" class="uc-dnum" fill="${d.color}">${String(i + 1).padStart(2, '0')}</text>`;
       const lx = cx + Math.cos(ang) * (R + 132), ly = cy + Math.sin(ang) * (R + 128);
-      svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" class="uc-dlabel" text-anchor="${Math.abs(Math.cos(ang)) < .3 ? 'middle' : Math.cos(ang) > 0 ? 'start' : 'end'}">${esc(d.short.toUpperCase())}</text></g>`;
+      svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" class="uc-dlabel" text-anchor="${Math.abs(Math.cos(ang)) < .3 ? 'middle' : Math.cos(ang) > 0 ? 'start' : 'end'}">${esc(d.short)}</text></g>`;
       nodes.push(d);
     });
     if (know) svg += `<g data-dept="${know.id}" class="uc-spoke ${!mapSel || mapSel === know.id ? '' : 'dim'}"><circle cx="${cx}" cy="${cy}" r="34" class="uc-dnode hub" stroke="${know.color}"/><text x="${cx}" y="${cy - 2}" class="uc-dnum" fill="var(--text)">KB</text><text x="${cx}" y="${cy + 13}" class="uc-hubt">read by all</text></g>`;
@@ -111,7 +111,7 @@
     const list = all.filter(a => (!fDept || a.dept === fDept) && (!q || (a.name + ' ' + a.does + ' ' + a.output).toLowerCase().includes(q.toLowerCase()))
       && (!fStat || (fStat === 'live' ? a.rule : fStat === 'auto' ? !a.rule && UC.canAuto(a) : fStat === 'designed' ? !a.rule && !UC.canAuto(a) : fStat === 'signoff' ? a.signoff : st.off[a.id])));
     const depts = UC.DEPTS.filter(UC.enabledDept);
-    view.innerHTML = `<section class="card"><div class="row spread"><div class="uc-sh"><span class="uc-num">${all.length}</span><div><h2>Agents</h2><div class="muted tiny">${all.filter(a => a.rule).length} rules · ${all.filter(a => !a.rule && UC.canAuto(a)).length} AI on autopilot · ${all.filter(a => !a.rule && !UC.canAuto(a)).length} AI on demand · one workflow file each</div></div></div>
+    view.innerHTML = `<section class="card"><div class="row spread"><div class="uc-sh"><span class="uc-num">${all.length}</span><div><h2 class="uc-dup">Agents</h2><div class="muted small">${all.filter(a => a.rule).length} rules · ${all.filter(a => !a.rule && UC.canAuto(a)).length} AI on autopilot · ${all.filter(a => !a.rule && !UC.canAuto(a)).length} AI on demand · one workflow file each</div></div></div>
         <div class="row"><button class="btn" id="aRunLive">${App.fx.icon('sparkles')} Run rules agents</button><button class="btn ghost" id="aExport">${App.fx.icon('download')} Workflows (.md)</button></div></div>
       <div class="uc-filters"><input id="aQ" placeholder="Search agents…" value="${esc(q)}" aria-label="Search agents">
         <select id="aD" data-native aria-label="Department"><option value="">All departments</option>${depts.map(d => `<option value="${d.id}" ${fDept === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>
@@ -203,7 +203,7 @@
   /* ---------- Knowledge (every agent reads these first) ---------- */
   UC.screens.knowledge = async (view) => {
     const k = UC.ai.knowledge();
-    view.innerHTML = `<section class="card"><div class="uc-sh"><span class="uc-num">KB</span><div><h2>Knowledge</h2><div class="muted tiny">every agent reads these before it does anything · the better these are, the better every draft</div></div></div></section>
+    view.innerHTML = `<section class="card"><div class="uc-sh"><span class="uc-num">KB</span><div><h2 class="uc-dup">Knowledge</h2><div class="muted small">every agent reads these before it does anything · the better these are, the better every draft</div></div></div></section>
       ${UC.ai.KDOCS.map(([id, name, hint]) => `<section class="card"><div class="row spread"><div class="uc-sh"><h2>${esc(name)}</h2><span class="muted tiny">${k[id] ? `${k[id].length.toLocaleString()} characters` : 'empty'}</span></div>
         <div class="row"><button class="btn small ghost" data-agent="knowledge/${id}">${App.fx.icon('sparkles')} Draft with AI</button><button class="btn small primary" data-ksave="${id}">Save</button></div></div>
         <textarea data-k="${id}" rows="8" placeholder="${esc(hint)}" style="width:100%;margin-top:10px">${esc(k[id] || '')}</textarea></section>`).join('')}`;
@@ -248,7 +248,7 @@
     const ctx = await E().context();
     const units = ctx.real;
     const target = UC.S.get('importTo', units[0]?.id || '');
-    view.innerHTML = `<section class="card"><div class="uc-sh"><span class="uc-num">IN</span><div><h2>Imports</h2><div class="muted tiny">exports from the systems you already use · shared with Ops Command Desk</div></div></div>
+    view.innerHTML = `<section class="card"><div class="uc-sh"><span class="uc-num">IN</span><div><h2 class="uc-dup">Imports</h2><div class="muted small">exports from the systems you already use · shared with Ops Command Desk</div></div></div>
       <div class="sp-two" style="margin-top:12px"><label class="field">Import into unit<select id="iU" data-native>${units.map(u => `<option value="${u.id}" ${u.id === target ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select></label>
         <div class="field"><span>Need another unit?</span><button class="btn" id="iNew">${App.fx.icon('plus')} Add a unit</button></div></div>
       <label class="uc-drop" id="iDrop"><input type="file" id="iF" multiple hidden accept=".csv,.xlsx,.xls,.ods,.pdf,.txt">
@@ -301,14 +301,14 @@
       <div class="uc-col">${aiCard}<section class="card"><div class="uc-sh"><h2>Plan</h2><span class="muted tiny">preview what the marketed version includes</span></div>
         <div class="seg">${Object.entries(UC.PLANS).map(([k, p]) => `<button data-plan="${k}" class="${plan === k ? 'on' : ''}">${p.label}</button>`).join('')}</div>
         <p class="muted small">${plan === 'lite' ? `Lite shows ${UC.AGENTS.filter(UC.enabledAgent).length} agents in ${UC.PLANS.lite.depts.length} departments, without Ventures or Multi-Unit Development.` : `Full: all ${UC.AGENTS.length} agents in ${UC.DEPTS.length} departments, Ventures and Multi-Unit Development.`}</p></section>
-        <section class="card"><div class="uc-sh"><h2>Look</h2></div><div class="row"><button class="btn" id="sTheme">${App.fx.icon(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon')} ${document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark'} mode</button></div></section>
+        <section class="card"><div class="uc-sh"><h2>Appearance</h2></div><div class="seg" style="margin-top:12px;display:flex">${[['dark', 'Dark'], ['light', 'Light'], ['auto', 'Automatic']].map(([k, l]) => `<button data-appear="${k}" class="${UC.appearance() === k ? 'on' : ''}" style="flex:1;justify-content:center">${l}</button>`).join('')}</div><p class="muted small" style="margin-top:8px">Dark glass is the default. Automatic follows your device.</p></section>
         ${account}
         <section class="card"><div class="uc-sh"><h2>About</h2></div><p class="small">${esc(UC.BRAND.name)} ${esc(UC.BRAND.version)} · ${UC.AGENTS.length} agents · shares sign-in, sync and imports with <a href="index.html">Ops Command Desk</a>.</p></section></div></div>`;
     view.querySelector('#sSave').onclick = () => { const t = {}; view.querySelectorAll('[data-t]').forEach(i => t[i.dataset.t] = +i.value); UC.S.set('targets', t); App.ui.toast('Targets saved'); E().morningRun(true); };
     view.querySelector('#sReset').onclick = () => { UC.S.set('targets', {}); UC.go('settings'); };
     view.querySelectorAll('[data-demo]').forEach(b => b.onclick = () => { UC.S.set('demo', JSON.parse(b.dataset.demo)); E().morningRun(true).then(() => UC.go('settings')); });
     view.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => { App.settings.set('uc.plan', b.dataset.plan); location.reload(); });
-    view.querySelector('#sTheme').onclick = e => App.fx.setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', { x: e.clientX, y: e.clientY });
+    view.querySelectorAll('[data-appear]').forEach(b => b.onclick = () => UC.setAppearance(b.dataset.appear));
     view.querySelector('#sClrLog').onclick = () => { E().clear('log'); App.ui.toast('Log cleared'); };
     view.querySelector('#sClrAsk').onclick = () => { E().clear('asks'); App.ui.toast('Cleared'); };
     view.querySelector('#sClrAll').onclick = () => { if (confirm('Clear every agent run, request and the morning page?')) { E().clear('all'); App.ui.toast('Agent history reset'); } };

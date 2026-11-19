@@ -5,7 +5,7 @@ UC.BRAND = {
   short: 'Unit Command',
   mark: 'UC',
   tagline: 'Create it, open it, run it, multiply it.',
-  version: '0.3.0'
+  version: '0.4.0'
 };
 /* Plans: "full" is the owner's system. "lite" is the version that can be marketed (fewer departments and agents). */
 UC.PLANS = {

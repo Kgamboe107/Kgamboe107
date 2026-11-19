@@ -84,6 +84,27 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 **Not yet:** live connections to email, calendar, POS, accounting and HR; server-side agents that run while the computer is off; and accounts and billing for the Lite version.
 
+## Unit Command design (0.4): iOS with glass
+
+Unit Command is designed to Apple's Human Interface Guidelines, with the Glassy Dashboard's dark glass look.
+
+- **Type and spacing:** the system San Francisco font with Apple's text sizes. Large titles collapse into a glass bar as you scroll. Numbers line up in columns, rounded figures are used for money, everything sits on an 8-point grid, and every tap target is at least 44 points.
+- **Layers:** glass (blur plus a thin highlight edge) only on the controls that float above content: the top bar, the floating tab bar, sheets and toasts. Content sits on solid "material" panels and grouped inset lists, as in the Settings app.
+- **Color:** gold marks the one main action on each screen (Approve, Ask, Save). Electric blue is for links, focus, live status and "AI thinking". Green, orange and red appear only for status. Dark glass is the default; **Settings → Appearance** has Dark, Light and Automatic.
+- **iOS patterns:**
+  - a 5-item tab bar (Today, Brain, Units, Agents, More)
+  - a "More" sheet for everything else
+  - bottom sheets with a grab handle on the phone
+  - iOS switches and segmented controls, and round check circles for checklists
+  - swipe right to approve and left to decline in Needs your yes
+  - spring animations that respect Reduce Motion
+- **UX laws:**
+  - **Jakob's Law:** it behaves like the iOS apps you already use.
+  - **Fitts's Law:** a large, full-width Approve button.
+  - **Hick's Law:** 5 tabs, with detail only when you ask for it.
+  - **Miller's Law:** Today shows one hero number, three key figures, three flags, then what's waiting for you.
+- **Accessibility:** contrast checked in both modes. Reduce Transparency swaps glass for solid panels, and Increase Contrast strengthens secondary text.
+
 ## Brain: Unit Command's second brain (0.3)
 
 **Brain** (second in Unit Command's menu) remembers everything, sorted into sections, and gets more useful the longer you use it.

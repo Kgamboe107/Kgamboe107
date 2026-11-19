@@ -10,14 +10,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Unit Command">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#06080d">
+  <meta name="theme-color" content="#000000">
   <meta name="format-detection" content="telephone=no">
   <meta name="color-scheme" content="dark light">
   <title>Unit Command</title>
   <link rel="preload" href="vendor/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="unit/css/unit.css">
-  <script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("ocd.theme"))||"dark"}catch(e){document.documentElement.dataset.theme="dark"}document.documentElement.classList.add("uc");</script>
+  <script>(function(){var a="dark";try{a=JSON.parse(localStorage.getItem("ocd.uc.appearance"))||"dark"}catch(e){}var t=a==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):a;document.documentElement.dataset.theme=t;document.documentElement.classList.add("uc")})();</script>
 </head>
 <body>
   <div id="ucSplash" class="uc-splash"><div class="uc-mark lg">UC</div></div>

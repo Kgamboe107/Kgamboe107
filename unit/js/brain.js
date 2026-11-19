@@ -199,7 +199,7 @@
     for (const o of await App.store.all('agentout', { raw: true }).catch(() => [])) {
       const a = UC.agent(o.agent), d = UC.dept(o.dept); if (!a) continue;
       const v = o.venture && UC.engine.ventures().find(x => x.id === o.venture);
-      await keep({ id: `agent:${o.id}`, type: 'agent', title: `${a.name} · ${App.dateKey(new Date(o.t))} ${new Date(o.t).toTimeString().slice(0, 5).replace(':', '')}`, section: P('Agents', d.name, a.name), date: App.dateKey(new Date(o.t)), tags: ['agent', a.key, d.id, ...(o.demo ? ['demo'] : [])],
+      await keep({ id: `agent:${o.id}`, type: 'agent', title: `${a.name} · ${new Date(o.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).replace(',', '')} · ${new Date(o.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(':', '.')}`, section: P('Agents', d.name, a.name), date: App.dateKey(new Date(o.t)), tags: ['agent', a.key, d.id, ...(o.demo ? ['demo'] : [])],
         links: [v ? `venture:${v.id}` : '', `day:${App.dateKey(new Date(o.t))}`].filter(Boolean),
         body: `**${a.name}** (${d.name})${v ? ` on [[${v.name}]]` : ''}${o.demo ? ', on demo data' : ''}. Model ${o.model || 'unknown'}${o.auto ? ', autopilot' : ''}.\n\n**Summary:** ${o.summary}\n${o.flags?.length ? `\n**Flags**\n${o.flags.map(f => `- ${f}`).join('\n')}\n` : ''}${o.missing?.length ? `\n**It needed**\n${o.missing.map(f => `- ${f}`).join('\n')}\n` : ''}${o.input ? `\n**You gave it**\n> ${o.input.slice(0, 1500).replace(/\n/g, '\n> ')}\n` : ''}\n## Result\n${o.output}`,
         updated: o.t });

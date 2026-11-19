@@ -65,7 +65,7 @@
     const tops = {}; all.forEach(n => { const t = n.section.split('/')[0]; tops[t] = (tops[t] || 0) + 1; });
     const head = `<section class="card uc-brainhead"><div class="row spread"><div class="uc-sh"><span class="uc-num">∞</span><div><h2>Brain</h2><div class="muted tiny">${all.length.toLocaleString()} memories in ${Object.keys(tops).length} sections · ${B().vecCount().toLocaleString()} searchable by meaning · synced, encrypted</div></div></div>
         <div class="row"><button class="btn small" data-new="note">${App.fx.icon('plus')} Note</button><button class="btn small" data-new="meeting">Meeting</button><button class="btn small" data-new="person">Person</button></div></div>
-      <div class="seg uc-btabs" style="margin-top:12px">${[['ask', 'Ask'], ['sections', 'Sections'], ['graph', 'Graph'], ['yoy', 'Year over year'], ['setup', 'Setup']].map(([k, l]) => `<button data-btab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div></section><div id="bBody"></div>`;
+      <div class="seg uc-btabs" style="margin-top:12px">${[['ask', 'Ask'], ['sections', 'Sections'], ['graph', 'Graph'], ['yoy', 'Compare'], ['setup', 'Setup']].map(([k, l]) => `<button data-btab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div></section><div id="bBody"></div>`;
     view.innerHTML = head;
     view.querySelectorAll('[data-btab]').forEach(b => b.onclick = () => { tab = b.dataset.btab; UC.go('brain', { keepScroll: true }); });
     view.querySelectorAll('[data-new]').forEach(b => b.onclick = () => newNote(b.dataset.new));
