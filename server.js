@@ -28,7 +28,7 @@ const AI_ROUTES = {
   square: { host: 'connect.squareup.com', headers: { 'Square-Version': '2024-10-17' }, paths: { 'GET /v2/payments': true, 'GET /v2/locations': true } },
   stripe: { host: 'api.stripe.com', paths: { 'GET /v1/balance_transactions': true, 'GET /v1/balance': true } },
   // Ollama runs on this computer; no key, plain http to the local port only
-  ollama: { local: true, host: '127.0.0.1', port: Number(process.env.OLLAMA_PORT) || 11434, paths: { 'GET /api/version': true, 'GET /api/tags': true, 'POST /api/chat': true, 'POST /api/pull': true } }
+  ollama: { local: true, host: '127.0.0.1', port: Number(process.env.OLLAMA_PORT) || 11434, paths: { 'GET /api/version': true, 'GET /api/tags': true, 'POST /api/chat': true, 'POST /api/pull': true, 'POST /api/embed': true, 'POST /api/embeddings': true } }
 };
 const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
 

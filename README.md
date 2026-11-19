@@ -53,7 +53,7 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 
 ## Unit Command: 136 agents for creating, running and multiplying businesses (Phase 1)
 
-**Unit Command** is a second app built on the desk's shared core. It has its own icon and look, and uses the same sign-in, encrypted sync, units and importers. Open it from **Unit Command** in the desk's sidebar, or go straight to `unit.html` (on the phone: https://kgamboe107.github.io/Kgamboe107/unit.html, then Share → Add to Home Screen). In Chrome or Edge on a computer, use **Install app** in the address bar. The name lives in `unit/js/brand.js` so it's easy to change.
+**Unit Command** is a second app built on the desk's shared core. It has its own icon and look, and uses the same sign-in, encrypted sync, units and importers. Open it from **Unit Command** in the desk's sidebar, or go straight to `unit.html` (on the phone: your private web address + `unit.html`, then Share → Add to Home Screen; see *Private hosting*). In Chrome or Edge on a computer, use **Install app** in the address bar. The name lives in `unit/js/brand.js` so it's easy to change.
 
 | Screen | What it does |
 |---|---|
@@ -83,6 +83,54 @@ Switch units from the card at the top of the sidebar. It groups Businesses and P
 **Set up the AI (once, on the computer):** open Unit Command from the desktop app (sidebar → Unit Command) → **Settings → AI agents**. Install Ollama, download a model, then turn on **Autopilot**. Llama 3.2 (3B) is quick on any machine. For better business plans, leases and drafts, use **Qwen 3 (8B)** or **Gemma 3** if the computer has 16 GB of memory. **Knowledge** (sidebar) is where you write the four docs every agent reads; any Knowledge agent can draft one from what you paste.
 
 **Not yet:** live connections to email, calendar, POS, accounting and HR; server-side agents that run while the computer is off; and accounts and billing for the Lite version.
+
+## Brain: Unit Command's second brain (0.3)
+
+**Brain** (second in Unit Command's menu) remembers everything, sorted into sections, and gets more useful the longer you use it.
+
+**What it captures on its own:**
+- every unit's daily numbers, kept permanently as *facts* even if the file is deleted
+- a monthly report per unit with the same month last year beside it
+- every import, and purchases by month
+- one note per vendor, with price changes
+- every agent result
+- every yes or no you give, with the draft
+- ventures with their checklists
+- your Knowledge docs and the desk's research notes
+- personal spending, giving, 1099 work and pay by month (under **Personal**)
+
+Notes, meetings and people you add are yours to edit. Everything links with `[[Title]]`, like Obsidian.
+
+| Tab | What it does |
+|---|---|
+| **Ask** | Ask in plain words, for example "How did Store 1042 do last November vs. this November?" Answers come from your memories and the year-over-year numbers, with sources you can open. On the phone it searches by words; on the computer it also searches by meaning. |
+| **Sections** | The folder tree (Business, Agents, Decisions, Imports, Vendors, Ventures, Knowledge, Research, Personal, Notes, People, Journal) with filters. |
+| **Graph** | An Obsidian-style graph of memories and their links. Drag, zoom, and tap a dot to open it. |
+| **Year over year** | Latest day, week to date, last 4 weeks, month, quarter and year to date vs. last year, per unit or all units. The change only compares days that exist in both years, so a partial history can't inflate it. The chart shows average sales per day by month for each year. |
+| **Setup** | Search by meaning (downloads Ollama's `nomic-embed-text`, about 270 MB, once), the Obsidian vault, and a full rebuild or export. |
+
+**Agents compound:** before every run, an agent gets its own last results, your decisions on its drafts (so it stops repeating what you declined), related memories and last year's numbers.
+
+**Obsidian, two-way:** in Brain → Setup, choose a vault folder (desktop app, or Chrome/Edge on a computer).
+- Every memory becomes a `.md` file in its section folder, with `[[links]]`, so Obsidian's graph matches.
+- Notes you write in Obsidian come into the Brain.
+- Lines you add under **My notes** on any memory are kept, even when the memory rebuilds itself.
+- If both sides changed, both versions are kept. Deleting a file in Obsidian never deletes anything in the Brain.
+
+**Storage and privacy:** memories and facts sync through your account, encrypted on the device before upload. The search-by-meaning index stays on each device.
+
+## Private hosting (only you can see the code)
+
+The repository should be **private**, and the phone/web version should sit behind a login gate so no one else can even download its files. One-time setup:
+
+1. **Cloudflare:** create a free account. Under **Workers & Pages**, create a Pages project named `ops-command-desk` (choose *Direct upload* and skip the upload).
+2. **Login gate:** in **Zero Trust → Access → Applications**, add a *Self-hosted* app for `ops-command-desk.pages.dev` and `*.ops-command-desk.pages.dev`. Add a policy that allows only your own email (one-time code login). Set the session to 1 month so the phone stays signed in.
+3. **Deploy keys:** create a Cloudflare API token with *Cloudflare Pages: Edit*. In GitHub → **Settings → Secrets and variables → Actions**, add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Every push to `master` then publishes through `.github/workflows/cloudflare.yml`.
+4. **Turn off the public site:** in GitHub → **Settings → Pages**, unpublish it. The old GitHub Pages workflow now only runs if you start it by hand.
+5. **Make the repo private:** GitHub → **Settings → General → Danger Zone → Change visibility → Private**.
+6. On the iPhone, open `https://ops-command-desk.pages.dev/unit.html`, sign in with the email code, then **Share → Add to Home Screen**. If you use another address, change `App.WEB_URL` in `js/version.js`.
+
+**Privacy check:** every publish runs `scripts/privacy-check.sh`. It refuses to publish if an email address, private key or API secret appears in the app's files. Your email is no longer in the code; the admin is decided by your account's role on the server. Older commits still contain it, which is fine once the repo is private (history was left untouched on purpose: rewriting it is destructive). The desktop installers only go to Releases, which are private with the repo.
 
 ## Command Map: your business and its agents on one screen (v1.28)
 
@@ -224,7 +272,7 @@ The app opens on a **Sign in** page.
 
 **Create an account:** enter your name, email and a password of 10 or more characters. New accounts stay **Waiting for approval** until the administrator approves them.
 
-**Admin approval** (the administrator is koen@gamboeconsulting.com):
+**Admin approval** (by the administrator account):
 1. Sign in and open **Settings → Account & sync**.
 2. Every account is listed with its status. Click **Approve** to get a **6-digit verification code**. It's valid for 7 days and 5 tries.
 3. Give the code to the person (copy or share it). They enter it on their waiting screen and they're in.
@@ -247,7 +295,7 @@ The phone app now always loads the newest version when it's online (the offline 
 
 ## iPhone / phone version
 
-Open **https://kgamboe107.github.io/Kgamboe107/** in Safari on your iPhone, tap **Share → Add to Home Screen**, then **Add**. It opens full screen with its own icon, works offline, and keeps its data on the phone (nothing is sent to a server).
+Open your private web address (see *Private hosting*) in Safari on your iPhone, tap **Share → Add to Home Screen**, then **Add**. It opens full screen with its own icon, works offline, and keeps its data on the phone (nothing is sent to a server).
 
 - **Phone layout:** a bottom tab bar (Home · Plan · Upload · AI · More), notch-safe and home-indicator-safe spacing, and no zooming into text fields. Exports open the share sheet, so you can save to Files, iCloud Drive, AirDrop or Mail.
 - **Bring your data:** on the computer, Settings → **Export backup**, then AirDrop it or save it to iCloud Drive. On the phone, Settings → **Restore backup**. Each device keeps its own copy, so repeat this to bring the phone up to date.

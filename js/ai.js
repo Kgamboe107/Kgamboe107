@@ -119,6 +119,17 @@
     return { text, model: d.model || m, ms: Date.now() - t0 };
   }
 
+  /* Embeddings for the Brain's search-by-meaning. Returns an array of vectors (one per input). */
+  async function ollamaEmbed(inputs, model = 'nomic-embed-text') {
+    try { const d = await relay('ollama', 'POST', '/api/embed', { model, input: inputs }); return d.embeddings || []; }
+    catch (e) {
+      if (!/404|not found|endpoint/i.test(e.message)) throw e;
+      const out = []; for (const t of inputs) { const d = await relay('ollama', 'POST', '/api/embeddings', { model, prompt: t }); out.push(d.embedding || []); } return out; // older Ollama
+    }
+  }
+  /* Every installed model, including embedding models */
+  async function ollamaAllModels() { const d = await relay('ollama', 'GET', '/api/tags'); return (d.models || []).map(m => m.name || m.model).filter(Boolean); }
+
   /* ---------- Ollama: detect, download a model, turn on ---------- */
   async function ollamaStatus() {
     if (App.hosted) return { running: false, error: 'Ollama runs on your computer, not on the phone version.', models: [] };
@@ -374,5 +385,5 @@ Rules: one entry per purchased line, with the name as printed. "amount" is the l
     };
   }
 
-  App.ai = { ollamaChat, models, modelKey, CHAT, OLLAMA_MODELS, ollamaStatus, ollamaPull, ollamaAutodetect, scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
+  App.ai = { ollamaChat, ollamaEmbed, ollamaAllModels, models, modelKey, CHAT, OLLAMA_MODELS, ollamaStatus, ollamaPull, ollamaAutodetect, scanReceipt, PROVIDERS, DEPTHS, getKey, setKey, connected, ask, grokModels, buildContext, md };
 })(window.App);

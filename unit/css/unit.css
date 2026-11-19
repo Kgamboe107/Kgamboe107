@@ -252,3 +252,33 @@ html.desktop.darwin .uc-brand { padding-top: 26px; }
   .uc-filters .seg button { white-space: nowrap; flex: none; }
   .uc-filters select { flex: 1 1 100%; }
 }
+
+/* Brain */
+.uc-btabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+.uc-btabs button { flex: 1 0 auto; justify-content: center; white-space: nowrap; }
+.uc-askbar { display: flex; gap: 8px; }
+.uc-askbar input { flex: 1; min-width: 0; font-size: 15px; padding: 12px 14px; }
+.uc-cite { color: var(--accent); font-weight: 700; cursor: pointer; text-decoration: none; }
+.uc-wl { color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.uc-note { max-height: 52vh; }
+.uc-nrow { grid-template-columns: auto minmax(0, 1fr) auto; }
+.uc-nrow > span:nth-child(2) b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.uc-brain2 { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+.uc-tree { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow: auto; display: flex; flex-direction: column; gap: 1px; }
+.uc-tnode { display: flex; align-items: center; gap: 8px; text-align: left; background: none; border: 0; color: var(--text-2); font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.uc-tnode i { width: 8px; height: 8px; border-radius: 2px; background: var(--dc, var(--muted)); flex: none; }
+.uc-tnode span { margin-left: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.uc-tnode:hover { background: var(--panel-3); }
+.uc-tnode.on { background: var(--accent-soft); color: var(--accent); }
+.uc-graphcard { padding: 12px; }
+.uc-graph { width: 100%; height: min(72vh, 760px); display: block; margin-top: 8px; border-radius: 12px; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 6%, var(--panel-2)), var(--panel-2) 70%); touch-action: none; cursor: grab; }
+.uc-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; color: var(--muted); }
+.uc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.uc-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.uc-table .up { color: var(--good); font-weight: 600; } .uc-table .down { color: var(--bad); font-weight: 600; }
+@media (max-width: 860px) {
+  .uc-brain2 { grid-template-columns: 1fr; }
+  .uc-tree { position: static; max-height: 240px; }
+  .uc-askbar { flex-direction: column; }
+  .uc-graph { height: 62vh; }
+}

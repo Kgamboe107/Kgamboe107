@@ -1,7 +1,7 @@
 {
   "name": "ops-command-desk",
   "productName": "Ops Command Desk",
-  "version": "1.28.0",
+  "version": "1.29.0",
   "description": "Desktop command center for an operations manager: financials, operations, trading risk, marketing, research, and personnel across multiple businesses.",
   "author": "Gamboe Consulting",
   "homepage": "https://github.com/Kgamboe107/Kgamboe107",
@@ -55,7 +55,7 @@
       "target": [{ "target": "AppImage", "arch": ["x64"] }, { "target": "deb", "arch": ["x64"] }],
       "category": "Office",
       "icon": "build/icon.png",
-      "maintainer": "Gamboe Consulting <koen@gamboeconsulting.com>"
+      "maintainer": "Gamboe Consulting <noreply@users.noreply.github.com>"
     }
   }
 }

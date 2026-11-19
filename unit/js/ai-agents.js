@@ -37,6 +37,12 @@
     if (a.reads.some(r => ['pos', 'labor', 'units', 'inv'].includes(r))) parts.push(unitsBlock(ctx));
     if (a.reads.includes('ventures') || ['venture', 'multi'].includes(a.dept)) parts.push(venturesBlock(opts.ventureId));
     if (a.reads.includes('ap')) parts.push(await purchasesBlock(ctx));
+    if (UC.brain) {
+      try {
+        const mem = await UC.brain.forAgent(a, opts.input || ''); if (mem) parts.push(mem);
+        if (a.reads.some(r => ['pos', 'labor', 'units'].includes(r))) { const y = UC.brain.yoyText(await UC.brain.facts(), null, UC.data.lastDate(ctx.real || [])); if (y) parts.push(y); }
+      } catch (e) { console.warn('brain context', e); }
+    }
     const missing = a.reads.filter(r => !UC.AVAILABLE.includes(r));
     if (missing.length) parts.push(`## Not connected\nThis agent normally reads ${missing.map(r => UC.NOT_CONNECTED[r] || r).join(', ')}, which isn’t connected. Use only what the owner pasted below; list anything else you need under "missing".`);
     return { text: parts.join('\n\n'), ctx };
@@ -91,6 +97,7 @@ ${changes.length ? 'Price changes: ' + changes.map(c => `${c.item} ${(c.change *
 ${UC.deptGuide(a.dept)}
 Rules:
 - Follow the Knowledge section (SOPs, brand voice, price book, terms) above everything else.
+- Use the Memory section: build on your past results, and follow the owner's past decisions (don't repeat what they declined).
 - Use only the numbers and facts provided. Never invent figures, names, prices or dates; if something is missing, say so and add it to "missing".
 - Be specific and practical. Prefer short tables and numbered steps. No filler.
 - ${a.signoff ? 'Your output is a DRAFT for the owner to approve. Nothing is sent until they say yes. Write it ready to send.' : 'You report and flag; you do not send anything.'}

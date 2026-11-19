@@ -21,7 +21,7 @@
     { id: 'operating', name: 'Operating', items: ['First 30 days reviewed', 'First 90 days reviewed against the pro forma', 'Added as a unit'] }
   ];
   const ventures = () => S.get('ventures', null) ?? starterVentures();
-  const saveVentures = v => { S.set('ventures', v); App.bus.emit('uc-changed'); };
+  const saveVentures = v => { S.set('ventures', v.map(x => ({ ...x, updated: x.updated || Date.now() }))); App.bus.emit('uc-changed'); };
   function blankChecklist(stage) { return STAGES.find(s => s.id === stage).items.map(t => ({ t, done: false, due: '' })); }
   function starterVentures() {
     const d = n => { const x = new Date(); x.setDate(x.getDate() + n); return App.dateKey(x); };

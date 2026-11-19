@@ -1,4 +1,4 @@
-# Supabase backend (project "Ops Command Desk", ref tatfzakpmpmgaijhwcob)
+# Supabase backend (project "Ops Command Desk")
 
 - `public.profiles`: one row per account. `status` is pending, approved or revoked; `role` is user or admin. New sign-ups are pending. The admin email is set in `handle_new_user()`.
 - `approve_user(uuid)` (admin only) returns a 6-digit code. It's stored bcrypt-hashed and expires after 7 days or 5 tries. `redeem_code(text)` approves the caller. `revoke_user(uuid)` removes access.

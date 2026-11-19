@@ -7,10 +7,9 @@
 (function (App) {
   const CFG = {
     url: 'https://tatfzakpmpmgaijhwcob.supabase.co',
-    key: 'sb_publishable_Pbv3uD6blYU5VWPAzN1Jtw_BdAV3lju',
-    admin: 'koen@gamboeconsulting.com'
+    key: 'sb_publishable_Pbv3uD6blYU5VWPAzN1Jtw_BdAV3lju'
   };
-  const STORES = ['files', 'datasets', 'notes', 'purchases', 'spending', 'giving', 'gigs', 'work', 'agentout'];
+  const STORES = ['files', 'datasets', 'notes', 'purchases', 'spending', 'giving', 'gigs', 'work', 'agentout', 'brain', 'facts']; // 'brainvec' stays on each device
   const ATT = ['purchases', 'spending', 'giving', 'gigs', 'work']; // stores whose records carry an attachment (receipt photo / PDF)
   // Settings that stay on each device: sign-in, sync state, app lock, API-key markers, window state
   const LOCAL_ONLY = /^(cloud\.|sync\.|lock|secret\.|onboarded$|theme$|surface$|rail$|activeBiz$|ai\.ollama)/;
@@ -467,14 +466,14 @@
     const last = S.get('last');
     const devs = Object.entries(S.get('devlist') || {}).sort((a, b) => b[1].seen - a[1].seen);
     const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 2 ? 'active now' : m < 90 ? m + ' min ago' : m < 2880 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
-    const phoneUrl = `https://kgamboe107.github.io/Kgamboe107/?email=${encodeURIComponent(user()?.email || '')}`;
+    const phoneUrl = App.WEB_URL || location.origin + '/';
     let qr = '';
     try { if (window.qrcode) { const q = window.qrcode(0, 'M'); q.addData(phoneUrl); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } } catch { qr = ''; }
     const devicesHtml = `<div class="rv-h">Your linked devices</div>
       <div class="stack">${devs.map(([id, d]) => `<div class="bk-item"><div><b>${esc(d.name)}</b>${id === deviceId() ? ' <span class="badge accent">this device</span>' : ''}<div class="muted tiny">${esc(d.app || '')} · ${esc(ago(d.seen))}</div></div></div>`).join('') || '<div class="muted small">Only this device so far.</div>'}</div>
       ${App.hosted ? `<div class="muted small">To link your laptop: open the Ops Command Desk desktop app (or this same address in a browser) and sign in with <b>${esc(user()?.email || '')}</b>.</div>`
       : `<div class="link-phone"><div class="link-qr">${qr || ''}</div><div class="stack" style="gap:6px"><b>Link your iPhone</b>
-          <ol class="small" style="margin:0;padding-left:18px"><li>Point the iPhone camera at this code and tap the link (or open <a href="${phoneUrl}" target="_blank" rel="noopener">kgamboe107.github.io/Kgamboe107</a> in Safari).</li>
+          <ol class="small" style="margin:0;padding-left:18px"><li>Point the iPhone camera at this code and tap the link (or open <a href="${phoneUrl}" target="_blank" rel="noopener">${esc(phoneUrl.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a> in Safari).</li>
           <li>Tap <b>Share → Add to Home Screen</b>, open the new icon.</li><li>Sign in with this same email and password. Your data appears in a few seconds.</li></ol></div></div>`}`;
     return `<div class="card stack"><h2>Account &amp; sync</h2>
       <div class="row spread"><div><b>${esc(p.name || user()?.email)}</b><div class="muted small">${esc(user()?.email)}${p.role === 'admin' ? ' · administrator' : ''}</div></div><span class="badge ${lastError ? 'bad' : 'good'}">${lastError ? 'sync paused' : 'syncing on'}</span></div>

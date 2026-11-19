@@ -1,8 +1,8 @@
-name: Publish phone / web version
+name: Publish public web version (GitHub Pages, off)
 
+# Turned off: GitHub Pages sites are public, so anyone could download the code.
+# The private Cloudflare workflow (cloudflare.yml) replaces it. Run by hand only if you mean to publish publicly.
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 permissions:

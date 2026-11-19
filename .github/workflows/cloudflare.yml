@@ -1,0 +1,46 @@
+name: Publish private web version (Cloudflare)
+
+# Publishes the phone / web version to Cloudflare Pages. Cloudflare Access (set up once in the Cloudflare
+# dashboard) makes the site send nothing until you sign in, so only you can load the app or its code.
+# Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (see README → Private hosting).
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assemble the web app
+        run: |
+          mkdir -p _site
+          cp -r index.html unit.html manifest.webmanifest sw.js css js vendor icons unit _site/
+          (cd _site && find css js vendor icons unit manifest.webmanifest unit.html -type f | grep -v LICENSE | grep -v vendor/tesseract | sort | python3 -c "import json,sys; print(json.dumps([l.strip() for l in sys.stdin]))" > precache.json)
+          sed -i "s/const VERSION = 'dev';/const VERSION = '${GITHUB_SHA::12}';/" _site/sw.js
+          # No search engines, no caching of the login-gated pages by shared proxies
+          printf 'User-agent: *\nDisallow: /\n' > _site/robots.txt
+          printf '/*\n  X-Robots-Tag: noindex, nofollow\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n  Cache-Control: private, no-cache\n' > _site/_headers
+      - name: Privacy check
+        run: bash scripts/privacy-check.sh _site
+      - name: Skip if Cloudflare isn't set up yet
+        id: cf
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: if [ -z "$TOKEN" ]; then echo "Cloudflare secrets not added yet; nothing published."; echo "ready=no" >> "$GITHUB_OUTPUT"; else echo "ready=yes" >> "$GITHUB_OUTPUT"; fi
+      - name: Deploy to Cloudflare Pages
+        if: steps.cf.outputs.ready == 'yes'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy _site --project-name=ops-command-desk --branch=main

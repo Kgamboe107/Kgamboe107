@@ -1,5 +1,5 @@
 /* Electron desktop shell — with startup diagnostics and self-healing for blank windows */
-const { app, BrowserWindow, shell, ipcMain, safeStorage } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, safeStorage, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { start } = require('./server');
@@ -127,6 +127,47 @@ ipcMain.handle('secret-set', (_e, name, value) => {
   fs.mkdirSync(path.dirname(secretsFile), { recursive: true });
   fs.writeFileSync(secretsFile, JSON.stringify(all), { mode: 0o600 });
   return true;
+});
+
+/* ---------- Obsidian vault (Unit Command Brain): .md files inside one folder the user picks ---------- */
+const vaultFile = path.join(app.getPath('userData'), 'vault.json');
+const vaultRoot = () => { try { const r = JSON.parse(fs.readFileSync(vaultFile, 'utf8')).root; return r && fs.existsSync(r) ? r : ''; } catch { return ''; } };
+function vaultPath(rel) {
+  const root = vaultRoot(); if (!root) throw new Error('No vault folder chosen yet.');
+  if (typeof rel !== 'string' || !/\.md$/i.test(rel) || rel.includes('\0')) throw new Error('Only .md files can be used.');
+  const full = path.resolve(root, rel);
+  if (full !== root && !full.startsWith(root + path.sep)) throw new Error('That path is outside the vault folder.');
+  return full;
+}
+ipcMain.handle('vault-pick', async e => {
+  const r = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), { title: 'Choose your Obsidian vault folder', properties: ['openDirectory', 'createDirectory'] });
+  if (r.canceled || !r.filePaths[0]) return { root: vaultRoot() };
+  fs.writeFileSync(vaultFile, JSON.stringify({ root: path.resolve(r.filePaths[0]) }));
+  return { root: vaultRoot() };
+});
+ipcMain.handle('vault-info', () => ({ root: vaultRoot() }));
+ipcMain.handle('vault-forget', () => { try { fs.unlinkSync(vaultFile); } catch { /* none */ } return true; });
+ipcMain.handle('vault-list', () => {
+  const root = vaultRoot(); if (!root) return [];
+  const out = [];
+  const walk = (dir, depth) => {
+    if (depth > 12 || out.length > 20000) return;
+    for (const d of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (d.name.startsWith('.')) continue; // .obsidian, .trash, .git
+      const full = path.join(dir, d.name);
+      if (d.isDirectory()) walk(full, depth + 1);
+      else if (d.isFile() && /\.md$/i.test(d.name)) { const st = fs.statSync(full); if (st.size < 3e6) out.push({ path: path.relative(root, full).split(path.sep).join('/'), mtime: Math.round(st.mtimeMs), size: st.size }); }
+    }
+  };
+  walk(root, 0);
+  return out;
+});
+ipcMain.handle('vault-read', (_e, rel) => fs.readFileSync(vaultPath(rel), 'utf8'));
+ipcMain.handle('vault-write', (_e, rel, text) => {
+  const full = vaultPath(rel);
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, String(text));
+  return Math.round(fs.statSync(full).mtimeMs);
 });
 
 ipcMain.on('renderer-ready', () => {

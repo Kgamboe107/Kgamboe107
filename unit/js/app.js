@@ -5,10 +5,10 @@
   const E = () => UC.engine;
   const money = v => App.fmt.money(v);
   const ROUTES = [
-    ['today', 'Today', 'dashboard'], ['units', 'Units', 'businesses'], ['ventures', 'Ventures', 'sparkles'],
-    ['map', 'Agent Map', 'command'], ['agents', 'Agents', 'layers'], ['knowledge', 'Knowledge', 'research'], ['imports', 'Imports', 'upload'], ['settings', 'Settings', 'settings']
+    ['today', 'Today', 'dashboard'], ['brain', 'Brain', 'research'], ['units', 'Units', 'businesses'], ['ventures', 'Ventures', 'sparkles'],
+    ['map', 'Agent Map', 'command'], ['agents', 'Agents', 'layers'], ['knowledge', 'Knowledge', 'library'], ['imports', 'Imports', 'upload'], ['settings', 'Settings', 'settings']
   ];
-  const TABS = ['today', 'units', 'map', 'agents', 'more'];
+  const TABS = ['today', 'brain', 'units', 'agents', 'more'];
   UC.screens = UC.screens || {};
   let current = 'today', token = 0;
 
@@ -20,7 +20,7 @@
     if (UC.plan() === 'lite' && route === 'ventures') route = 'today';
     current = route;
     $$('#ucNav [data-go]').forEach(a => a.classList.toggle('on', a.dataset.go === route));
-    $$('#ucTabs [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === route || (b.dataset.tab === 'more' && ['ventures', 'knowledge', 'imports', 'settings'].includes(route))));
+    $$('#ucTabs [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === route || (b.dataset.tab === 'more' && ['ventures', 'map', 'knowledge', 'imports', 'settings'].includes(route))));
     $('#ucTitle').textContent = ROUTES.find(r => r[0] === route)[1];
     if (location.hash.slice(1) !== route) history.replaceState(null, '', '#' + route);
     const view = $('#ucView'); view.innerHTML = ''; view.classList.remove('uc-enter'); void view.offsetWidth; view.classList.add('uc-enter');
@@ -239,7 +239,7 @@
     if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) document.documentElement.classList.add('standalone');
     (App.cloud ? App.cloud.gate() : Promise.resolve())
       .then(() => go(location.hash.slice(1) || 'today'))
-      .then(() => { UC.ai.status().then(aiChip); UC.ai.startAutopilot(); })
+      .then(() => { UC.ai.status().then(aiChip); UC.ai.startAutopilot(); setTimeout(() => UC.brain.capture().then(() => UC.brain.startVault()).catch(e => console.warn('brain', e)), 3000); })
       .finally(() => { document.getElementById('ucSplash')?.remove(); });
   }
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
