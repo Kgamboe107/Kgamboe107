@@ -17,7 +17,7 @@
   <link rel="preload" href="vendor/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="unit/css/unit.css">
-  <script>(function(){var a="dark";try{a=JSON.parse(localStorage.getItem("ocd.uc.appearance"))||"dark"}catch(e){}var t=a==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):a;document.documentElement.dataset.theme=t;document.documentElement.classList.add("uc")})();</script>
+  <script>(function(){var a="dark";try{a=JSON.parse(localStorage.getItem("ocd.uc.appearance"))||"dark"}catch(e){}var t=a==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):a;document.documentElement.dataset.theme=t;try{document.documentElement.dataset.palette=JSON.parse(localStorage.getItem("ocd.uc.palette"))||"gold"}catch(e){document.documentElement.dataset.palette="gold"}document.documentElement.classList.add("uc")})();</script>
 </head>
 <body>
   <div id="ucSplash" class="uc-splash"><div class="uc-mark lg">UC</div></div>
@@ -83,6 +83,7 @@
   <script src="unit/js/brain.js"></script>
   <script src="unit/js/coordinator.js"></script>
   <script src="unit/js/growth.js"></script>
+  <script src="unit/js/science.js"></script>
   <script src="unit/js/deals.js"></script>
   <script src="unit/js/decide.js"></script>
   <script src="unit/js/screens.js"></script>
@@ -92,6 +93,7 @@
   <script src="unit/js/growth-ui.js"></script>
   <script src="unit/js/deals-ui.js"></script>
   <script src="unit/js/legal-ui.js"></script>
+  <script src="unit/js/blueprint-ui.js"></script>
   <script src="unit/js/app.js"></script>
 </body>
 </html>

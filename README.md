@@ -140,6 +140,26 @@ Notes, meetings and people you add are yours to edit. Everything links with `[[T
 
 **Storage and privacy:** memories and facts sync through your account, encrypted on the device before upload. The search-by-meaning index stays on each device.
 
+### Color system and the Blueprint (0.8)
+
+**Color (Settings → Color)** follows the 60/30/10 rule: 60% base, 30% support, 10% accent. There are three palettes:
+- **Black · White · Gold** (default): gold marks what to tap or look at first; blue is for links and AI; red only for alerts.
+- **Black · White · Red:** red is the accent and alerts turn orange so they stay distinct.
+- **Navy · White · Gold:** a deep navy base.
+
+Secondary buttons stay neutral, so the accent always means "this matters".
+
+**Blueprint** treats human thought and structure as a management science: a master skill tree in four phases, drawn on graph paper. Every framework works somewhere in the app:
+1. **Foundations:** time and priorities (Today's three), capture (Brain), retention (Review cards), continuous learning (Notebooks).
+2. **Core mechanics:** each unit's *normal range*. The Sales Trend agent flags any day more than two standard deviations from that unit's usual for the same weekday. Agents are told that correlation is not causation. The accounting equation; forecast accuracy.
+3. **Human experience:**
+   - Coaching styles from the four schools of psychology.
+   - A **communication check** on every draft in Needs your yes: a clear receiver and ask, no shouting, no jargon, a readable length.
+   - The three ethical scales (outcome, duty, character), now an **ethics check** in every decision brief.
+4. **Applied systems:** Plan · Organize · Lead · Control mapped to the departments; the 4 Ps; security (confidentiality, integrity, availability); legal risk.
+
+Tap any box to see what it says about your business right now.
+
 ### Deals, Decisions and Legal (0.7)
 
 **Growth → Deals** finds acquisition and expansion opportunities people miss because they don't know they exist. Create a search (kind of business, area, budget, your experience). It looks four ways:

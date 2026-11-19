@@ -56,6 +56,8 @@
     trend(ctx) {
       const out = ctx.units.map(u => { const a = D().stats(D().windowRows(u, ctx.end, 7)), b = D().stats(D().prior(u, ctx.end, 7)); return { u, ch: b.sales ? (a.sales - b.sales) / b.sales : NaN }; }).filter(x => !isNaN(x.ch));
       const down = out.filter(x => x.ch < -T().trendDrop / 100);
+      const odd = UC.science ? UC.science.unusual(ctx.units, ctx.end) : [];
+      if (odd.length) return { text: `Outside the normal range on ${fmtDay(ctx.end)}: ${odd.map(UC.science.describe).join('; ')}.${down.length ? ` Also sliding (7 days vs the 7 before): ${down.map(x => `${x.u.name} ${signPct(x.ch)}`).join('; ')}.` : ''} Check for a cause before reacting.`, kind: 'flag', units: [...new Set([...odd.map(x => x.u.id), ...down.map(x => x.u.id)])] };
       return down.length ? { text: `Sales sliding (last 7 days vs. the 7 before): ${down.map(x => `${x.u.name} ${signPct(x.ch)}`).join('; ')}.`, kind: 'flag', units: down.map(x => x.u.id) }
         : { text: `Last 7 days vs. the 7 before: ${out.map(x => `${x.u.name} ${signPct(x.ch)}`).join(', ') || 'not enough history yet'}.`, kind: 'done' };
     },
