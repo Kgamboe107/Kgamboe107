@@ -40,7 +40,7 @@
       ${id ? `<div class="uc-sub">Agents for the ${esc(S[stageIx].name)} stage</div><div class="uc-chips">${UC.AGENTS.filter(a => a.dept === 'venture' && UC.cadence(a).stage === v.stage).map(a => `<button class="uc-chip" data-agent="${a.id}">${esc(a.name)}</button>`).join('') || '<span class="muted tiny">None for this stage.</span>'}</div>
         <div class="row" style="margin-top:8px"><button class="btn small" id="vRun">${App.fx.icon('sparkles')} Run all of them on this venture</button></div>` : ''}
       <div class="row" style="justify-content:space-between;margin-top:12px">${id ? '<div class="row"><button class="btn danger" id="vDel">Delete</button>' + (v.stage === 'operating' || v.stage === 'open' ? '<button class="btn" id="vUnit">Add as a unit</button>' : '') + '</div>' : '<span></span>'}
-        <div class="row"><button class="btn" data-close>Cancel</button><button class="btn primary" id="vSave">Save</button></div></div>`, (c, close) => {
+        <div class="row">${id ? '<button class="btn" id="vThink">Before you decide</button>' : ''}<button class="btn" data-close>Cancel</button><button class="btn primary" id="vSave">Save</button></div></div>`, (c, close) => {
       const collect = () => {
         v.name = c.querySelector('#vN').value.trim(); v.type = c.querySelector('#vT').value; v.stage = c.querySelector('#vS').value; v.open = c.querySelector('#vO').value; v.notes = c.querySelector('#vNo').value; v.sample = false;
         c.querySelectorAll('[data-ck]').forEach(x => { const [s, k] = x.dataset.ck.split(':'); v.check[s][k].done = x.checked; });
@@ -53,6 +53,7 @@
         for (const a of ags) { e.target.innerHTML = `<span class="task-spin"></span> ${esc(a.name)} (${++n} of ${ags.length})…`; try { await UC.ai.run(a, { ventureId: v.id }); } catch (err) { App.ui.toast(err.message, 6000); break; } }
         e.target.disabled = false; e.target.textContent = 'Done. Tap an agent above to read its result.';
       });
+      c.querySelector('#vThink')?.addEventListener('click', () => { close(); UC.decide.think(`Go ahead with ${v.name}?`, 'venture', v.id, () => UC.go('ventures')); });
       c.querySelector('#vDel')?.addEventListener('click', () => { if (!confirm(`Delete ${v.name}?`)) return; E().saveVentures(E().ventures().filter(x => x.id !== v.id)); close(); UC.go('ventures'); });
       c.querySelector('#vUnit')?.addEventListener('click', () => {
         collect(); const b = App.biz.create({ name: v.name, type: v.type, description: 'Created from a Unit Command venture', started: v.open || App.dateKey(new Date()) });

@@ -19,6 +19,10 @@
     if (ready) out.push({ p: 6, text: `Send ${ready} approved outreach email${ready > 1 ? 's' : ''}`, go: 'growth', src: 'growth' });
     const td = new Date().toISOString().slice(0, 10);
     for (const v of UC.engine.ventures().filter(v => !v.sample)) { const it = (v.check[v.stage] || []).find(i => !i.done); if (it) out.push({ p: it.due && it.due < td ? 8 : 5, text: `${v.name}: ${it.t}`, go: 'ventures', src: 'venture' }); }
+    for (const b of (UC.decide?.due() || []).slice(0, 2)) out.push({ p: 9, text: `Reassess “${b.title.slice(0, 50)}”: continue, adjust or stop?`, go: 'decide', params: { id: b.id }, src: 'brief' });
+    const talks = UC.deals ? (await UC.deals.all()).filter(p => ['talking', 'nda', 'loi', 'diligence'].includes(p.stage)) : [];
+    for (const p of talks.slice(0, 2)) out.push({ p: 6, text: `Deal: next step with ${p.name} (${UC.deals.STAGES.find(s => s[0] === p.stage)[1]})`, go: 'growth', params: { mode: 'deals' }, src: 'deal' });
+    try { for (const { u, a } of (await UC.legalAssessAll?.() || []).filter(x => x.a)) { const g = a.gaps.find(x => x.sev === 3); if (g) { out.push({ p: 7, text: `${u.name} legal: ${g.q.length > 60 ? g.q.slice(0, 58).replace(/\s+\S*$/, '') + '…' : g.q}`, go: 'legal', params: { unit: u.id, tab: 'fix' }, src: 'legal' }); break; } } } catch { /* optional */ }
     const due = dueCards().length;
     if (due) out.push({ p: 4, text: `Review ${due} card${due > 1 ? 's' : ''} (about ${Math.max(1, Math.round(due * 0.15))} min)`, go: 'brain', params: { tab: 'review' }, src: 'review' });
     out.push({ p: 1, text: 'Write one note in the Brain about something you learned today', go: 'brain', src: 'note' });

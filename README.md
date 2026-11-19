@@ -140,6 +140,20 @@ Notes, meetings and people you add are yours to edit. Everything links with `[[T
 
 **Storage and privacy:** memories and facts sync through your account, encrypted on the device before upload. The search-by-meaning index stays on each device.
 
+### Deals, Decisions and Legal (0.7)
+
+**Growth → Deals** finds acquisition and expansion opportunities people miss because they don't know they exist. Create a search (kind of business, area, budget, your experience). It looks four ways:
+- **Owners open to selling:** independent businesses from OpenStreetMap, with chains left out. Reading their websites (desktop app) looks for years in business, family ownership, retirement or sale mentions, and sites nobody has updated in years.
+- **Businesses for sale:** paste a listing link or the listing text, or import a broker's list. Asking price, cash flow, revenue, the multiple, seller financing and the reason for selling are pulled out and scored against your budget. Search links open the big marketplaces for your kind of business and area.
+- **Franchise brands with open territory:** brands that are common within the wider region but have no locations in your area, with each brand's website from Wikidata. Reading the brand site pulls the franchise fee, investment range and royalty. Links open the public state franchise disclosure (FDD) databases (California, Wisconsin, Minnesota).
+- **Market gaps:** people per business for each area you list. Uses OpenStreetMap counts and population; add a free Census API key for official County Business Patterns and population counts.
+
+First contacts (to an owner, a broker or a franchise development team) are drafted, wait in Needs your yes, and open in your own mail app with your address and an opt-out line. The pipeline runs Lead → Researching → Contacted → Talking → Under NDA → LOI → Due diligence → Closed or Passed. Any deal can become a Venture. Every deal is saved in the Brain under Deals.
+
+**Decisions (Before you decide).** Big decisions go through seven questions: define the problem; what you know vs. what you're assuming; the option you're overlooking (often a pilot); what you're giving up; what happens beyond the first result; how easy it is to reverse; and what evidence would change your mind. The AI can draft the brief from your data, and you edit it. Hard-to-reverse decisions need every question answered. Moving a deal to LOI, Closed or Passed opens a brief, and Projects, Ventures and any approval ("Think it through") can have one too. On the review date it comes back in Today's three: continue, adjust or stop. Every brief is saved in the Brain under Decisions.
+
+**Legal** uses the same engine and data as the Ops Command Desk's Legal & Risk, for every unit on one screen: protection score, high-risk gaps to fix first, documents (draft, edit, save versions, download, print), signatures, incident reports and business details. **Deal legal** gives each deal a checklist (NDA, liens, lease assignment, license transfer, bulk-sale clearance, quality of earnings, non-compete; for franchises the FDD 14-day rule and Items 7, 12, 19, 20, 21) plus drafts of a mutual NDA and a non-binding letter of intent. High-risk gaps show up in Today's three. Not legal advice: have a licensed attorney review documents.
+
 ### Brain upgrade (0.6): Today's three, Planet, Notebooks, Review
 
 - **Today's three.** Each morning the Today screen picks three objectives from what actually needs you: approvals waiting in Needs your yes, the next step of a running or blocked project, the top flag, approved outreach to send, overdue venture steps, and cards due for review. Tick them off. Each day's list is saved in the Brain under Journal/year/month.

@@ -21,10 +21,10 @@
   const TYPES = {
     unit: ['Business', 'Unit'], month: ['Business', 'Monthly report'], import: ['Imports', 'Import'], purchases: ['Business', 'Purchases'], vendor: ['Vendors', 'Vendor'],
     agent: ['Agents', 'Agent result'], log: ['Journal', 'Agent log'], decision: ['Decisions', 'Decision'], venture: ['Ventures', 'Venture'], knowledge: ['Knowledge', 'Knowledge'],
-    research: ['Research', 'Research note'], project: ['Projects', 'Project'], prospect: ['Growth', 'Prospect'], objectives: ['Journal', 'Daily objectives'], personal: ['Personal', 'Personal'], note: ['Notes', 'Note'], meeting: ['Notes', 'Meeting'], person: ['People', 'Person']
+    research: ['Research', 'Research note'], project: ['Projects', 'Project'], prospect: ['Growth', 'Prospect'], objectives: ['Journal', 'Daily objectives'], deal: ['Deals', 'Deal'], brief: ['Decisions', 'Decision brief'], legal: ['Legal', 'Legal check'], personal: ['Personal', 'Personal'], note: ['Notes', 'Note'], meeting: ['Notes', 'Meeting'], person: ['People', 'Person']
   };
   UC.BRAIN_TYPES = TYPES;
-  const SECTION_COLORS = { Projects: '#E9B949', Growth: '#2F9BFF', Business: '#6366f1', Imports: '#06b6d4', Vendors: '#14b8a6', Agents: '#f59e0b', Journal: '#94a3b8', Decisions: '#ef4444', Ventures: '#f97316', Knowledge: '#a3a3a3', Research: '#8b5cf6', Personal: '#ec4899', Notes: '#22c55e', People: '#eab308' };
+  const SECTION_COLORS = { Projects: '#E9B949', Growth: '#2F9BFF', Business: '#6366f1', Imports: '#06b6d4', Vendors: '#14b8a6', Agents: '#f59e0b', Journal: '#94a3b8', Decisions: '#ef4444', Deals: '#D4A23C', Legal: '#64748b', Ventures: '#f97316', Knowledge: '#a3a3a3', Research: '#8b5cf6', Personal: '#ec4899', Notes: '#22c55e', People: '#eab308' };
   UC.sectionColor = s => SECTION_COLORS[String(s).split('/')[0]] || '#64748b';
 
   /* ---------- in-memory index ---------- */
@@ -216,7 +216,7 @@
     }
 
     // Growth: every prospect you've written to or heard from
-    for (const pr of (await App.store.all('prospects', { raw: true }).catch(() => [])).filter(x => x.draft || (x.thread || []).length || ['meeting', 'won', 'lost'].includes(x.status))) {
+    for (const pr of (await App.store.all('prospects', { raw: true }).catch(() => [])).filter(x => !x.deal).filter(x => x.draft || (x.thread || []).length || ['meeting', 'won', 'lost'].includes(x.status))) {
       const camp = (UC.growth?.campaigns() || []).find(c => c.id === pr.campaign);
       await keep({ id: `prospect:${pr.id}`, type: 'prospect', title: pr.name, section: P('Growth', clean(camp?.name || 'Outreach')), date: App.dateKey(new Date(pr.created)), tags: ['prospect', pr.status, ...(pr.category ? [pr.category] : [])],
         body: `**${pr.name}**${pr.category ? `, ${pr.category}` : ''}${pr.address ? `, ${pr.address}` : ''}. Status: ${pr.status}.${pr.email ? ` Email: ${pr.email}.` : ''}${pr.website ? ` Website: ${pr.website}.` : ''}\n\n${pr.site?.facts?.length ? `## From their website\n${pr.site.facts.map(f => `- ${f}`).join('\n')}\n\n` : ''}${pr.draft ? `## Email\n**${pr.draft.subject}**\n\n${pr.draft.body}\n\n` : ''}${(pr.thread || []).length ? `## Conversation\n${pr.thread.map(m => `- ${m.from === 'me' ? 'Us' : pr.name} (${App.dateKey(new Date(m.t))}): ${m.text.slice(0, 600)}`).join('\n')}` : ''}`,
@@ -230,6 +230,30 @@
         links: pr.tasks.filter(t => t.out).map(t => `agent:${t.out}`).concat(pr.forkOf ? [`project:${pr.forkOf}`] : []),
         body: `**Goal:** ${pr.goal}${pr.approach ? `\n\n**Approach:** ${pr.approach}` : ''}\n\nStatus: ${pr.status}. ${pr.summary || ''}\n\n## Steps\n${pr.tasks.map(t => `- [${st[t.status] || ' '}] ${t.title} (${UC.agent(t.agent)?.name || t.agent})${t.summary ? `: ${t.summary}` : ''}`).join('\n')}${(pr.asks || []).length ? `\n\n## Side questions\n${pr.asks.map(a => `- **${a.q}** ${a.a.slice(0, 300)}`).join('\n')}` : ''}`,
         updated: pr.updated || pr.created });
+    }
+
+    // Deals: every acquisition / franchise / market lead you researched, contacted or moved
+    for (const d of (await App.store.all('prospects', { raw: true }).catch(() => [])).filter(x => x.deal && (x.readAt || x.draft || x.notes || x.stage !== 'lead' || x.fin))) {
+      const h = UC.deals?.hunt(d.campaign), f = d.fin || {}, fr = d.fr || {}, stl = UC.deals?.STAGES.find(s => s[0] === d.stage)?.[1] || d.stage;
+      await keep({ id: `deal:${d.id}`, type: 'deal', title: d.name, section: P('Deals', clean(h?.name || 'Search')), date: App.dateKey(new Date(d.created)), tags: ['deal', d.dtype, d.stage],
+        links: [d.venture ? `venture:${d.venture}` : '', UC.decide?.forRef(d.id) ? `brief:${UC.decide.forRef(d.id).id}` : ''].filter(Boolean),
+        body: `**${d.name}** (${UC.deals?.TYPES[d.dtype]?.[1] || d.dtype}). Stage: ${stl}. Fit ${d.fit?.score ?? '—'}: ${d.fit?.why || ''}.${d.address ? `\n\nWhere: ${d.address}` : ''}${d.website ? `\nWebsite: ${d.website}` : ''}${d.email ? `\nEmail: ${d.email}` : ''}${f.price ? `\n\n| Asking | Cash flow | Revenue | Multiple |\n|---|---|---|---|\n| ${money(f.price)} | ${f.cashFlow ? money(f.cashFlow) : '—'} | ${f.revenue ? money(f.revenue) : '—'} | ${f.multiple ? f.multiple + '×' : '—'} |` : ''}${fr.brand ? `\n\nFranchise: ${fr.regionCount} locations within ${fr.regionKm} km, ${fr.localCount} within ${fr.localKm} km.${fr.investment ? ` Investment ${fr.investment}.` : ''}${fr.fee ? ` Fee ${fr.fee}.` : ''}` : ''}${(d.signals || []).length ? `\n\n## Signals\n${d.signals.map(x => `- ${x}`).join('\n')}` : ''}${d.notes ? `\n\n## Notes\n${d.notes}` : ''}${d.draft ? `\n\n## First contact\n**${d.draft.subject}**\n\n${d.draft.body}` : ''}${(d.thread || []).length ? `\n\n## Conversation\n${d.thread.map(m => `- ${m.from === 'me' ? 'Us' : d.name} (${App.dateKey(new Date(m.t))}): ${m.text.slice(0, 600)}`).join('\n')}` : ''}${d.legal ? `\n\n## Deal legal\n${Object.entries(d.legal.check || {}).filter(([, v]) => v).length} checklist items done${Object.keys(d.legal.docs || {}).length ? `; drafts saved: ${Object.keys(d.legal.docs).join(', ')}` : ''}` : ''}`,
+        updated: d.updated || d.created });
+    }
+    // Decision briefs: the 7-question thought process behind each big decision
+    for (const b of (UC.decide?.list() || [])) {
+      const L = a => (a || []).map(x => `- ${x}`).join('\n') || '- —';
+      await keep({ id: `brief:${b.id}`, type: 'brief', title: b.title, section: P('Decisions', 'Briefs', String(new Date(b.created).getFullYear())), date: App.dateKey(new Date(b.decidedAt || b.created)), tags: ['brief', b.status, b.kind, b.reversible].filter(Boolean),
+        links: b.kind === 'deal' ? [`deal:${b.ref}`] : b.kind === 'project' ? [`project:${b.ref}`] : b.kind === 'venture' ? [`venture:${b.ref}`] : [],
+        body: `${b.status === 'thinking' ? 'Still thinking.' : `**Decided:** ${b.choice} (${b.decidedAt ? App.dateKey(new Date(b.decidedAt)) : ''}). Review on ${b.reviewOn || '—'}.`}\n\n## 01 The problem\n${b.problem || '—'}\n\n## 02 What I know / what I’m assuming\n**Know**\n${L(b.know)}\n\n**Assuming**\n${L(b.assume)}${b.testFirst ? `\n\nTest first: ${b.testFirst}` : ''}\n\n## 03 Options\n${L(b.options)}${b.pilot ? `\n\nPilot: ${b.pilot}` : ''}\n\n## 04 What I’m giving up\n${b.givingUp || '—'}\n\n## 05 Beyond the first result\nResult: ${b.result || '—'}\nNew demands: ${b.demands || '—'}\nWho sustains it: ${b.who || '—'}\n\n## 06 Reversibility\n${b.reversible || '—'}${b.reverseCost ? `: ${b.reverseCost}` : ''}\n\n## 07 What would change my mind\nContinue if: ${b.cont || '—'}\nAdjust if: ${b.adjust || '—'}\nStop if: ${b.stop || '—'}${(b.reviews || []).length ? `\n\n## Reviews\n${b.reviews.map(r => `- ${App.dateKey(new Date(r.t))} **${r.verdict}** ${r.note || ''}`).join('\n')}` : ''}`,
+        updated: b.updated || b.created });
+    }
+    // Legal: one check per unit (score, gaps, documents, incidents)
+    for (const { u, a } of (await (UC.legalAssessAll?.() || Promise.resolve([]))).filter(x => x.a)) {
+      const docs = await App.biz.withBiz(u.id, () => App.bsettings.get('legal.docs', {})), inc = await App.biz.withBiz(u.id, () => App.bsettings.get('legal.incidents', []));
+      await keep({ id: `legal:${u.id}`, type: 'legal', title: `${u.name} · legal check`, section: P('Legal', clean(u.name)), tags: ['legal'], links: [`unit:${u.id}`],
+        body: `${isNaN(a.score) ? 'Not checked yet.' : `${Math.round(a.score * 100)}% protected.`} ${a.gaps.filter(g => g.sev === 3).length} high-risk gaps, ${a.unanswered} unanswered.\n\n## Gaps\n${a.gaps.map(g => `- (${g.sev === 3 ? 'high' : g.sev === 2 ? 'medium' : 'low'}) ${g.q}`).join('\n') || '- none'}\n\n## Documents saved\n${Object.entries(docs).map(([k, v]) => `- ${App.legal.DOCS.find(d => d.id === k)?.title || k} v${v.version}`).join('\n') || '- none'}\n\n## Incidents\n${inc.map(i => `- ${(i.when || '').slice(0, 10)} ${i.type} (${i.status}): ${(i.description || '').slice(0, 200)}`).join('\n') || '- none'}`,
+        updated: Math.max(1, ...Object.values(docs).map(v => v.savedAt || 0), ...inc.map(i => i.updated || 0)) });
     }
 
     // Daily objectives (Journal): one note per day, kept forever

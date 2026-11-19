@@ -57,7 +57,7 @@
         <div class="uc-bar" style="margin:14px 0 6px"><i style="width:${Math.round(r.pct * 100)}%"></i></div>
         <div class="muted tiny">${r.done} of ${r.total} steps · ${p.usage?.runs || 0} runs · ${mins(p.usage?.ms || 0)} of AI time · ${p.planner === 'ai' ? 'AI plan' : 'catalog plan'}</div>
         <div class="row uc-pact">${p.status === 'running' ? `<button class="btn" id="pPause">Pause</button>` : p.status !== 'done' ? `<button class="btn primary" id="pRun">${p.status === 'ready' ? 'Run the plan' : 'Continue'}</button>` : ''}
-          <button class="btn" id="pWhere">Where are we?</button><button class="btn" id="pFork">Fork</button><button class="btn ghost" id="pDel" style="color:var(--red)">Delete</button></div>
+          <button class="btn" id="pWhere">Where are we?</button><button class="btn" id="pFork">Fork</button><button class="btn" id="pThink">Before you decide</button><button class="btn ghost" id="pDel" style="color:var(--red)">Delete</button></div>
         ${lastReport[p.id] ? `<div class="uc-report"><b>Status</b><div class="uc-md small">${UC.fullMd(lastReport[p.id])}</div></div>` : ''}</section>
       <div class="uc-lanes2">${Object.entries(lanes).map(([d, ts]) => { const dd = UC.dept(d); const dn = ts.filter(t => ['done', 'waiting'].includes(t.status)).length; return `<section class="card uc-thread" style="--dc:${dd?.color || 'var(--label-3)'}">
         <div class="uc-thead"><span class="uc-dot" style="background:${dd?.color}"></span><b>${esc(dd?.name || 'Other')}</b><span class="muted tiny">${dn}/${ts.length}</span></div>
@@ -73,6 +73,7 @@
     view.querySelector('#pRun')?.addEventListener('click', () => { C().start(p.id); App.ui.toast('Running. Steps go one at a time.'); setTimeout(re, 300); });
     view.querySelector('#pPause')?.addEventListener('click', () => { C().pause(p.id); re(); });
     view.querySelector('#pWhere').onclick = async e => { e.target.disabled = true; e.target.innerHTML = '<span class="task-spin"></span>'; try { lastReport[p.id] = await C().whereAreWe(p.id); } catch (err) { lastReport[p.id] = C().statusReport(p).lines.join('\n'); } re(); };
+    view.querySelector('#pThink').onclick = () => UC.decide.think(`Commit to “${p.name || p.goal}”?`, 'project', p.id, () => UC.go('projects', { id: p.id, keepScroll: true }));
     view.querySelector('#pFork').onclick = () => App.ui.modal(`<div class="row spread"><h2>Fork this project</h2><button class="btn ghost small" data-close aria-label="Close">✕</button></div>
       <p class="muted small">Same goal, a different approach. The original keeps its progress.</p><label class="field">Try this instead<input id="fkA" placeholder="e.g. Cut hours on slow weekdays instead of overtime"></label>
       <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-close>Cancel</button><button class="btn primary" id="fkGo">Fork</button></div>`, (c, close) => {

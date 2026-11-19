@@ -19,14 +19,16 @@
     refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.2h-4.2"/>',
     back: '<path d="M14.5 5 8 12l6.5 7"/>',
     projects: '<rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M8 9.5h8M8 13h5M8 16.5h3"/><circle cx="17.5" cy="16" r="2.2" fill="currentColor" stroke="none"/>',
-    growth: '<path d="M4 18.5 9.5 13l3.5 3.5L20 9.5"/><path d="M15 9.5h5v5"/>'
+    growth: '<path d="M4 18.5 9.5 13l3.5 3.5L20 9.5"/><path d="M15 9.5h5v5"/>',
+    decide: '<circle cx="5" cy="12" r="1.6"/><path d="M6.6 12H10c3 0 4-5.5 8-5.5"/><path d="M10 12c3 0 4 5.5 8 5.5"/><circle cx="19.5" cy="6.5" r="1.3"/><circle cx="19.5" cy="17.5" r="1.3"/>',
+    legal: '<path d="M12 4v16"/><path d="M7 20h10"/><path d="M5 7h14"/><path d="M7 7l-3 6a3 3 0 0 0 6 0z"/><path d="M17 7l-3 6a3 3 0 0 0 6 0z"/>'
   };
   UC.icon = (n, cls = '') => ICO[n] ? `<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]}</svg>` : App.fx.icon(n, cls);
   const ROUTES = [
-    ['today', 'Today', 'today'], ['projects', 'Projects', 'projects'], ['growth', 'Growth', 'growth'], ['brain', 'Brain', 'brain'], ['units', 'Units', 'units'], ['agents', 'Agents', 'agents'], ['ventures', 'Ventures', 'ventures'],
+    ['today', 'Today', 'today'], ['projects', 'Projects', 'projects'], ['growth', 'Growth', 'growth'], ['decide', 'Decisions', 'decide'], ['brain', 'Brain', 'brain'], ['units', 'Units', 'units'], ['agents', 'Agents', 'agents'], ['ventures', 'Ventures', 'ventures'], ['legal', 'Legal', 'legal'],
     ['map', 'Agent Map', 'map'], ['knowledge', 'Knowledge', 'knowledge'], ['imports', 'Imports', 'imports'], ['settings', 'Settings', 'settings']
   ];
-  const MORE = ['growth', 'agents', 'ventures', 'map', 'knowledge', 'imports', 'settings'];
+  const MORE = ['growth', 'decide', 'legal', 'agents', 'ventures', 'map', 'knowledge', 'imports', 'settings'];
   const TABS = ['today', 'projects', 'brain', 'units', 'more'];
   UC.screens = UC.screens || {};
   let current = 'today', token = 0;
@@ -121,7 +123,7 @@
       ${list.map(a => { const ag = UC.agent(a.agent), d = UC.dept(a.dept); return `<div class="uc-swipe"><article class="uc-ask" data-ask="${a.id}">
         <div class="uc-askmeta"><span>${esc(ag?.name || d?.name || '')}${a.to ? ' → ' + esc(a.to) : ''}</span><span>${UC.ago(a.created)}</span></div>
         <b>${esc(a.title)}</b>${a.detail ? `<div class="uc-ask-d uc-md">${UC.fullMd ? UC.fullMd(a.detail) : esc(a.detail).replace(/\n/g, '<br>')}</div>` : ''}
-        <div class="uc-ask-act"><button class="btn primary" data-yes="${a.id}">Approve</button><button class="btn" data-edit="${a.id}">Edit</button><button class="btn ghost" data-no="${a.id}">Decline</button></div></article></div>`; }).join('')
+        <div class="uc-ask-act"><button class="btn primary" data-yes="${a.id}">Approve</button><button class="btn" data-edit="${a.id}">Edit</button><button class="btn ghost" data-no="${a.id}">Decline</button><button class="btn ghost" data-think="${a.id}">${UC.decide?.forRef(a.id)?.status === 'decided' ? 'Brief ✓' : 'Think it through'}</button></div></article></div>`; }).join('')
         || `<div class="uc-empty">Nothing waiting here.${lane === 'clients' ? ' Client-facing drafts land here only after you approve them for sending.' : ''}</div>`}`;
   }
   function bindAsks(root, rerender) {
@@ -138,6 +140,7 @@
         else { card.style.transform = ''; wrap.classList.remove('go-right', 'go-left'); } };
       card.addEventListener('pointerup', end); card.addEventListener('pointercancel', end);
     });
+    root.querySelectorAll('[data-think]').forEach(b => b.onclick = () => { const a = E().state().asks.find(x => x.id === b.dataset.think); if (a) UC.decide.think(a.title, 'ask', a.id, rerender); });
     root.querySelectorAll('[data-no]').forEach(b => b.onclick = () => { E().decide(b.dataset.no, 'rejected'); App.ui.toast('Declined. Nothing was sent.'); rerender(); });
     root.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
       const a = E().state().asks.find(x => x.id === b.dataset.edit);
