@@ -23,7 +23,7 @@ self.addEventListener('activate', e => {
 /* Network first for everything (so updates show up on the next open); the cache is the offline fallback */
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/api/')) return;
+  if (e.request.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/api/') || url.pathname.includes('/budget/')) return;
   const page = e.request.mode === 'navigate';
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
